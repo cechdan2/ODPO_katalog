@@ -23,6 +23,7 @@
         --pad: 12px;
         --gap: 8px;
         --radius: 12px;
+        --bar-height: 108px;
     }
 
     * {
@@ -31,6 +32,7 @@
 
     body {
         margin: 0;
+        padding: 0 0 108px 0;
         font-family: system-ui,-apple-system,Segoe UI,Roboto,Ubuntu;
         color: var(--text);
         background: var(--bg);
@@ -192,19 +194,101 @@
         margin-top: 10px;
     }
 
-    .additional-preview img {
-        width: 80px;
-        height: 80px;
-        object-fit: cover;
-        border-radius: 6px;
-        border: 1px solid var(--border);
+        .additional-preview img {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+        }
+
+    /* Bottom action bar - MENŠÍ VERZE (108px) */
+    .bottom-bar {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 108px;
+        background: linear-gradient(180deg, var(--brand), var(--brand-dark));
+        border-top: 1px solid rgba(0,0,0,0.06);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1500;
+        padding: 10px;
+        gap: 12px;
+        box-shadow: 0 -6px 20px rgba(0,0,0,0.12);
     }
+
+        .bottom-bar .actions-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            width: 100%;
+            max-width: 400px;
+            padding: 6px;
+        }
+
+        .bottom-bar .action-btn {
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            padding: 8px;
+            border-radius: 12px;
+            text-decoration: none;
+            color: #fff;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.08);
+            min-height: 60px;
+            cursor: pointer;
+        }
+
+            .bottom-bar .action-btn img {
+                width: 29px;
+                height: 29px;
+                display: block;
+                filter: drop-shadow(0 2px 2px rgba(0,0,0,0.25));
+            }
+
+            .bottom-bar .action-btn .label {
+                font-size: 8.5px;
+                font-weight: 600;
+                color: #fff;
+                text-align: center;
+            }
 
     /* small screens */
     @@media (max-width: 640px) {
         .styled-form {
             grid-template-columns: 1fr;
         }
+    }
+
+    /* Mobile responsive */
+    @@media (max-width: 420px) {
+        .bottom-bar {
+            height: 96px;
+        }
+
+            .bottom-bar .actions-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 8px;
+            }
+
+            .bottom-bar .action-btn {
+                min-height: 51px;
+            }
+
+                .bottom-bar .action-btn img {
+                    width: 25px;
+                    height: 25px;
+                }
+
+                .bottom-bar .action-btn .label {
+                    font-size: 7.5px;
+                }
     }
 </style>
 
@@ -215,7 +299,7 @@
                 <img src="@Url.Content("~/logo.png")" alt="ODPO logo" style="height:48px;width:auto;display:block;" />
             </a>
             <div>
-                <h1 style="margin:0;font-size:18px;color:var(--brand);">Detail vzorku</h1>
+                <h1 style="margin:0;font-size:18px;color:var(--brand);">Přidat nový záznam</h1>
                 <div class="muted" style="font-size:13px;">ODPO s.r.o. – Katalog vzorků plastů</div>
             </div>
         </div>
@@ -226,7 +310,7 @@
     <div class="center-form-container">
         <h2>Přidat nový záznam</h2>
 
-        <form asp-action="Create" method="post" enctype="multipart/form-data" class="styled-form" novalidate>
+        <form id="createForm" asp-action="Create" method="post" enctype="multipart/form-data" class="styled-form" novalidate>
             @Html.AntiForgeryToken()
 
             <div asp-validation-summary="All" class="validation-summary"></div>
@@ -338,6 +422,21 @@
         </form>
     </div>
 </main>
+
+<!-- Bottom fixed action bar (2 tlačítka) -->
+<nav class="bottom-bar" role="navigation" aria-label="Rychlé akce">
+    <div class="actions-grid" role="menu" aria-label="Rychlé akce">
+        <a role="menuitem" href="@Url.Action("Index", "Photos")" class="action-btn" title="Katalog">
+            <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 24 24' fill='white'><path d='M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z' fill='%23ffffff'/></svg>" alt="Katalog" />
+            <div class="label">Katalog</div>
+        </a>
+
+        <a role="menuitem" href="#" class="action-btn" title="Uložit" onclick="document.getElementById('createForm').submit(); return false;">
+            <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 24 24' fill='white'><path d='M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z' fill='%23ffffff'/></svg>" alt="Uložit" />
+            <div class="label">Uložit</div>
+        </a>
+    </div>
+</nav>
 
 @section Scripts {
     <script>

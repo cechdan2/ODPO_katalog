@@ -2,19 +2,303 @@
     ViewData["Title"] = "DB Backup";
 }
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<h2>Database backup / restore</h2>
+<meta name="theme-color" content="#16a34a">
+<link rel="manifest" href="/manifest.json">
+<!-- Android / Chrome -->
+<meta name="mobile-web-app-capable" content="yes">
+<!-- iOS -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="/icons/icon-192.png">
 
-<div>
-    <button id="downloadBtn">Stáhnout zálohu</button>
-</div>
+<style>
+    :root {
+        --brand: #16a34a;
+        --brand-dark: #166534;
+        --border: #dbe7d9;
+        --bg: #f4fbf4;
+        --text: #0b1f0b;
+        --white: #fff;
+        --pad: 12px;
+        --gap: 8px;
+        --radius: 12px;
+        --bar-height: 108px;
+    }
 
-<div style="margin-top:20px">
-    <input type="file" id="restoreFile" />
-    <button id="restoreBtn">Nahrát a obnovit</button>
-</div>
+    * {
+        box-sizing: border-box;
+    }
+
+    body {
+        margin: 0;
+        padding: 0 0 108px 0;
+        font-family: system-ui,-apple-system,Segoe UI,Roboto,Ubuntu;
+        color: var(--text);
+        background: var(--bg);
+    }
+
+    header {
+        position: sticky;
+        top: 0;
+        z-index: 5;
+        background: #fff;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .container {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 14px var(--pad);
+    }
+
+    h1 {
+        margin: 0;
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--brand-dark);
+    }
+
+    .center-form-container {
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 2rem 2.2rem;
+        margin: 40px auto 0 auto;
+        max-width: 720px;
+        box-shadow: 0 2px 8px rgba(0,0,0,.08);
+    }
+
+        .center-form-container h2 {
+            margin-bottom: 1.8rem;
+            text-align: center;
+            font-size: 1.6rem;
+            color: var(--brand-dark);
+        }
+
+    .styled-form {
+        width: 100%;
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 18px;
+        align-items: start;
+    }
+
+    .full {
+        grid-column: 1 / -1;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        margin-bottom: 0.5rem;
+    }
+
+        .form-group label {
+            font-weight: 500;
+            margin-bottom: 0.4rem;
+            color: #333;
+        }
+
+    .form-control-file {
+        margin-top: 0.5rem;
+        font-size: 1rem;
+        padding: 0.5rem;
+        border: 1px solid #cfd8dc;
+        border-radius: 7px;
+    }
+
+    .btn-primary {
+        background: var(--brand);
+        color: #fff;
+        padding: 0.7rem 1.6rem;
+        border: none;
+        border-radius: 8px;
+        font-size: 1.1rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background 0.2s ease;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+    }
+
+        .btn-primary:hover {
+            background: var(--brand-dark);
+        }
+
+    .btn {
+        padding: 0.7rem 1.6rem;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+        background: var(--white);
+        color: var(--brand-dark);
+        cursor: pointer;
+        font-weight: 500;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 1.1rem;
+    }
+
+        .btn:hover {
+            background: #e6f9e9;
+        }
+
+    .field-validation {
+        color: #b91c1c;
+        font-size: 0.95rem;
+        margin-top: 6px;
+    }
+
+    .success-message {
+        background: #d1fae5;
+        border: 1px solid #10b981;
+        color: #065f46;
+        padding: 12px;
+        border-radius: 8px;
+        margin-top: 12px;
+    }
+
+    /* Bottom action bar */
+    .bottom-bar {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 108px;
+        background: linear-gradient(180deg, var(--brand), var(--brand-dark));
+        border-top: 1px solid rgba(0,0,0,0.06);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1500;
+        padding: 10px;
+        gap: 12px;
+        box-shadow: 0 -6px 20px rgba(0,0,0,0.12);
+    }
+
+        .bottom-bar .actions-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            width: 100%;
+            max-width: 400px;
+            padding: 6px;
+        }
+
+        .bottom-bar .action-btn {
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            padding: 8px;
+            border-radius: 12px;
+            text-decoration: none;
+            color: #fff;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.08);
+            min-height: 60px;
+            cursor: pointer;
+        }
+
+            .bottom-bar .action-btn img {
+                width: 29px;
+                height: 29px;
+                display: block;
+                filter: drop-shadow(0 2px 2px rgba(0,0,0,0.25));
+            }
+
+            .bottom-bar .action-btn .label {
+                font-size: 8.5px;
+                font-weight: 600;
+                color: #fff;
+                text-align: center;
+            }
+
+    /* Mobile responsive */
+    @@media (max-width: 420px) {
+        .bottom-bar {
+            height: 96px;
+        }
+
+            .bottom-bar .actions-grid {
+                gap: 8px;
+            }
+
+            .bottom-bar .action-btn {
+                min-height: 51px;
+            }
+
+                .bottom-bar .action-btn img {
+                    width: 25px;
+                    height: 25px;
+                }
+
+                .bottom-bar .action-btn .label {
+                    font-size: 7.5px;
+                }
+    }
+</style>
+
+<header>
+    <div class="container" style="display:flex;align-items:center;gap:12px">
+        <div class="page-header" style="display:flex;align-items:center;gap:12px">
+            <a asp-controller="Photos" asp-action="Index" style="display:inline-block;">
+                <img src="@Url.Content("~/logo.png")" alt="ODPO logo" style="height:48px;width:auto;display:block;" />
+            </a>
+            <div>
+                <h1 style="margin:0;font-size:18px;color:var(--brand);">Záloha databáze</h1>
+                <div style="font-size:13px;color:#666;">ODPO s.r.o. – Katalog vzorků plastů</div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<main class="container">
+    <div class="center-form-container">
+        <h2>Záloha a obnova databáze</h2>
+
+        <div class="styled-form">
+            <!-- Stáhnout zálohu -->
+            <div class="form-group full">
+                <label>Stáhnout zálohu databáze:</label>
+                <button id="downloadBtn" class="btn-primary" style="width:100%;">📥 Stáhnout zálohu</button>
+            </div>
+
+            <!-- Oddělovač -->
+            <div class="full" style="border-top:2px solid var(--border);margin:20px 0;"></div>
+
+            <!-- Nahrát a obnovit -->
+            <div class="form-group full">
+                <label for="restoreFile">Nahrát a obnovit databázi ze zálohy:</label>
+                <input type="file" id="restoreFile" class="form-control-file" accept=".db,.sqlite,.sqlite3" />
+            </div>
+
+            <div class="form-group full" style="display:flex;gap:12px;justify-content:flex-end;margin-top:10px;">
+                <a href="@Url.Action("Index", "Photos")" class="btn">Zpět</a>
+                <button id="restoreBtn" class="btn-primary">📤 Nahrát a obnovit</button>
+            </div>
+        </div>
+
+        <div id="statusMessage" style="display:none;"></div>
+    </div>
+</main>
+
+<!-- Bottom fixed action bar -->
+<nav class="bottom-bar" role="navigation" aria-label="Rychlé akce">
+    <div class="actions-grid" role="menu" aria-label="Rychlé akce">
+        <a role="menuitem" href="@Url.Action("Index", "Photos")" class="action-btn" title="Katalog">
+            <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 24 24' fill='white'><path d='M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z' fill='%23ffffff'/></svg>" alt="Katalog" />
+            <div class="label">Katalog</div>
+        </a>
+
+        <a role="menuitem" href="#" class="action-btn" title="Stáhnout zálohu" onclick="document.getElementById('downloadBtn').click(); return false;">
+            <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 24 24' fill='white'><path d='M12 2L4 6v6c0 5 3.9 9.4 8 10 4.1-.6 8-5 8-10V6l-8-4zM11 14v-4h2v4h3l-4 4-4-4h3z' fill='%23ffffff'/></svg>" alt="Záloha" />
+            <div class="label">Záloha</div>
+        </a>
+    </div>
+</nav>
 
 <script src="~/js/db-backup.js"></script>
 <script>
     document.getElementById('downloadBtn').addEventListener('click', () => downloadBackup());
     document.getElementById('restoreBtn').addEventListener('click', () => uploadRestore(document.getElementById('restoreFile')));
-</script>x;
+</script>

@@ -107,6 +107,7 @@
         border-radius: 10px;
         border: 1px solid var(--border);
         margin-top: 10px;
+        display: block;
     }
 
     .btn-row {
@@ -124,6 +125,8 @@
         color: var(--brand-dark);
         cursor: pointer;
         font-weight: 500;
+        text-decoration: none;
+        display: inline-block;
     }
 
     .btn-danger {
@@ -154,7 +157,7 @@
                 <img src="@Url.Content("~/logo.png")" alt="ODPO logo" style="height:48px;width:auto;display:block;" />
             </a>
             <div>
-                <h1 style="margin:0;font-size:18px;color:var(--brand);">Detail vzorku</h1>
+                <h1 style="margin:0;font-size:18px;color:var(--brand);">Smazat vzorek</h1>
                 <div class="muted" style="font-size:13px;">ODPO s.r.o. – Katalog vzorků plastů</div>
             </div>
         </div>
@@ -175,14 +178,20 @@
             <dd>@Model.Supplier</dd>
             <dt>Poznámky</dt>
             <dd>@Model.Notes</dd>
-            @if (!string.IsNullOrEmpty(Model.PhotoPath))
+            @{
+                var imageSrc = !string.IsNullOrWhiteSpace(Model.ImagePath)
+                ? Url.Content(Model.ImagePath)
+                : (!string.IsNullOrWhiteSpace(Model.PhotoPath) ? Url.Content(Model.PhotoPath) : null);
+            }
+            @if (!string.IsNullOrEmpty(imageSrc))
             {
                 <dt>Obrázek</dt>
-                <dd><img src="@Model.PhotoPath" class="thumb" alt="Obrázek vzorku" /></dd>
+                <dd><img src="@imageSrc" class="thumb" alt="Obrázek vzorku" /></dd>
             }
         </dl>
         <form asp-action="Delete" method="post">
             <input type="hidden" asp-for="Id" />
+            @Html.AntiForgeryToken()
             <div class="btn-row">
                 <button type="submit" class="btn btn-danger">Smazat</button>
                 <a href="@Url.Action("Index")" class="btn">Zpět</a>

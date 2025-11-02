@@ -27,6 +27,10 @@
     var additionalPhotos = Model.GetAdditionalPhotosList();
 }
 <style>
+    * {
+        box-sizing: border-box;
+    }
+
     :root {
         --brand: #16a34a;
         --border: #dbe7d9;
@@ -34,14 +38,22 @@
         --text: #0b1f0b;
         --white: #fff;
         --radius: 12px;
+        --bar-height: 108px;
+    }
+
+    body {
+        margin: 0;
+        padding: 0 0 108px 0;
+        overflow-x: hidden;
     }
 
     .detail-page {
         max-width: 1100px;
-        margin: 30px auto;
+        margin: 0 auto;
         padding: 16px;
         font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
         color: var(--text);
+        width: 100%;
     }
 
     .card {
@@ -50,12 +62,14 @@
         border-radius: var(--radius);
         padding: 20px;
         box-shadow: 0 2px 10px rgba(0,0,0,.05);
+        width: 100%;
     }
 
     .layout {
         display: grid;
-        grid-template-columns: 320px 1fr;
+        grid-template-columns: 1fr;
         gap: 20px;
+        width: 100%;
     }
 
     .media {
@@ -63,11 +77,14 @@
         flex-direction: column;
         align-items: center;
         gap: 12px;
+        width: 100%;
     }
 
         .media img.detail-img {
-            width: 280px;
-            height: 280px;
+            width: 100%;
+            max-width: 280px;
+            height: auto;
+            aspect-ratio: 1;
             object-fit: cover;
             border-radius: 10px;
             border: 1.5px solid var(--border);
@@ -90,6 +107,7 @@
             font-weight: 700;
             color: var(--brand);
             margin-bottom: 6px;
+            word-wrap: break-word;
         }
 
     .qr {
@@ -97,6 +115,7 @@
         flex-direction: column;
         align-items: center;
         gap: 8px;
+        width: 100%;
     }
 
         .qr img {
@@ -110,20 +129,22 @@
 
     .fields {
         display: grid;
-        grid-template-columns: repeat(2, minmax(0,1fr));
-        gap: 12px 20px;
+        grid-template-columns: 1fr;
+        gap: 12px;
+        width: 100%;
     }
 
     .field {
         display: flex;
         flex-direction: column;
         gap: 6px;
+        width: 100%;
     }
 
     .label {
         font-weight: 700;
         color: #333;
-        width: 100%;
+        font-size: 0.9rem;
     }
 
     .value {
@@ -135,27 +156,30 @@
         color: #222;
         white-space: pre-wrap;
         word-break: break-word;
+        width: 100%;
+        overflow-wrap: break-word;
     }
 
     .full {
-        grid-column: 1 / -1;
+        grid-column: 1;
     }
 
     .muted {
         color: #666;
-        font-size: 0.95rem;
+        font-size: 0.85rem;
         margin-top: 10px;
     }
 
     .actions {
         margin-top: 14px;
         display: flex;
+        flex-direction: column;
         gap: 10px;
-        justify-content: flex-end;
+        width: 100%;
     }
 
     .btn {
-        padding: 8px 14px;
+        padding: 12px 14px;
         border-radius: 8px;
         border: 1px solid var(--border);
         background: var(--white);
@@ -163,6 +187,9 @@
         text-decoration: none;
         font-weight: 500;
         cursor: pointer;
+        text-align: center;
+        display: block;
+        width: 100%;
     }
 
         .btn:hover {
@@ -170,17 +197,24 @@
         }
 
     .btn-primary {
-        padding: 8px 14px;
+        padding: 12px 14px;
         border-radius: 8px;
         border: none;
         background: var(--brand);
         color: white;
         font-weight: 500;
         cursor: pointer;
+        width: 100%;
+        font-size: 1rem;
     }
 
         .btn-primary:hover {
             background: #15803d;
+        }
+
+        .btn-primary:disabled {
+            background: #ccc;
+            cursor: not-allowed;
         }
 
     /* *** GALERIE DODATEČNÝCH FOTEK *** */
@@ -188,18 +222,20 @@
         margin-top: 24px;
         padding-top: 20px;
         border-top: 2px solid var(--border);
+        width: 100%;
     }
 
         .additional-photos-section h3 {
             margin: 0 0 16px 0;
             color: var(--brand);
-            font-size: 1.2rem;
+            font-size: 1.1rem;
         }
 
     .photo-gallery {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-        gap: 12px;
+        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+        gap: 8px;
+        width: 100%;
     }
 
     .gallery-item {
@@ -225,14 +261,14 @@
 
         .gallery-item .delete-btn {
             position: absolute;
-            top: 6px;
-            right: 6px;
+            top: 4px;
+            right: 4px;
             background: rgba(185, 28, 28, 0.9);
             color: white;
             border: none;
             border-radius: 4px;
-            padding: 4px 8px;
-            font-size: 0.75rem;
+            padding: 4px 6px;
+            font-size: 0.7rem;
             cursor: pointer;
             opacity: 0;
             transition: opacity 0.2s;
@@ -253,6 +289,7 @@
         background: #f9fef9;
         border: 1px solid var(--border);
         border-radius: 8px;
+        width: 100%;
     }
 
         .upload-form h4 {
@@ -263,7 +300,9 @@
 
         .upload-form input[type="file"] {
             margin-bottom: 10px;
-            font-size: 0.95rem;
+            font-size: 0.9rem;
+            width: 100%;
+            max-width: 100%;
         }
 
         .upload-form .preview-container {
@@ -271,17 +310,18 @@
             flex-wrap: wrap;
             gap: 8px;
             margin: 10px 0;
+            width: 100%;
         }
 
             .upload-form .preview-container img {
-                width: 80px;
-                height: 80px;
+                width: 70px;
+                height: 70px;
                 object-fit: cover;
                 border-radius: 6px;
                 border: 1px solid var(--border);
             }
 
-    /* Lightbox / fullscreen viewer for clicked image */
+    /* Lightbox */
     .image-lightbox {
         position: fixed;
         inset: 0;
@@ -339,45 +379,135 @@
         }
     }
 
-    @@media (max-width:900px) {
-        .layout {
-            grid-template-columns: 1fr;
+    /* Bottom action bar - MENŠÍ VERZE (2/5 z původních 180px = 108px) */
+    .bottom-bar {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 108px;
+        background: linear-gradient(180deg, var(--brand), #166534);
+        border-top: 1px solid rgba(0,0,0,0.06);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1500;
+        padding: 10px;
+        gap: 12px;
+        box-shadow: 0 -6px 20px rgba(0,0,0,0.12);
+    }
+
+        .bottom-bar .actions-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            width: 100%;
+            max-width: 600px;
+            padding: 6px;
         }
 
-        .media img.detail-img {
-            width: 200px;
-            height: 200px;
+        .bottom-bar .action-btn {
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            padding: 8px;
+            border-radius: 12px;
+            text-decoration: none;
+            color: #fff;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.08);
+            min-height: 60px;
+        }
+
+            .bottom-bar .action-btn img {
+                width: 29px;
+                height: 29px;
+                display: block;
+                filter: drop-shadow(0 2px 2px rgba(0,0,0,0.25));
+            }
+
+            .bottom-bar .action-btn .label {
+                font-size: 8.5px;
+                font-weight: 600;
+                color: #fff;
+                text-align: center;
+            }
+
+    /* Desktop layout */
+    @@media (min-width: 768px) {
+        .layout {
+            grid-template-columns: 320px 1fr;
         }
 
         .fields {
-            grid-template-columns: 1fr;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px 20px;
         }
 
+        .full {
+            grid-column: 1 / -1;
+        }
+
+        .actions {
+            flex-direction: row;
+            justify-content: flex-end;
+        }
+
+        .btn {
+            width: auto;
+        }
+
+        .photo-gallery {
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 12px;
+        }
+    }
+
+    /* Tablet */
+    @@media (min-width: 600px) and (max-width: 767px) {
         .photo-gallery {
             grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
         }
     }
 
-    @@media (max-width:600px) {
-        .photo-gallery {
-            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-            gap: 8px;
+    /* Mobile responsive */
+    @@media (max-width: 420px) {
+        .bottom-bar {
+            height: 96px;
         }
+
+            .bottom-bar .actions-grid {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 8px;
+            }
+
+            .bottom-bar .action-btn {
+                min-height: 51px;
+            }
+
+                .bottom-bar .action-btn img {
+                    width: 25px;
+                    height: 25px;
+                }
+
+                .bottom-bar .action-btn .label {
+                    font-size: 7.5px;
+                }
     }
 </style>
 
 <main class="detail-page">
 
     <header style="margin-bottom: 20px;">
-        <div class="container" style="display:flex;align-items:center;gap:12px">
-            <div class="page-header" style="display:flex;align-items:center;gap:12px">
-                <a asp-controller="Photos" asp-action="Index" style="display:inline-block;">
-                    <img src="@Url.Content("~/logo.png")" alt="ODPO logo" style="height:48px;width:auto;display:block;" />
-                </a>
-                <div>
-                    <h1 style="margin:0;font-size:18px;color:var(--brand);">Detail vzorku</h1>
-                    <div class="muted" style="font-size:13px;">ODPO s.r.o. – Katalog vzorků plastů</div>
-                </div>
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+            <a asp-controller="Photos" asp-action="Index" style="display:inline-block;">
+                <img src="@Url.Content("~/logo.png")" alt="ODPO logo" style="height:40px;width:auto;display:block;" />
+            </a>
+            <div>
+                <h1 style="margin:0;font-size:16px;color:var(--brand);">Detail vzorku</h1>
+                <div class="muted" style="font-size:12px;">ODPO s.r.o. – Katalog vzorků plastů</div>
             </div>
         </div>
     </header>
@@ -413,7 +543,7 @@
         </aside>
 
         <section>
-            <h2 style="margin-top:0;margin-bottom:12px;">Informace o vzorku</h2>
+            <h2 style="margin-top:0;margin-bottom:12px;font-size:1.2rem;">Informace o vzorku</h2>
 
             <div class="fields" aria-live="polite">
                 <div class="field"><div class="label">Pozice</div><div class="value">@Safe(Model.Position?.ToString())</div></div>
@@ -480,7 +610,37 @@
     </div>
 </main>
 
-<!-- Lightbox element placed at end of body/main to display clicked image -->
+<!-- Bottom fixed action bar (3 tlačítka) -->
+<nav class="bottom-bar" role="navigation" aria-label="Rychlé akce">
+    <div class="actions-grid" role="menu" aria-label="Rychlé akce">
+        <a role="menuitem" href="@Url.Action("Index", "Photos")" class="action-btn" title="Katalog">
+            <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 24 24' fill='white'><path d='M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z' fill='%23ffffff'/></svg>" alt="Katalog" />
+            <div class="label">Katalog</div>
+        </a>
+
+        @if (User.Identity?.IsAuthenticated == true)
+        {
+            <a role="menuitem" href="@Url.Action("Edit", "Photos", new { id = Model.Id })" class="action-btn" title="Upravit">
+                <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 24 24' fill='white'><path d='M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z' fill='%23ffffff'/></svg>" alt="Upravit" />
+                <div class="label">Upravit</div>
+            </a>
+
+            <a role="menuitem" href="@Url.Action("Delete", "Photos", new { id = Model.Id })" class="action-btn" title="Smazat" onclick="return confirm('Opravdu smazat tento vzorek?');">
+                <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 24 24' fill='white'><path d='M6 19a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z' fill='%23ffffff'/></svg>" alt="Smazat" />
+                <div class="label">Smazat</div>
+            </a>
+        }
+        else
+        {
+            <a role="menuitem" href="@publicUrl" target="_blank" class="action-btn" title="Sdílet">
+                <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 24 24' fill='white'><path d='M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z' fill='%23ffffff'/></svg>" alt="Sdílet" />
+                <div class="label">Sdílet</div>
+            </a>
+        }
+    </div>
+</nav>
+
+<!-- Lightbox -->
 <div id="imageLightbox" class="image-lightbox" role="dialog" aria-modal="true" aria-hidden="true">
     <div class="inner" role="document">
         <button class="close-btn" id="lightboxClose" aria-label="Zavřít (Esc)">✕</button>
@@ -514,7 +674,6 @@
             document.body.style.overflow = '';
         }
 
-        // Přidat event listener na všechny zoomovatelné obrázky
         zoomableImages.forEach(img => {
             img.addEventListener('click', function () {
                 const full = img.getAttribute('data-full') || img.src;

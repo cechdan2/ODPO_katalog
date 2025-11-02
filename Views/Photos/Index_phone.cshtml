@@ -32,7 +32,7 @@
         --pad: 16px;
         --gap: 12px;
         --radius: 16px;
-        --bar-height: 152px; /* zvýšená výška (2x) */
+        --bar-height: 250px;
     }
 
     * {
@@ -48,7 +48,7 @@
         font-family: system-ui,-apple-system,Segoe UI,Roboto,Ubuntu;
         color: var(--text);
         background: var(--bg);
-        padding-bottom: calc(var(--bar-height)); /* reserve space for bottom bar */
+        padding-bottom: 250px;
     }
 
     .container {
@@ -57,35 +57,56 @@
         padding: var(--pad);
     }
 
-    /* Header - only logo centered */
+    /* Header - logo centered and bigger */
+    header {
+        background: #fff;
+        border-bottom: 2px solid var(--border);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+
     .header-inner {
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: 20px;
-        padding: 16px 0;
+        padding: 24px 0;
+        max-width: 1100px;
+        margin: 0 auto;
     }
 
     .brand {
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: 8px;
+        gap: 12px;
         text-decoration: none;
         color: inherit;
     }
 
         .brand img {
-            height: 60px;
+            height: 120px;
             width: auto;
+            display: block;
         }
 
         .brand h1 {
             margin: 0;
-            font-size: 20px;
+            font-size: 24px;
             font-weight: 700;
             color: var(--brand-dark);
+            text-align: center;
         }
+
+    .visually-hidden {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border-width: 0;
+    }
 
     /* Header actions (kept minimal here) */
     .action-btn, .action-pill {
@@ -211,31 +232,31 @@
         margin-top: 12px;
     }
 
-    /* Bottom action bar */
+    /* Bottom action bar - VĚTŠÍ VERZE */
     .bottom-bar {
         position: fixed;
         left: 0;
         right: 0;
         bottom: 0;
-        height: var(--bar-height);
+        height: 250px;
         background: linear-gradient(180deg, var(--brand), var(--brand-dark));
         border-top: 1px solid rgba(0,0,0,0.06);
         display: flex;
         align-items: center;
         justify-content: center;
         z-index: 1500;
-        padding: 14px;
-        gap: 18px;
+        padding: 18px;
+        gap: 20px;
         box-shadow: 0 -6px 20px rgba(0,0,0,0.12);
     }
 
         .bottom-bar .actions-grid {
             display: grid;
             grid-template-columns: repeat(5, 1fr);
-            gap: 12px;
+            gap: 16px;
             width: 100%;
             max-width: 900px;
-            padding: 8px;
+            padding: 10px;
         }
 
         .bottom-bar .action-btn {
@@ -243,25 +264,25 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 6px;
-            padding: 10px;
-            border-radius: 12px;
+            gap: 8px;
+            padding: 14px;
+            border-radius: 14px;
             text-decoration: none;
             color: #fff;
             background: rgba(255,255,255,0.05);
             border: 1px solid rgba(255,255,255,0.08);
-            min-height: 72px;
+            min-height: 100px;
         }
 
             .bottom-bar .action-btn img {
-                width: 36px;
-                height: 36px;
+                width: 48px;
+                height: 48px;
                 display: block;
                 filter: drop-shadow(0 2px 2px rgba(0,0,0,0.25));
             }
 
             .bottom-bar .action-btn .label {
-                font-size: 12px;
+                font-size: 14px;
                 font-weight: 600;
                 color: #fff;
                 text-align: center;
@@ -275,20 +296,45 @@
     .footer {
         text-align: center;
         font-size: 16px;
-        padding: 20px 0 180px;
+        padding: 20px 0 200px;
         color: #3b6b3b;
     }
 
     /* Responsive tweaks */
     @@media (max-width: 420px) {
-        .bottom-bar .actions-grid {
-            grid-template-columns: repeat(4, 1fr);
-            gap: 8px;
+        .brand img {
+            height: 80px;
         }
 
-        .bottom-bar .action-btn {
-            min-height: 64px;
+        .brand h1 {
+            font-size: 18px;
         }
+
+        .header-inner {
+            padding: 16px 0;
+        }
+
+        .bottom-bar {
+            height: 160px;
+        }
+
+            .bottom-bar .actions-grid {
+                grid-template-columns: repeat(4, 1fr);
+                gap: 10px;
+            }
+
+            .bottom-bar .action-btn {
+                min-height: 85px;
+            }
+
+                .bottom-bar .action-btn img {
+                    width: 42px;
+                    height: 42px;
+                }
+
+                .bottom-bar .action-btn .label {
+                    font-size: 12px;
+                }
 
         .thumb {
             width: 320px;
@@ -333,7 +379,7 @@
     }
 </style>
 
-<header class="container">
+<header>
     <div class="header-inner">
         <a class="brand" asp-controller="Photos" asp-action="Index" title="Katalog vzorků">
             <img src="/logo.png" alt="ODPO logo" />
