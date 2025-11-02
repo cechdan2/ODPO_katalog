@@ -4,6 +4,14 @@
     ViewData["Title"] = "Přidat nový záznam";
 }
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="theme-color" content="#16a34a">
+<link rel="manifest" href="/manifest.json">
+<!-- Android / Chrome -->
+<meta name="mobile-web-app-capable" content="yes">
+<!-- iOS -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="/icons/icon-192.png">
 <style>
     :root {
         --brand: #16a34a;
@@ -177,6 +185,21 @@
         margin-top: 6px;
     }
 
+    .additional-preview {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 10px;
+    }
+
+    .additional-preview img {
+        width: 80px;
+        height: 80px;
+        object-fit: cover;
+        border-radius: 6px;
+        border: 1px solid var(--border);
+    }
+
     /* small screens */
     @@media (max-width: 640px) {
         .styled-form {
@@ -196,7 +219,7 @@
                 <div class="muted" style="font-size:13px;">ODPO s.r.o. – Katalog vzorků plastů</div>
             </div>
         </div>
-        </div>
+    </div>
 </header>
 
 <main class="container">
@@ -288,16 +311,23 @@
             </div>
 
             <div class="form-group">
-                <label for="PhotoFile">Fotka (soubor)</label>
+                <label for="PhotoFile">Hlavní fotka (soubor)</label>
                 <input type="file" name="PhotoFile" id="PhotoFile" class="form-control-file" accept="image/*" />
                 <span class="field-validation" id="photoError"></span>
             </div>
 
             <div class="form-group">
-                <label for="PhotoPreview">Náhled</label>
+                <label for="PhotoPreview">Náhled hlavní fotky</label>
                 <div>
                     <img id="PhotoPreview" src="" class="preview-img" alt="Náhled fotky" style="display:none;" />
                 </div>
+            </div>
+
+            <div class="form-group full">
+                <label for="AdditionalPhotoFiles">Dodatečné fotky (vyberte více najednou)</label>
+                <input type="file" name="AdditionalPhotoFiles" id="AdditionalPhotoFiles" class="form-control-file" accept="image/*" multiple />
+                <span class="field-validation" id="additionalPhotosError"></span>
+                <div id="AdditionalPreview" class="additional-preview"></div>
             </div>
 
             <!-- actions -->
@@ -311,7 +341,7 @@
 
 @section Scripts {
     <script>
-        // image preview
+        // Hlavní fotka - náhled
         document.getElementById('PhotoFile')?.addEventListener('change', function (e) {
             const input = e.target;
             const preview = document.getElementById('PhotoPreview');
@@ -334,6 +364,33 @@
             } else {
                 preview.style.display = 'none';
                 preview.src = '';
+            }
+        });
+
+        // Dodatečné fotky - náhled
+        document.getElementById('AdditionalPhotoFiles')?.addEventListener('change', function (e) {
+            const input = e.target;
+            const previewContainer = document.getElementById('AdditionalPreview');
+            const err = document.getElementById('additionalPhotosError');
+            err.textContent = '';
+            previewContainer.innerHTML = '';
+
+            if (input.files && input.files.length > 0) {
+                Array.from(input.files).forEach((file, index) => {
+                    if (!file.type.startsWith('image/')) {
+                        err.textContent = `Soubor ${file.name} není obrázek.`;
+                        return;
+                    }
+
+                    const reader = new FileReader();
+                    reader.onload = function (ev) {
+                        const img = document.createElement('img');
+                        img.src = ev.target.result;
+                        img.alt = `Náhled dodatečné fotky ${index + 1}`;
+                        previewContainer.appendChild(img);
+                    };
+                    reader.readAsDataURL(file);
+                });
             }
         });
     </script>

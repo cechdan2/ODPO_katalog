@@ -59,10 +59,28 @@ namespace PhotoApp.Models
         // Nové pole, používané v controlleru (relativní cesta v wwwroot)
         public string? ImagePath { get; set; }
 
+        // *** NOVÉ POLE PRO VÍCE FOTEK ***
+        // Obsahuje více cest oddìlených støedníkem (napø. "/uploads/foto1.jpg;/uploads/foto2.jpg")
+        public string? AdditionalPhotos { get; set; }
+
         // pole pro datum vytvoøení
         public DateTime CreatedAt { get; set; }
 
         // pole pro datum aktualizace (volitelnì)
         public DateTime UpdatedAt { get; set; }
+
+        // *** HELPER METODA PRO ZÍSKÁNÍ SEZNAMU DODATEÈNÝCH FOTEK ***
+        // Neukládá se do DB, slouží pouze pro práci v kódu
+        public List<string> GetAdditionalPhotosList()
+        {
+            if (string.IsNullOrWhiteSpace(AdditionalPhotos))
+                return new List<string>();
+
+            return AdditionalPhotos
+                .Split(';', StringSplitOptions.RemoveEmptyEntries)
+                .Select(p => p.Trim())
+                .Where(p => !string.IsNullOrWhiteSpace(p))
+                .ToList();
+        }
     }
 }

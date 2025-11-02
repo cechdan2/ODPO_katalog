@@ -1,0 +1,100 @@
+﻿/* ===== MOBILE OPTIMALIZATION FOR EDIT VIEW ===== */
+
+@media (max-width: 1000px) {
+    body {
+        font-size: 16px; /* iOS prefers 16px minimum to avoid zoom */
+        line-height: 1.45;
+    }
+
+    header {
+        padding: 10px 0;
+    }
+
+    .container {
+        padding: 10px 16px;
+    }
+
+    .center-form-container {
+        padding: 1.4rem 1.2rem;
+        margin-top: 20px;
+        width: 100%;
+        max-width: 100%;
+    }
+
+        .center-form-container h2 {
+            font-size: 1.35rem;
+            margin-bottom: 1.3rem;
+        }
+
+    .styled-form {
+        grid-template-columns: 1fr;
+        gap: 14px;
+    }
+
+    .form-group {
+        margin-bottom: 1rem;
+    }
+
+    .form-control,
+    textarea.form-control {
+        font-size: 16px; /* Prevents zoom on iOS */
+        padding: 0.7rem 0.85rem;
+        border-radius: 10px;
+    }
+
+    textarea.form-control {
+        min-height: 90px;
+    }
+
+    label {
+        font-size: 0.95rem;
+    }
+
+    .form-actions {
+        flex-direction: column-reverse;
+        gap: 10px;
+    }
+
+    .btn-primary,
+    .btn {
+        width: 100%;
+        text-align: center;
+        font-size: 1.05rem;
+        padding: 0.85rem;
+    }
+
+    .preview-img,
+    .no-image-placeholder {
+        width: 160px;
+        height: 160px;
+        margin-top: 6px;
+    }
+}
+
+/* ==== VERY SMALL DEVICES (typical 360px – 420px phones) ==== */
+@media (max-width: 480px) {
+    .center-form-container {
+        padding: 1.2rem 1rem;
+        margin-top: 10px;
+    }
+
+    .styled-form {
+        gap: 12px;
+    }
+
+    .form-control,
+    textarea.form-control {
+        font-size: 16px; /* Keep at 16px for iOS */
+        padding: 0.65rem 0.8rem;
+    }
+
+    .preview-img,
+    .no-image-placeholder {
+        width: 140px;
+        height: 140px;
+    }
+
+    h1, .center-form-container h2 {
+        font-size: 1.25rem;
+    }
+}

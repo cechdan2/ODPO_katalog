@@ -1,23 +1,30 @@
 @using Microsoft.AspNetCore.Html
 @model PhotoApp.Models.PhotoRecord
 
-
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="theme-color" content="#16a34a">
+<link rel="manifest" href="/manifest.json">
+<!-- Android / Chrome -->
+<meta name="mobile-web-app-capable" content="yes">
+<!-- iOS -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="/icons/icon-192.png">
 @{
     ViewData["Title"] = "Detail vzorku";
 
-    // bezpečné získání publicUrl z ViewBag pokud controller nastavil, jinak sestavit zde
     var publicUrl = ViewBag.PublicUrl as string ?? Url.Action("DetailsAnonymous", "Home", new { id = Model.Id }, Context?.Request?.Scheme ?? "https");
     var qrApi = !string.IsNullOrWhiteSpace(publicUrl)
         ? "https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=" + System.Uri.EscapeDataString(publicUrl)
         : null;
 
-    // použijeme ImagePath pokud existuje, jinak PhotoPath (kompatibilita)
     var imageSrc = !string.IsNullOrWhiteSpace(Model.ImagePath) ? Url.Content(Model.ImagePath) : (string.IsNullOrWhiteSpace(Model.PhotoPath) ? null : Url.Content(Model.PhotoPath));
 
-    // Vrací bezpečný IHtmlContent — to zajistí správné vykreslení diakritiky bez dvojitého kódování
     IHtmlContent Safe(string s) => string.IsNullOrWhiteSpace(s) ? new HtmlString("-") : new HtmlString(Html.Encode(s));
     string SafeDate(DateTime dt) => (dt == DateTime.MinValue) ? "-" : dt.ToLocalTime().ToString("g");
+
+    // Získat seznam dodatečných fotek
+    var additionalPhotos = Model.GetAdditionalPhotosList();
 }
 <style>
     :root {
@@ -65,7 +72,7 @@
             border-radius: 10px;
             border: 1.5px solid var(--border);
             background: #f7fef7;
-            cursor: zoom-in; /* show that image is clickable */
+            cursor: zoom-in;
             transition: transform .12s ease;
         }
 
@@ -154,25 +161,125 @@
         background: var(--white);
         color: var(--brand);
         text-decoration: none;
+        font-weight: 500;
+        cursor: pointer;
     }
 
-    @@media (max-width:900px) {
-        .layout
+        .btn:hover {
+            background: #e6f9e9;
+        }
 
-    {
-        grid-template-columns: 1fr;
+    .btn-primary {
+        padding: 8px 14px;
+        border-radius: 8px;
+        border: none;
+        background: var(--brand);
+        color: white;
+        font-weight: 500;
+        cursor: pointer;
     }
 
-    .media img.detail-img {
-        width: 200px;
-        height: 200px;
+        .btn-primary:hover {
+            background: #15803d;
+        }
+
+    /* *** GALERIE DODATEČNÝCH FOTEK *** */
+    .additional-photos-section {
+        margin-top: 24px;
+        padding-top: 20px;
+        border-top: 2px solid var(--border);
     }
 
-    .fields {
-        grid-template-columns: 1fr;
+        .additional-photos-section h3 {
+            margin: 0 0 16px 0;
+            color: var(--brand);
+            font-size: 1.2rem;
+        }
+
+    .photo-gallery {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 12px;
     }
 
+    .gallery-item {
+        position: relative;
+        aspect-ratio: 1;
+        border-radius: 8px;
+        overflow: hidden;
+        border: 1px solid var(--border);
+        background: #f7fef7;
     }
+
+        .gallery-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            cursor: zoom-in;
+            transition: transform 0.2s ease;
+        }
+
+        .gallery-item:hover img {
+            transform: scale(1.05);
+        }
+
+        .gallery-item .delete-btn {
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            background: rgba(185, 28, 28, 0.9);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 4px 8px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .gallery-item:hover .delete-btn {
+            opacity: 1;
+        }
+
+        .gallery-item .delete-btn:hover {
+            background: rgba(153, 27, 27, 1);
+        }
+
+    /* *** FORMULÁŘ PRO NAHRÁNÍ FOTEK *** */
+    .upload-form {
+        margin-top: 16px;
+        padding: 16px;
+        background: #f9fef9;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+    }
+
+        .upload-form h4 {
+            margin: 0 0 12px 0;
+            font-size: 1rem;
+            color: var(--brand);
+        }
+
+        .upload-form input[type="file"] {
+            margin-bottom: 10px;
+            font-size: 0.95rem;
+        }
+
+        .upload-form .preview-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin: 10px 0;
+        }
+
+            .upload-form .preview-container img {
+                width: 80px;
+                height: 80px;
+                object-fit: cover;
+                border-radius: 6px;
+                border: 1px solid var(--border);
+            }
 
     /* Lightbox / fullscreen viewer for clicked image */
     .image-lightbox {
@@ -181,7 +288,7 @@
         display: none;
         align-items: center;
         justify-content: center;
-        background: rgba(0,0,0,0.75);
+        background: rgba(0,0,0,0.85);
         z-index: 99999;
         padding: 20px;
     }
@@ -216,28 +323,51 @@
             background: rgba(255,255,255,0.9);
             border-radius: 6px;
             border: none;
-            padding: 6px 8px;
+            padding: 8px 12px;
             font-weight: 700;
             cursor: pointer;
+            font-size: 1.2rem;
         }
 
     @@keyframes fadeIn {
-        from
+        from {
+            opacity: 0;
+        }
 
-    {
-        opacity: 0;
+        to {
+            opacity: 1;
+        }
     }
 
-    to {
-        opacity: 1;
+    @@media (max-width:900px) {
+        .layout {
+            grid-template-columns: 1fr;
+        }
+
+        .media img.detail-img {
+            width: 200px;
+            height: 200px;
+        }
+
+        .fields {
+            grid-template-columns: 1fr;
+        }
+
+        .photo-gallery {
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        }
     }
 
+    @@media (max-width:600px) {
+        .photo-gallery {
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 8px;
+        }
     }
 </style>
 
 <main class="detail-page">
 
-    @* Logo + nadpis - vložte jako první element v <main> *@
     <header style="margin-bottom: 20px;">
         <div class="container" style="display:flex;align-items:center;gap:12px">
             <div class="page-header" style="display:flex;align-items:center;gap:12px">
@@ -252,18 +382,15 @@
         </div>
     </header>
 
-
-
     <div class="card layout" role="region" aria-label="Detail vzorku">
         <aside class="media" aria-label="Obrázek a veřejný odkaz">
             @if (!string.IsNullOrEmpty(imageSrc))
             {
-                <!-- Add data-full attribute so the script can open the full-sized image -->
-                <img src="@imageSrc" alt="Fotografie vzorku: @Model.Name" class="detail-img" id="detailImage" data-full="@imageSrc" />
+                <img src="@imageSrc" alt="Fotografie vzorku: @Model.Name" class="detail-img photo-zoom" data-full="@imageSrc" />
             }
             else
             {
-                <div class="detail-img" aria-hidden="true" title="Žádný obrázek"></div>
+                <div class="detail-img" style="display:flex;align-items:center;justify-content:center;color:#999;" aria-hidden="true">Žádný obrázek</div>
             }
 
             <div class="meta">
@@ -291,30 +418,63 @@
             <div class="fields" aria-live="polite">
                 <div class="field"><div class="label">Pozice</div><div class="value">@Safe(Model.Position?.ToString())</div></div>
                 <div class="field"><div class="label">ID</div><div class="value">@Safe(Model.ExternalId)</div></div>
-
                 <div class="field full"><div class="label">Dodavatel</div><div class="value">@Safe(Model.Supplier)</div></div>
-
                 <div class="field full"><div class="label">Původní název</div><div class="value">@Safe(Model.OriginalName)</div></div>
-
                 <div class="field"><div class="label">Materiál</div><div class="value">@Safe(Model.Material)</div></div>
                 <div class="field"><div class="label">Forma</div><div class="value">@Safe(Model.Form)</div></div>
-
                 <div class="field"><div class="label">Plnivo</div><div class="value">@Safe(Model.Filler)</div></div>
                 <div class="field"><div class="label">Barva</div><div class="value">@Safe(Model.Color)</div></div>
-
                 <div class="field full"><div class="label">Popis</div><div class="value">@Safe(Model.Description)</div></div>
-
                 <div class="field"><div class="label">Množství (měsíc)</div><div class="value">@Safe(Model.MonthlyQuantity?.ToString())</div></div>
                 <div class="field"><div class="label">MFI</div><div class="value">@Safe(Model.Mfi)</div></div>
-
                 <div class="field full"><div class="label">Poznámky</div><div class="value">@Safe(Model.Notes)</div></div>
-
                 <div class="field"><div class="label">Vytvořeno</div><div class="value">@SafeDate(Model.CreatedAt)</div></div>
+            </div>
+
+            @* *** GALERIE DODATEČNÝCH FOTEK *** *@
+            <div class="additional-photos-section">
+                <h3>Dodatečné fotografie (@additionalPhotos.Count)</h3>
+
+                @if (additionalPhotos.Count > 0)
+                {
+                    <div class="photo-gallery">
+                        @foreach (var photoPath in additionalPhotos)
+                        {
+                            <div class="gallery-item">
+                                <img src="@Url.Content(photoPath)" alt="Dodatečná fotografie" class="photo-zoom" data-full="@Url.Content(photoPath)" />
+                                @if (User.Identity?.IsAuthenticated == true)
+                                {
+                                    <form asp-action="DeleteAdditionalPhoto" asp-route-id="@Model.Id" asp-route-photoPath="@photoPath" method="post" style="display:inline;">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="delete-btn" onclick="return confirm('Opravdu smazat tuto fotku?');">Smazat</button>
+                                    </form>
+                                }
+                            </div>
+                        }
+                    </div>
+                }
+
+                @* *** FORMULÁŘ PRO NAHRÁNÍ NOVÝCH FOTEK *** *@
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    <div class="upload-form">
+                        <h4>➕ Přidat další fotografie</h4>
+                        <form asp-action="UploadAdditionalPhotos" asp-route-id="@Model.Id" method="post" enctype="multipart/form-data" id="uploadForm">
+                            @Html.AntiForgeryToken()
+                            <input type="file" name="AdditionalPhotoFiles" id="quickUploadInput" accept="image/*" multiple />
+                            <div id="quickUploadPreview" class="preview-container"></div>
+                            <button type="submit" class="btn-primary" id="uploadBtn" disabled>Nahrát fotky</button>
+                        </form>
+                    </div>
+                }
             </div>
 
             <div class="actions">
                 <a asp-controller="Photos" asp-action="Index" class="btn">Zpět na katalog</a>
-                <a asp-controller="Photos" asp-action="Edit" asp-route-id="@Model.Id" class="btn">Upravit vzorek</a>
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    <a asp-controller="Photos" asp-action="Edit" asp-route-id="@Model.Id" class="btn">Upravit vzorek</a>
+                }
             </div>
         </section>
     </div>
@@ -324,16 +484,16 @@
 <div id="imageLightbox" class="image-lightbox" role="dialog" aria-modal="true" aria-hidden="true">
     <div class="inner" role="document">
         <button class="close-btn" id="lightboxClose" aria-label="Zavřít (Esc)">✕</button>
-        <img id="lightboxImg" src="" alt="Zvětšená fotografie vzorku" />
+        <img id="lightboxImg" src="" alt="Zvětšená fotografie" />
     </div>
 </div>
 
 <script>
     (function () {
-        const detailImg = document.getElementById('detailImage');
         const lightbox = document.getElementById('imageLightbox');
         const lightboxImg = document.getElementById('lightboxImg');
         const closeBtn = document.getElementById('lightboxClose');
+        const zoomableImages = document.querySelectorAll('.photo-zoom');
 
         function openLightbox(src, alt) {
             if (!src) return;
@@ -341,64 +501,50 @@
             if (alt) lightboxImg.alt = alt;
             lightbox.classList.add('show');
             lightbox.setAttribute('aria-hidden', 'false');
-            // prevent page scroll while open
             document.documentElement.style.overflow = 'hidden';
             document.body.style.overflow = 'hidden';
-            // focus close button for accessibility
             closeBtn.focus();
         }
 
         function closeLightbox() {
             lightbox.classList.remove('show');
             lightbox.setAttribute('aria-hidden', 'true');
-            // small timeout to avoid flicker on some browsers when clearing src
             setTimeout(() => { lightboxImg.src = ''; }, 120);
             document.documentElement.style.overflow = '';
             document.body.style.overflow = '';
         }
 
-        // Open when clicking the detail thumbnail (if present)
-        if (detailImg) {
-            detailImg.addEventListener('click', function (e) {
-                const full = detailImg.getAttribute('data-full') || detailImg.src;
-                openLightbox(full, detailImg.alt || '');
+        // Přidat event listener na všechny zoomovatelné obrázky
+        zoomableImages.forEach(img => {
+            img.addEventListener('click', function () {
+                const full = img.getAttribute('data-full') || img.src;
+                openLightbox(full, img.alt || '');
             });
 
-            // also allow Enter / Space when focused
-            detailImg.setAttribute('tabindex', '0');
-            detailImg.addEventListener('keydown', function (e) {
+            img.setAttribute('tabindex', '0');
+            img.addEventListener('keydown', function (e) {
                 if (e.key === 'Enter' || e.key === ' ') {
                     e.preventDefault();
-                    const full = detailImg.getAttribute('data-full') || detailImg.src;
-                    openLightbox(full, detailImg.alt || '');
+                    const full = img.getAttribute('data-full') || img.src;
+                    openLightbox(full, img.alt || '');
                 }
             });
-        }
-
-        // Close interactions
-        closeBtn.addEventListener('click', closeLightbox);
-
-        // Clicking on overlay (outside the inner image) closes
-        lightbox.addEventListener('click', function (e) {
-            if (e.target === lightbox) {
-                closeLightbox();
-            }
         });
 
-        // clicking on image also closes (useful for touch)
+        closeBtn.addEventListener('click', closeLightbox);
+        lightbox.addEventListener('click', function (e) {
+            if (e.target === lightbox) closeLightbox();
+        });
         lightboxImg.addEventListener('click', closeLightbox);
 
-        // Close with Escape key
         document.addEventListener('keydown', function (e) {
             if (e.key === 'Escape' && lightbox.classList.contains('show')) {
                 closeLightbox();
             }
         });
 
-        // Prevent accidental drag causing selection on mobile
         lightboxImg.addEventListener('dragstart', function (e) { e.preventDefault(); });
 
-        // Accessibility: simple focus trap while lightbox open
         document.addEventListener('focus', function (event) {
             if (!lightbox.classList.contains('show')) return;
             if (!lightbox.contains(event.target)) {
@@ -406,5 +552,32 @@
                 closeBtn.focus();
             }
         }, true);
+
+        // *** QUICK UPLOAD PREVIEW ***
+        const quickInput = document.getElementById('quickUploadInput');
+        const quickPreview = document.getElementById('quickUploadPreview');
+        const uploadBtn = document.getElementById('uploadBtn');
+
+        if (quickInput) {
+            quickInput.addEventListener('change', function(e) {
+                quickPreview.innerHTML = '';
+                uploadBtn.disabled = true;
+
+                if (e.target.files && e.target.files.length > 0) {
+                    uploadBtn.disabled = false;
+                    Array.from(e.target.files).forEach(file => {
+                        if (file.type.startsWith('image/')) {
+                            const reader = new FileReader();
+                            reader.onload = function(ev) {
+                                const img = document.createElement('img');
+                                img.src = ev.target.result;
+                                quickPreview.appendChild(img);
+                            };
+                            reader.readAsDataURL(file);
+                        }
+                    });
+                }
+            });
+        }
     })();
 </script>

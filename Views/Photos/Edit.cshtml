@@ -4,183 +4,31 @@
     ViewData["Title"] = "Upravit vzorek";
 }
 
-<style>
-    :root {
-        --brand: #16a34a;
-        --brand-dark: #166534;
-        --border: #dbe7d9;
-        --bg: #f4fbf4;
-        --text: #0b1f0b;
-        --white: #fff;
-        --pad: 12px;
-        --gap: 8px;
-        --radius: 12px;
-    }
-
-    * {
-        box-sizing: border-box
-    }
-
-    body {
-        margin: 0;
-        font-family: system-ui,-apple-system,Segoe UI,Roboto,Ubuntu;
-        color: var(--text);
-        background: var(--bg);
-    }
-
-    header {
-        position: sticky;
-        top: 0;
-        z-index: 5;
-        background: #fff;
-        border-bottom: 1px solid var(--border);
-    }
-
-    .container {
-        max-width: 1100px;
-        margin: 0 auto;
-        padding: 14px var(--pad);
-    }
-
-    .brand {
-        display: flex;
-        align-items: center;
-        gap: 12px
-    }
-
-        .brand img {
-            height: 36px;
-            width: auto
-        }
-
-    h1 {
-        margin: 0;
-        font-size: 18px;
-        font-weight: 700;
-        color: var(--brand-dark);
-    }
-
-    .card, .center-form-container {
-        background: #fff;
-        border: 1px solid var(--border);
-        border-radius: var(--radius);
-        padding: 2rem 2.2rem 2rem 2.2rem;
-        margin: 40px auto 0 auto;
-        max-width: 760px;
-        box-shadow: 0 2px 8px rgba(0,0,0,.08);
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-    }
-
-        .center-form-container h2 {
-            margin-bottom: 1.8rem;
-            text-align: center;
-            font-size: 1.6rem;
-            color: var(--brand-dark);
-        }
-
-    .styled-form {
-        width: 100%;
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 12px 18px;
-        align-items: start;
-    }
-
-    .full {
-        grid-column: 1 / -1;
-    }
-
-    .form-group {
-        margin-bottom: 1.4rem;
-        display: flex;
-        flex-direction: column;
-    }
-
-        .form-group label {
-            font-weight: 500;
-            margin-bottom: 0.5rem;
-            color: #333;
-        }
-
-    .form-control {
-        padding: 0.5rem 0.9rem;
-        border: 1px solid #cfd8dc;
-        border-radius: 7px;
-        font-size: 1rem;
-        transition: border-color 0.15s;
-    }
-
-        .form-control:focus {
-            outline: none;
-            border-color: #0078d7;
-        }
-
-    .form-control-file {
-        margin-top: 0.5rem;
-        font-size: 1rem;
-    }
-
-    .btn-primary {
-        background: var(--brand);
-        color: #fff;
-        padding: 0.7rem 1.6rem;
-        border: none;
-        border-radius: 8px;
-        font-size: 1.1rem;
-        font-weight: 500;
-        cursor: pointer;
-        transition: background 0.2s ease;
-        margin-top: 0.2rem;
-        box-shadow: 0 2px 8px rgba(0,0,0,.03);
-    }
-
-        .btn-primary:hover {
-            background: var(--brand-dark);
-        }
-
-    .btn {
-        padding: 8px 16px;
-        border-radius: 8px;
-        border: 1px solid var(--border);
-        background: var(--white);
-        color: var(--brand-dark);
-        cursor: pointer;
-        font-weight: 500;
-        margin-left: 10px;
-        text-decoration: none;
-        display: inline-block;
-    }
-
-        .btn:hover {
-            background: #e6f9e9;
-        }
-
-    .preview-img {
-        width: 180px;
-        height: 180px;
-        object-fit: cover;
-        border-radius: 10px;
-        border: 1px solid var(--border);
-        margin-top: 10px;
-    }
-
-    .field-validation {
-        color: #b91c1c;
-        font-size: 0.95rem;
-        margin-top: 6px;
-    }
-
-    @@media (max-width: 640px) {
-        .styled-form
-
-    {
-        grid-template-columns: 1fr;
-    }
-
-    }
-</style>
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
+    <meta name="theme-color" content="#16a34a">
+    
+    <!-- PWA manifest -->
+    <link rel="manifest" href="/manifest.json">
+    
+    <!-- Android / Chrome -->
+    <meta name="mobile-web-app-capable" content="yes">
+    
+    <!-- iOS -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="/icons/icon-192.png">
+    
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="~/css/Edit.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/Mobile.css" asp-append-version="true" />
+    
+    <title>@ViewData["Title"]</title>
+</head>
+<body>
 
 <header>
     <div class="container" style="display:flex;align-items:center;gap:12px">
@@ -203,8 +51,8 @@
         <form asp-action="Edit" enctype="multipart/form-data" method="post" class="styled-form" novalidate>
             @Html.AntiForgeryToken()
             <input type="hidden" asp-for="Id" />
+            <input type="hidden" asp-for="AdditionalPhotos" />
 
-            <!-- Pořadí polí upravené podle tvého požadavku -->
             <div class="form-group">
                 <label asp-for="Position">Pozice</label>
                 <input asp-for="Position" class="form-control" />
@@ -277,14 +125,14 @@
                 <span asp-validation-for="Notes" class="field-validation"></span>
             </div>
 
-            <div class="form-group">
-                <label for="PhotoFile">Fotka (nový soubor)</label>
+            <div class="form-group full">
+                <label for="PhotoFile">Hlavní fotka (nový soubor)</label>
                 <input type="file" name="PhotoFile" id="PhotoFile" class="form-control-file" accept="image/*" />
                 <span class="field-validation" id="photoError"></span>
             </div>
 
-            <div class="form-group">
-                <label>Náhled aktuální fotky</label>
+            <div class="form-group full">
+                <label>Náhled aktuální hlavní fotky</label>
                 @{
                     var imageSrc = !string.IsNullOrWhiteSpace(Model.ImagePath) ? Url.Content(Model.ImagePath) : (!string.IsNullOrWhiteSpace(Model.PhotoPath) ? Url.Content(Model.PhotoPath) : null);
                 }
@@ -294,11 +142,31 @@
                 }
                 else
                 {
-                    <div style="width:180px;height:180px;border:1px solid var(--border);border-radius:10px;background:#f6faf6;display:flex;align-items:center;justify-content:center;color:#888">Žádný obrázek</div>
+                    <div class="no-image-placeholder">Žádný obrázek</div>
                 }
             </div>
 
-            <div class="form-group full" style="display:flex;gap:12px;justify-content:flex-end;margin-top:10px;">
+            <div class="form-group full">
+                <label for="AdditionalPhotoFiles">Dodatečné fotky (vyberte více najednou)</label>
+                <input type="file" name="AdditionalPhotoFiles" id="AdditionalPhotoFiles" class="form-control-file" accept="image/*" multiple />
+                <span class="field-validation" id="additionalPhotosError"></span>
+                
+                @if (!string.IsNullOrWhiteSpace(Model.AdditionalPhotos))
+                {
+                    var existingPhotos = Model.GetAdditionalPhotosList();
+                    <div style="margin-top:10px;">
+                        <strong>Aktuálně nahráno: @existingPhotos.Count foto(ek)</strong>
+                        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">
+                            @foreach (var photo in existingPhotos)
+                            {
+                                <img src="@Url.Content(photo)" style="width:60px;height:60px;object-fit:cover;border-radius:4px;border:1px solid #ddd;" alt="Dodatečná fotka" />
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <div class="form-actions">
                 <a href="@Url.Action("Index")" class="btn">Zpět</a>
                 <button type="submit" class="btn-primary">Uložit změny</button>
             </div>
@@ -308,7 +176,6 @@
 
 @section Scripts {
     <script>
-        // preview nově vybraného souboru (zobrazení místo/nebo vedle aktuálního obrázku)
         document.getElementById('PhotoFile')?.addEventListener('change', function (e) {
             const input = e.target;
             const err = document.getElementById('photoError');
@@ -325,12 +192,16 @@
                     if (current) {
                         current.src = ev.target.result;
                     } else {
-                        // pokud není element, vytvoříme náhled pod inputem
                         const img = document.createElement('img');
                         img.id = 'CurrentPhotoPreview';
                         img.className = 'preview-img';
                         img.src = ev.target.result;
-                        input.parentNode.appendChild(img);
+                        const placeholder = input.parentNode.querySelector('.no-image-placeholder');
+                        if (placeholder) {
+                            placeholder.replaceWith(img);
+                        } else {
+                            input.parentNode.appendChild(img);
+                        }
                     }
                 };
                 reader.readAsDataURL(file);
@@ -340,3 +211,6 @@
 
     <partial name="_ValidationScriptsPartial" />
 }
+
+</body>
+</html>
