@@ -577,7 +577,7 @@
                 const img = link.querySelector('img');
                 if (!img) return;
                 // start delay
-                const t = setTimeout(() => showPreview(img.src), 1000);
+                const t = setTimeout(() => showPreview(img.src), 500);
                 timeoutMap.set(link, t);
             });
 

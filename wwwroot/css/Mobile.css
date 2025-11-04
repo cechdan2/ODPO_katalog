@@ -1,8 +1,9 @@
 ﻿/* ===== MOBILE OPTIMALIZATION FOR EDIT VIEW ===== */
 
+/* Tablet - 1000px and below */
 @media (max-width: 1000px) {
     body {
-        font-size: 16px; /* iOS prefers 16px minimum to avoid zoom */
+        font-size: 16px;
         line-height: 1.45;
     }
 
@@ -11,14 +12,15 @@
     }
 
     .container {
-        padding: 10px 16px;
+        padding: 10px 12px;
+        box-sizing: border-box;
     }
 
     .center-form-container {
-        padding: 1.4rem 1.2rem;
-        margin-top: 20px;
-        width: 100%;
+        padding: 1.2rem 1rem;
         max-width: 100%;
+        width: 100%;
+        box-sizing: border-box;
     }
 
         .center-form-container h2 {
@@ -28,18 +30,23 @@
 
     .styled-form {
         grid-template-columns: 1fr;
-        gap: 14px;
+        width: 100%;
+        box-sizing: border-box;
     }
 
     .form-group {
         margin-bottom: 1rem;
+        width: 100%;
+        box-sizing: border-box;
     }
 
     .form-control,
     textarea.form-control {
-        font-size: 16px; /* Prevents zoom on iOS */
+        font-size: 16px;
         padding: 0.7rem 0.85rem;
-        border-radius: 10px;
+        border-radius: 8px;
+        width: 100%;
+        box-sizing: border-box;
     }
 
     textarea.form-control {
@@ -53,6 +60,8 @@
     .form-actions {
         flex-direction: column-reverse;
         gap: 10px;
+        width: 100%;
+        box-sizing: border-box;
     }
 
     .btn-primary,
@@ -61,6 +70,7 @@
         text-align: center;
         font-size: 1.05rem;
         padding: 0.85rem;
+        margin-left: 0;
     }
 
     .preview-img,
@@ -71,21 +81,27 @@
     }
 }
 
-/* ==== VERY SMALL DEVICES (typical 360px – 420px phones) ==== */
+/* Very small devices (360px – 480px phones) */
 @media (max-width: 480px) {
     .center-form-container {
-        padding: 1.2rem 1rem;
+        padding: 1rem 0.8rem;
         margin-top: 10px;
+        width: 100%;
+        box-sizing: border-box;
     }
 
     .styled-form {
-        gap: 12px;
+        gap: 8px;
+        width: 100%;
+        box-sizing: border-box;
     }
 
     .form-control,
     textarea.form-control {
-        font-size: 16px; /* Keep at 16px for iOS */
+        font-size: 16px;
         padding: 0.65rem 0.8rem;
+        width: 100%;
+        box-sizing: border-box;
     }
 
     .preview-img,
@@ -95,6 +111,33 @@
     }
 
     h1, .center-form-container h2 {
-        font-size: 1.25rem;
+        font-size: 1.2rem;
+    }
+
+    .form-group {
+        margin-bottom: 0.8rem;
+    }
+}
+
+/* Extra small - 360px and below */
+@media (max-width: 360px) {
+    .container {
+        padding: 8px 6px;
+    }
+
+    .center-form-container {
+        padding: 0.8rem 0.6rem;
+    }
+
+    .form-control,
+    textarea.form-control {
+        padding: 0.6rem 0.7rem;
+        font-size: 15px;
+    }
+
+    .preview-img,
+    .no-image-placeholder {
+        width: 110px;
+        height: 110px;
     }
 }

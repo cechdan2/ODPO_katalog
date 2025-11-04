@@ -191,10 +191,10 @@
 
         .bottom-bar .actions-grid {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
+            grid-template-columns: repeat(3, 1fr);
             gap: 10px;
             width: 100%;
-            max-width: 400px;
+            max-width: 600px;
             padding: 6px;
         }
 
@@ -230,26 +230,29 @@
 
     /* Mobile responsive */
     @@media (max-width: 420px) {
-        .bottom-bar {
-            height: 96px;
+        .bottom-bar
+
+    {
+        height: 96px;
+    }
+
+    .bottom-bar .actions-grid {
+        gap: 8px;
+    }
+
+    .bottom-bar .action-btn {
+        min-height: 51px;
+    }
+
+        .bottom-bar .action-btn img {
+            width: 25px;
+            height: 25px;
         }
 
-            .bottom-bar .actions-grid {
-                gap: 8px;
-            }
+        .bottom-bar .action-btn .label {
+            font-size: 7.5px;
+        }
 
-            .bottom-bar .action-btn {
-                min-height: 51px;
-            }
-
-                .bottom-bar .action-btn img {
-                    width: 25px;
-                    height: 25px;
-                }
-
-                .bottom-bar .action-btn .label {
-                    font-size: 7.5px;
-                }
     }
 </style>
 
@@ -260,7 +263,7 @@
                 <img src="@Url.Content("~/logo.png")" alt="ODPO logo" style="height:48px;width:auto;display:block;" />
             </a>
             <div>
-                <h1 style="margin:0;font-size:18px;color:var(--brand);">Záloha a obnova databáze</h1>
+                <h1 style="margin:0;font-size:18px;color:var(--brand);">Správa dat</h1>
                 <div style="font-size:13px;color:#666;">ODPO s.r.o. – Katalog vzorků plastů</div>
             </div>
         </div>
@@ -269,7 +272,7 @@
 
 <main class="container">
     <div class="center-form-container">
-        <h2>Záloha a obnova databáze</h2>
+        <h2>Správa databáze a importu</h2>
 
         <div class="info-box">
             ℹ️ <strong>Tip:</strong> Záloha obsahuje databázi a všechny nahrané fotografie zabalené do ZIP archivu.
@@ -279,8 +282,8 @@
         <div class="styled-form">
             <!-- Stáhnout zálohu -->
             <div class="form-group full">
-                <label>Stáhnout zálohu databáze a fotografií:</label>
-                <button id="downloadBtn" class="btn-primary" style="width:100%;">📥 Stáhnout zálohu (ZIP)</button>
+                <label>📥 Stáhnout zálohu databáze a fotografií:</label>
+                <button id="downloadBtn" class="btn-primary" style="width:100%;">Stáhnout zálohu (ZIP)</button>
             </div>
 
             <!-- Oddělovač -->
@@ -288,7 +291,7 @@
 
             <!-- Nahrát a obnovit -->
             <div class="form-group full">
-                <label for="restoreFile">Nahrát a obnovit databázi ze zálohy (ZIP):</label>
+                <label for="restoreFile">📤 Nahrát a obnovit databázi ze zálohy (ZIP):</label>
                 <input type="file" id="restoreFile" class="form-control-file" accept=".zip" />
                 <div class="field-validation" style="color:#075985;margin-top:8px;">
                     ⚠️ Pozor: Obnovení přepíše aktuální databázi a fotografie!
@@ -296,8 +299,24 @@
             </div>
 
             <div class="form-group full" style="display:flex;gap:12px;justify-content:flex-end;margin-top:10px;">
-                <a href="@Url.Action("Index", "Photos")" class="btn">Zpět</a>
-                <button id="restoreBtn" class="btn-primary">📤 Nahrát a obnovit</button>
+                <button id="restoreBtn" class="btn-primary">Obnovit ze zálohy</button>
+            </div>
+
+            <!-- Oddělovač -->
+            <div class="full" style="border-top:2px solid var(--border);margin:40px 0 20px 0;"></div>
+
+            <!-- Import z Excelu -->
+            <div class="form-group full">
+                <label for="excelFile">📊 Importovat data z Excel souboru (.xlsx, .xls):</label>
+                <input type="file" id="excelFile" class="form-control-file" accept=".xlsx,.xls" />
+                <div class="field-validation" style="color:#075985;margin-top:8px;">
+                    💡 Excel musí obsahovat sloupce: Position, ExternalId, OriginalName, Material, Form, Filler, Color, Description, MonthlyQuantity, Mfi, Notes, Supplier
+                </div>
+            </div>
+
+            <div class="form-group full" style="display:flex;gap:12px;justify-content:space-between;margin-top:10px;">
+                <a href="@Url.Action("Index", "Photos")" class="btn">Zpět na katalog</a>
+                <button id="importBtn" class="btn-primary">Importovat z Excelu</button>
             </div>
         </div>
 
@@ -315,13 +334,18 @@
 
         <a role="menuitem" href="#" class="action-btn" title="Stáhnout zálohu" onclick="document.getElementById('downloadBtn').click(); return false;">
             <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 24 24' fill='white'><path d='M12 2L4 6v6c0 5 3.9 9.4 8 10 4.1-.6 8-5 8-10V6l-8-4zM11 14v-4h2v4h3l-4 4-4-4h3z' fill='%23ffffff'/></svg>" alt="Záloha" />
-            <div class="label">Stáhnout</div>
+            <div class="label">Záloha</div>
+        </a>
+
+        <a role="menuitem" href="#" class="action-btn" title="Import z Excelu" onclick="document.getElementById('importBtn').click(); return false;">
+            <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 24 24' fill='white'><path d='M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z' fill='%23ffffff'/></svg>" alt="Import" />
+            <div class="label">Import</div>
         </a>
     </div>
 </nav>
 
 <script>
-    // stáhne zip přes API a nabídne ke stažení
+    // Stažení zálohy
     async function downloadBackup() {
         const btn = document.getElementById('downloadBtn');
         btn.disabled = true;
@@ -347,11 +371,11 @@
             alert('Chyba: ' + err.message);
         } finally {
             btn.disabled = false;
-            btn.textContent = '📥 Stáhnout zálohu (ZIP)';
+            btn.textContent = 'Stáhnout zálohu (ZIP)';
         }
     }
 
-    // upload + restore (posílá multipart/form-data pole s názvem 'backupZip')
+    // Obnovení ze zálohy
     async function uploadRestore(fileInput) {
         const file = fileInput?.files?.[0];
         if (!file) return alert('Vyberte soubor.');
@@ -397,20 +421,62 @@
             alert('Chyba: ' + err.message);
         } finally {
             btn.disabled = false;
-            btn.textContent = '📤 Nahrát a obnovit';
+            btn.textContent = 'Obnovit ze zálohy';
         }
     }
 
-    // bezpečně připojíme event listenery jen pokud element existuje
+    // Import z Excelu
+    async function uploadImport(fileInput) {
+        const file = fileInput?.files?.[0];
+        if (!file) return alert('Vyberte Excel soubor.');
+
+        if (!confirm('Opravdu chcete importovat data z Excel souboru?')) return;
+
+        const btn = document.getElementById('importBtn');
+        btn.disabled = true;
+        btn.textContent = '⏳ Importování...';
+
+        const form = new FormData();
+        form.append('file', file);
+
+        try {
+            const resp = await fetch('@Url.Action("Import", "Photos")', {
+                method: 'POST',
+                body: form,
+                credentials: 'include'
+            });
+
+            if (!resp.ok) {
+                const txt = await resp.text();
+                alert('Import se nezdařil: ' + txt);
+                return;
+            }
+
+            alert('✅ Import byl úspěšný!');
+            window.location.href = '/Photos';
+        } catch (err) {
+            alert('Chyba: ' + err.message);
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'Importovat z Excelu';
+        }
+    }
+
+    // Event listenery
     document.addEventListener('DOMContentLoaded', () => {
         const downloadBtn = document.getElementById('downloadBtn');
         if (downloadBtn) downloadBtn.addEventListener('click', downloadBackup);
 
         const restoreBtn = document.getElementById('restoreBtn');
         const restoreFile = document.getElementById('restoreFile');
-
         if (restoreBtn && restoreFile) {
             restoreBtn.addEventListener('click', () => uploadRestore(restoreFile));
+        }
+
+        const importBtn = document.getElementById('importBtn');
+        const excelFile = document.getElementById('excelFile');
+        if (importBtn && excelFile) {
+            importBtn.addEventListener('click', () => uploadImport(excelFile));
         }
     });
 </script>

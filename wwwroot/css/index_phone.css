@@ -1,0 +1,571 @@
+﻿<style >
+:root {
+    --brand: #16a34a;
+    --brand-dark: #166534;
+    --border: #dbe7d9;
+    --bg: #f4fbf4;
+    --text: #0b1f0b;
+    --white: #fff;
+    --pad: 16px;
+    --gap: 12px;
+    --radius: 16px;
+    --bar-height: 96px;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+html, body {
+    height: 100%;
+    overflow-x: hidden;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: system-ui,-apple-system,Segoe UI,Roboto,Ubuntu;
+    color: var(--text);
+    background: var(--bg);
+    padding-bottom: 96px;
+}
+
+.container {
+    width: 100%;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: var(--pad);
+    box-sizing: border-box;
+}
+
+/* Header - logo centered and bigger */
+header {
+    background: #fff;
+    border-bottom: 2px solid var(--border);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    width: 100%;
+}
+
+.header-inner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px 0;
+    max-width: 1100px;
+    margin: 0 auto;
+    box-sizing: border-box;
+}
+
+.brand {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    text-decoration: none;
+    color: inherit;
+}
+
+    .brand img {
+        height: 120px;
+        width: auto;
+        display: block;
+    }
+
+    .brand h1 {
+        margin: 0;
+        font-size: 24px;
+        font-weight: 700;
+        color: var(--brand-dark);
+        text-align: center;
+    }
+
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+}
+
+/* Header actions (kept minimal here) */
+.action-btn, .action-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 14px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: var(--white);
+    color: inherit;
+    text-decoration: none;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+    .action-btn.primary {
+        background: var(--brand);
+        color: #fff;
+        border-color: var(--brand-dark);
+    }
+
+    .action-btn.destructive {
+        background: #ef4444;
+        color: #fff;
+        border-color: #b91c1c;
+    }
+
+.inline-form {
+    margin: 0;
+    display: inline-block;
+}
+
+/* Toolbar/search area remains above the list */
+.toolbar {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: var(--pad);
+    margin-bottom: var(--pad);
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* FILTER FORM - 2 sloupce na mobilu, více na desktopu */
+.filter-form {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--gap);
+    align-items: stretch;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+    .filter-form input, .filter-form select {
+        width: 100%;
+        padding: 14px;
+        border-radius: 10px;
+        border: 1px solid var(--border);
+        font-size: 18px;
+        background: #fff;
+        box-sizing: border-box;
+    }
+
+        /* Vyhledávací pole přes celou šířku */
+        .filter-form input[type="search"] {
+            grid-column: 1 / -1;
+        }
+
+.filter-controls {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    grid-column: 1 / -1;
+    margin-top: 4px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+    .filter-controls .action-btn {
+        width: 100%;
+        padding: 12px;
+        font-size: 18px;
+    }
+
+/* Cards - ZLEPŠENO */
+.card-list {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--gap);
+    width: 100%;
+    box-sizing: border-box;
+    padding-bottom: 16px;
+}
+
+.item-card {
+    background: #fff;
+    border-radius: 20px;
+    padding: 16px;
+    border: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    font-size: 16px;
+    width: 100%;
+    box-sizing: border-box;
+    box-shadow: 0 2px 8px rgba(0,0,0,.05);
+}
+
+/* Hlavní obrázek - VĚTŠÍ */
+.thumb {
+    width: 100%;
+    max-width: 300px;
+    height: auto;
+    aspect-ratio: 1;
+    object-fit: cover;
+    border-radius: 16px;
+    border: 1.5px solid var(--border);
+    background: #f7fef7;
+}
+
+.card-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    text-align: center;
+    width: 100%;
+}
+
+    .card-info div {
+        line-height: 1.4;
+        font-size: 15px;
+    }
+
+    .card-info strong {
+        font-weight: 600;
+        color: #333;
+    }
+
+.card-footer {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 12px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+    .card-footer .action-btn {
+        flex: 1;
+        min-width: 90px;
+        padding: 10px 12px;
+        font-size: 14px;
+    }
+/* Bottom action bar - VĚTŠÍ VERZE */
+.bottom-bar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 120px;
+    background: linear-gradient(180deg, var(--brand), var(--brand-dark));
+    border-top: 1px solid rgba(0,0,0,0.06);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1500;
+    padding: 12px;
+    gap: 12px;
+    box-shadow: 0 -6px 20px rgba(0,0,0,0.12);
+    width: 100%;
+    box-sizing: border-box;
+}
+
+    .bottom-bar .actions-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+        width: 100%;
+        max-width: 480px;
+        padding: 8px;
+        box-sizing: border-box;
+    }
+
+    .bottom-bar .action-btn {
+        display: inline-flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        padding: 10px;
+        border-radius: 12px;
+        text-decoration: none;
+        color: #fff;
+        background: rgba(255,255,255,0.05);
+        border: 1px solid rgba(255,255,255,0.08);
+        min-height: 70px;
+        cursor: pointer;
+        transition: background 0.2s ease;
+    }
+
+        .bottom-bar .action-btn:hover {
+            background: rgba(255,255,255,0.1);
+        }
+
+        .bottom-bar .action-btn img {
+            width: 32px;
+            height: 32px;
+            display: block;
+            filter: drop-shadow(0 2px 2px rgba(0,0,0,0.25));
+        }
+
+        .bottom-bar .action-btn .label {
+            font-size: 10px;
+            font-weight: 600;
+            color: #fff;
+            text-align: center;
+            line-height: 1.2;
+        }
+
+    /* Destructive button styling */
+    .bottom-bar .action-btn-destructive {
+        background: rgba(239, 68, 68, 0.15);
+        border-color: rgba(239, 68, 68, 0.3);
+    }
+
+        .bottom-bar .action-btn-destructive:hover {
+            background: rgba(239, 68, 68, 0.25);
+        }
+
+/* Mobile responsive */
+@@media (max-width: 599px) {
+    body {
+        padding-bottom: 120px;
+    }
+
+    .bottom-bar {
+        height: 120px;
+        padding: 10px;
+        gap: 10px;
+    }
+
+        .bottom-bar .actions-grid {
+            gap: 10px;
+            max-width: 440px;
+        }
+
+        .bottom-bar .action-btn {
+            min-height: 65px;
+            padding: 8px;
+            gap: 5px;
+        }
+
+            .bottom-bar .action-btn img {
+                width: 28px;
+                height: 28px;
+            }
+
+            .bottom-bar .action-btn .label {
+                font-size: 9px;
+            }
+}
+
+/* Extra small - 420px and below */
+@@media (max-width: 420px) {
+    body {
+        padding-bottom: 115px;
+    }
+
+    .bottom-bar {
+        height: 115px;
+        padding: 9px;
+    }
+
+        .bottom-bar .actions-grid {
+            gap: 9px;
+            max-width: 400px;
+        }
+
+        .bottom-bar .action-btn {
+            min-height: 62px;
+            padding: 7px;
+            gap: 5px;
+        }
+
+            .bottom-bar .action-btn img {
+                width: 26px;
+                height: 26px;
+            }
+
+            .bottom-bar .action-btn .label {
+                font-size: 8.5px;
+            }
+}
+
+.footer {
+    text-align: center;
+    font-size: 16px;
+    padding: 20px 0 100px;
+    color: #3b6b3b;
+    width: 100%;
+}
+
+/* Tablet */
+@@media (min-width: 600px) and (max-width: 767px) {
+    .brand img {
+        height: 100px;
+    }
+
+    .brand h1 {
+        font-size: 22px;
+    }
+
+    .thumb {
+        max-width: 350px;
+    }
+}
+
+/* Mobile responsive */
+@@media (max-width: 599px) {
+    .brand img {
+        height: 90px;
+    }
+
+    .brand h1 {
+        font-size: 20px;
+    }
+
+    .header-inner {
+        padding: 16px 0;
+    }
+
+    .container {
+        padding: 12px 10px;
+    }
+
+    .toolbar {
+        padding: 12px;
+        margin-bottom: 10px;
+    }
+
+    .filter-form {
+        gap: 8px;
+    }
+
+        .filter-form input, .filter-form select {
+            padding: 12px;
+            font-size: 16px;
+        }
+
+    .item-card {
+        padding: 14px;
+        gap: 10px;
+        border-radius: 16px;
+    }
+
+    .thumb {
+        max-width: 280px;
+    }
+
+    .card-info div {
+        font-size: 14px;
+    }
+
+    .card-footer {
+        gap: 6px;
+    }
+
+        .card-footer .action-btn {
+            padding: 9px 10px;
+            font-size: 13px;
+            min-width: 75px;
+        }
+
+    .bottom-bar {
+        height: 96px;
+    }
+
+        .bottom-bar .actions-grid {
+            gap: 6px;
+        }
+
+        .bottom-bar .action-btn {
+            min-height: 48px;
+            padding: 5px;
+        }
+
+            .bottom-bar .action-btn img {
+                width: 22px;
+                height: 22px;
+            }
+
+            .bottom-bar .action-btn .label {
+                font-size: 7px;
+            }
+
+    .footer {
+        padding: 16px 0 80px;
+        font-size: 14px;
+    }
+}
+
+/* Extra small - 420px and below */
+@@media (max-width: 420px) {
+    .brand img {
+        height: 80px;
+    }
+
+    .brand h1 {
+        font-size: 18px;
+    }
+
+    .container {
+        padding: 10px 8px;
+    }
+
+    .toolbar {
+        padding: 10px;
+    }
+
+    .thumb {
+        max-width: 240px;
+    }
+
+    .card-footer .action-btn {
+        padding: 8px 8px;
+        font-size: 12px;
+        min-width: 65px;
+    }
+
+    .card-info div {
+        font-size: 13px;
+    }
+
+    .bottom-bar {
+        height: 90px;
+    }
+
+        .bottom-bar .actions-grid {
+            gap: 6px;
+            max-width: 380px;
+        }
+
+        .bottom-bar .action-btn {
+            min-height: 42px;
+            padding: 4px;
+            gap: 3px;
+        }
+
+            .bottom-bar .action-btn img {
+                width: 20px;
+                height: 20px;
+            }
+
+            .bottom-bar .action-btn .label {
+                font-size: 6.5px;
+            }
+}
+
+/* Desktop layout - rozšíreno */
+@@media (min-width: 1200px) {
+    .card-list {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .filter-form {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+        .filter-form input[type="search"] {
+            grid-column: 1 / -1;
+        }
+}
+
+</style >
