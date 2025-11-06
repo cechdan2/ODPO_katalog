@@ -56,13 +56,15 @@
         padding: 10px 20px;
         display: flex;
         align-items: center;
-        gap: 20px;
+        justify-content: space-between;
     }
 
     .brand {
         display: flex;
         align-items: center;
         gap: 12px;
+        text-decoration: none;
+        color: inherit;
     }
 
         .brand img {
@@ -76,18 +78,10 @@
         color: var(--brand-dark);
     }
 
-    .header-actions {
-        margin-left: auto;
-        display: flex;
-        gap: var(--gap);
-        align-items: center;
-        flex-wrap: wrap;
-    }
-
-    .user-row {
+    .header-right-actions {
         display: flex;
         align-items: center;
-        gap: var(--gap);
+        gap: 10px;
     }
 
     .user-pill {
@@ -113,6 +107,7 @@
         font-size: 13px;
         font-weight: 500;
         cursor: pointer;
+        white-space: nowrap;
     }
 
         .action-btn.primary {
@@ -127,17 +122,77 @@
             border-color: #b91c1c;
         }
 
+    .logout-form {
+        margin: 0;
+        padding: 0;
+        display: flex;
+    }
+
+
+    /* === STYL PRO VYHLEDÁVACÍ POLE (FINÁLNÍ VERZE) === */
+    .filter-toggle-placeholder {
+        width: 20px; /* Stejná šířka jako checkbox */
+        flex-shrink: 0;
+    }
+
+    .search-input-wrapper {
+        position: relative;
+        display: flex;
+        align-items: center;
+        flex-grow: 1;
+        /* Vzhled jako Select2 filtr */
+        background-color: var(--white);
+        border: 1px solid var(--border);
+        border-radius: 7px;
+        min-height: 38px;
+        transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+        .search-input-wrapper:focus-within {
+            outline: none;
+            border-color: var(--brand);
+            box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.2);
+        }
+
+        .search-input-wrapper .search-icon {
+            position: absolute;
+            left: 10px;
+            width: 20px;
+            height: 20px;
+            color: #9ca3af;
+            pointer-events: none; /* Ikona neblokuje kliknutí */
+        }
+
+        .search-input-wrapper input[type="search"] {
+            flex-grow: 1;
+            width: 100%;
+            height: 100%;
+            padding-left: 38px;
+            /* Resetování vzhledu inputu */
+            border: none;
+            background-color: transparent;
+            outline: none;
+            font-size: 14px;
+            font-family: inherit;
+        }
+
+        .search-input-wrapper:focus-within .search-icon {
+            color: var(--brand);
+        }
+
+
+
     /* === LAYOUT === */
     .page-layout {
         display: grid;
-        grid-template-columns: 280px 1fr;
+        grid-template-columns: 320px 1fr;
         gap: 20px;
         max-width: 1600px;
         margin: 0 auto;
         padding: 20px;
         align-items: flex-start;
     }
-
+    /* Širší sidebar */
     .filter-sidebar {
         position: sticky;
         top: 80px;
@@ -163,19 +218,11 @@
             padding-bottom: 8px;
         }
 
-    .filter-form, .column-toggle-form {
+    .filter-form {
         display: flex;
         flex-direction: column;
         gap: 12px;
     }
-
-        .filter-form select, .filter-form input {
-            width: 100%;
-            padding: 8px;
-            border-radius: 7px;
-            border: 1px solid var(--border);
-            font-size: 14px;
-        }
 
     .filter-controls {
         display: grid;
@@ -184,17 +231,49 @@
         margin-top: 8px;
     }
 
-    .column-toggle-form label {
+    /* === NOVÝ STYL PRO FILTRY S PŘEPÍNAČI === */
+    .filter-row {
         display: flex;
         align-items: center;
-        gap: 8px;
-        font-size: 14px;
+        gap: 10px;
     }
+
+        .filter-row .select2-container {
+            flex-grow: 1;
+        }
+
+    .filter-toggle {
+        -webkit-appearance: none;
+        appearance: none;
+        position: relative;
+        width: 20px;
+        height: 20px;
+        border: 2px solid #ccc;
+        border-radius: 5px;
+        cursor: pointer;
+        flex-shrink: 0;
+        transition: background-color 0.2s, border-color 0.2s;
+    }
+
+        .filter-toggle:checked {
+            background-color: var(--brand);
+            border-color: var(--brand-dark);
+        }
+
+            .filter-toggle:checked::after {
+                content: '✔';
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                font-size: 14px;
+                color: white;
+            }
 
     /* === DLAŽDICE === */
     .card-grid {
         display: grid;
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
         gap: var(--gap);
     }
 
@@ -213,9 +292,18 @@
         gap: var(--pad);
     }
 
+    .image-column {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        align-items: center;
+        flex-shrink: 0;
+        width: 180px;
+    }
+
     .sample-card .thumb {
-        width: 120px;
-        height: 120px;
+        width: 180px;
+        height: 180px;
         flex-shrink: 0;
         object-fit: cover;
         border-radius: 10px;
@@ -227,17 +315,17 @@
     }
 
         .sample-card-info .name {
-            font-size: 18px;
+            font-size: 20px;
             font-weight: 700;
             color: var(--brand-dark);
-            margin: 0 0 8px 0;
+            margin: 0 0 10px 0;
         }
 
     .info-grid {
         display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 6px 12px;
-        font-size: 13px;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px 12px;
+        font-size: 15px;
     }
 
     .info-item {
@@ -248,7 +336,12 @@
         .info-item strong {
             font-weight: 600;
             color: #555;
-            font-size: 11px;
+            font-size: 12px;
+            opacity: 0.8;
+        }
+
+        .info-item[data-col="notes"] {
+            font-size: 14px;
         }
 
     .sample-card-footer {
@@ -267,7 +360,61 @@
         padding: 20px 0;
     }
 
-    /* Styly pro Select2 */
+    /* === STYLY PRO DODATEČNÉ FOTKY === */
+    .additional-photos-gallery {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        justify-content: center;
+    }
+
+        .additional-photos-gallery a {
+            display: block;
+        }
+
+        .additional-photos-gallery img {
+            width: 84px;
+            height: 84px;
+            object-fit: cover;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+        }
+
+            .additional-photos-gallery img:hover {
+                transform: scale(1.1);
+                box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            }
+
+    /* === STYLY PRO FULLSCREEN NÁHLED === */
+    #image-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.85);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 2000;
+        backdrop-filter: blur(8px);
+    }
+
+        #image-overlay.active {
+            display: flex;
+        }
+
+        #image-overlay img {
+            max-width: 90vw;
+            max-height: 90vh;
+            object-fit: contain;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            border-radius: 8px;
+        }
+
+    /* === STYLY PRO SELECT2 === */
     .select2-container .select2-selection--multiple {
         border: 1px solid var(--border) !important;
         border-radius: 7px !important;
@@ -296,19 +443,19 @@
             <img src="@Url.Content("~/logo.png")" alt="ODPO logo" />
             <h1>Katalog vzorků</h1>
         </a>
-        <div class="header-actions">
+        <div class="header-right-actions">
             <a href="@Url.Action("Create", "Photos")" class="action-btn primary">+ Nový vzorek</a>
             <a href="@Url.Action("Database", "Admin")" class="action-btn">Správa dat</a>
-        </div>
-        <div class="user-row" style="margin-left:auto;">
             @if (User?.Identity?.IsAuthenticated == true)
             {
                 <div class="user-pill" title="@User?.Identity?.Name">@User?.Identity?.Name</div>
-                <form asp-controller="Account" asp-action="Logout" method="post"><button type="submit" class="action-pill" title="Odhlásit se">Odhlásit</button></form>
+                <form class="logout-form" asp-controller="Account" asp-action="Logout" method="post">
+                    <button type="submit" class="action-btn" title="Odhlásit se">Odhlásit</button>
+                </form>
             }
             else
             {
-                <a asp-controller="Account" asp-action="Login" class="action-pill" title="Přihlásit">Přihlásit</a>
+                <a asp-controller="Account" asp-action="Login" class="action-btn">Přihlásit</a>
             }
         </div>
     </div>
@@ -318,66 +465,109 @@
     <!-- LEVÝ PANEL S FILTRY -->
     <aside class="filter-sidebar">
         <div class="filter-section">
-            <h2>Filtrovat</h2>
+            <h2>Filtrovat & Zobrazit</h2>
             <form method="get" class="filter-form">
-                <input type="search" name="search" placeholder="Hledat cokoliv…" value="@(Model?.Search ?? "")" />
+                <!-- Kontejner pro vyhledávání s ikonou -->
+                <!-- Kontejner pro vyhledávání, který se chová jako řádek filtru -->
+                <div class="filter-row">
+                    <!-- Prázdný placeholder, který zarovná pole s ostatními filtry -->
+                    <div class="filter-toggle-placeholder"></div>
 
-                <select name="supplier" class="multi-select" multiple="multiple" data-placeholder="Filtr pro dodavatele">
-                    <option></option> @* <-- TATO PRÁZDNÁ VOLBA JE KLÍČOVÁ *@
-                    @foreach (var s in Model.Suppliers)
-                    {
-                        <option value="@s" selected="@(Model.Supplier.Contains(s))">@s</option>
-                    }
-                </select>
-                <select name="material" class="multi-select" multiple="multiple" data-placeholder="Filtr pro materiály">
-                    <option></option>
-                    @foreach (var m in Model.Materials)
-                    {
-                        <option value="@m" selected="@(Model.Material.Contains(m))">@m</option>
-                    }
-                </select>
-                <select name="color" class="multi-select" multiple="multiple" data-placeholder="Filtr pro barvy">
-                    <option></option>
-                    @foreach (var c in Model.Colors)
-                    {
-                        <option value="@c" selected="@(Model.Color.Contains(c))">@c</option>
-                    }
-                </select>
-                <select name="position" class="multi-select" multiple="multiple" data-placeholder="Filtr pro pozice">
-                    <option></option>
-                    @foreach (var p in Model.Positions)
-                    {
-                        <option value="@p" selected="@(Model.Position.Contains(p))">@p</option>
-                    }
-                </select>
-                <select name="form" class="multi-select" multiple="multiple" data-placeholder="Filtr pro formy">
-                    <option></option>
-                    @foreach (var f in Model.Forms)
-                    {
-                        <option value="@f" selected="@(Model.Form.Contains(f))">@f</option>
-                    }
-                </select>
-                <select name="filler" class="multi-select" multiple="multiple" data-placeholder="Filtr pro plniva">
-                    <option></option>
-                    @foreach (var f in Model.Fillers)
-                    {
-                        <option value="@f" selected="@(Model.Filler.Contains(f))">@f</option>
-                    }
-                </select>
-                <select name="monthlyQuantity" class="multi-select" multiple="multiple" data-placeholder="Filtr pro množství">
-                    <option></option>
-                    @foreach (var q in Model.MonthlyQuantities)
-                    {
-                        <option value="@q" selected="@(Model.MonthlyQuantity.Contains(q))">@q</option>
-                    }
-                </select>
-                <select name="mfi" class="multi-select" multiple="multiple" data-placeholder="Filtr pro MFI">
-                    <option></option>
-                    @foreach (var m in Model.Mfis)
-                    {
-                        <option value="@m" selected="@(Model.Mfi.Contains(m))">@m</option>
-                    }
-                </select>
+                    <!-- Kontejner, který bude vypadat jako filtr -->
+                    <div class="search-input-wrapper">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="search-icon">
+                            <path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z" clip-rule="evenodd" />
+                        </svg>
+                        <input type="search" name="search" placeholder="Hledat cokoliv…" value="@(Model?.Search ?? "")" />
+                    </div>
+                </div>
+
+                <!-- NOVÁ STRUKTURA FILTRŮ -->
+                <div class="filter-row">
+                    <input type="checkbox" class="filter-toggle col-toggle" data-col="supplier" title="Zobrazit sloupec" checked />
+                    <select name="supplier" class="multi-select" multiple="multiple" data-placeholder="Filtr pro dodavatele">
+                        <option></option>
+                        @foreach (var s in Model.Suppliers)
+                        {
+                            <option value="@s" selected="@(Model.Supplier.Contains(s))">@s</option>
+                        }
+                    </select>
+                </div>
+                <div class="filter-row">
+                    <input type="checkbox" class="filter-toggle col-toggle" data-col="material" title="Zobrazit sloupec" checked />
+                    <select name="material" class="multi-select" multiple="multiple" data-placeholder="Filtr pro materiály">
+                        <option></option>
+                        @foreach (var m in Model.Materials)
+                        {
+                            <option value="@m" selected="@(Model.Material.Contains(m))">@m</option>
+                        }
+                    </select>
+                </div>
+                <div class="filter-row">
+                    <input type="checkbox" class="filter-toggle col-toggle" data-col="color" title="Zobrazit sloupec" checked />
+                    <select name="color" class="multi-select" multiple="multiple" data-placeholder="Filtr pro barvy">
+                        <option></option>
+                        @foreach (var c in Model.Colors)
+                        {
+                            <option value="@c" selected="@(Model.Color.Contains(c))">@c</option>
+                        }
+                    </select>
+                </div>
+                <div class="filter-row">
+                    <input type="checkbox" class="filter-toggle col-toggle" data-col="position" title="Zobrazit sloupec" checked />
+                    <select name="position" class="multi-select" multiple="multiple" data-placeholder="Filtr pro pozice">
+                        <option></option>
+                        @foreach (var p in Model.Positions)
+                        {
+                            <option value="@p" selected="@(Model.Position.Contains(p))">@p</option>
+                        }
+                    </select>
+                </div>
+                <div class="filter-row">
+                    <input type="checkbox" class="filter-toggle col-toggle" data-col="form" title="Zobrazit sloupec" checked />
+                    <select name="form" class="multi-select" multiple="multiple" data-placeholder="Filtr pro formy">
+                        <option></option>
+                        @foreach (var f in Model.Forms)
+                        {
+                            <option value="@f" selected="@(Model.Form.Contains(f))">@f</option>
+                        }
+                    </select>
+                </div>
+                <div class="filter-row">
+                    <input type="checkbox" class="filter-toggle col-toggle" data-col="filler" title="Zobrazit sloupec" checked />
+                    <select name="filler" class="multi-select" multiple="multiple" data-placeholder="Filtr pro plniva">
+                        <option></option>
+                        @foreach (var f in Model.Fillers)
+                        {
+                            <option value="@f" selected="@(Model.Filler.Contains(f))">@f</option>
+                        }
+                    </select>
+                </div>
+                <div class="filter-row">
+                    <input type="checkbox" class="filter-toggle col-toggle" data-col="monthlyquantity" title="Zobrazit sloupec" checked />
+                    <select name="monthlyQuantity" class="multi-select" multiple="multiple" data-placeholder="Filtr pro množství">
+                        <option></option>
+                        @foreach (var q in Model.MonthlyQuantities)
+                        {
+                            <option value="@q" selected="@(Model.MonthlyQuantity.Contains(q))">@q</option>
+                        }
+                    </select>
+                </div>
+                <div class="filter-row">
+                    <input type="checkbox" class="filter-toggle col-toggle" data-col="mfi" title="Zobrazit sloupec" checked />
+                    <select name="mfi" class="multi-select" multiple="multiple" data-placeholder="Filtr pro MFI">
+                        <option></option>
+                        @foreach (var m in Model.Mfis)
+                        {
+                            <option value="@m" selected="@(Model.Mfi.Contains(m))">@m</option>
+                        }
+                    </select>
+                </div>
+                <div class="filter-row">
+                    <input type="checkbox" class="filter-toggle col-toggle" data-col="notes" title="Zobrazit sloupec" checked />
+                    <!-- Placeholder pro poznámky, i když nemají filtr -->
+                    <div style="flex-grow: 1; padding: 8px; border: 1px solid transparent; color: #999;">Poznámky</div>
+                </div>
 
                 <div class="filter-controls">
                     <button type="submit" class="action-btn primary">Filtrovat</button>
@@ -385,22 +575,7 @@
                 </div>
             </form>
         </div>
-
-        <div class="filter-section">
-            <h2>Zobrazit pole</h2>
-            <div class="column-toggle-form">
-                <label><input type="checkbox" class="col-toggle" data-col="id" checked> ID</label>
-                <label><input type="checkbox" class="col-toggle" data-col="position" checked> Pozice</label>
-                <label><input type="checkbox" class="col-toggle" data-col="supplier" checked> Dodavatel</label>
-                <label><input type="checkbox" class="col-toggle" data-col="material" checked> Materiál</label>
-                <label><input type="checkbox" class="col-toggle" data-col="color" checked> Barva</label>
-                <label><input type="checkbox" class="col-toggle" data-col="form" checked> Forma</label>
-                <label><input type="checkbox" class="col-toggle" data-col="filler" checked> Plnivo</label>
-                <label><input type="checkbox" class="col-toggle" data-col="monthlyquantity" checked> Množství (měsíc)</label>
-                <label><input type="checkbox" class="col-toggle" data-col="mfi" checked> MFI</label>
-                <label><input type="checkbox" class="col-toggle" data-col="notes" checked> Poznámky</label>
-            </div>
-        </div>
+        <!-- PŮVODNÍ SEKCE "ZOBRAZIT POLE" JE NYNÍ ODSTRANĚNA -->
     </aside>
 
     <!-- PRAVÝ OBSAH S DLAŽDICEMI -->
@@ -410,17 +585,32 @@
             {
                 <div class="sample-card">
                     <div class="sample-card-header">
-                        <a href="@Url.Action("Details", new { id = item.Id })">
-                            <img class="thumb" src="@(ImageSrc(item) ?? "https://via.placeholder.com/120")" alt="Foto vzorku" />
-                        </a>
+                        <div class="image-column">
+                            <a href="@Url.Action("Details", new { id = item.Id })">
+                                <img class="thumb" src="@(ImageSrc(item) ?? "https://via.placeholder.com/180")" alt="Foto vzorku" />
+                            </a>
+                            @{
+                                var additionalPhotoPaths = string.IsNullOrEmpty(item.AdditionalPhotos) ? Enumerable.Empty<string>() : item.AdditionalPhotos.Split(';', StringSplitOptions.RemoveEmptyEntries);
+                            }
+                            @if (additionalPhotoPaths.Any())
+                            {
+                                <div class="additional-photos-gallery">
+                                    @foreach (var photoPath in additionalPhotoPaths)
+                                    {
+                                        <a href="@Url.Content(photoPath)" class="gallery-thumb-link">
+                                            <img src="@Url.Content(photoPath)" alt="Dodatečná fotografie" />
+                                        </a>
+                                    }
+                                </div>
+                            }
+                        </div>
                         <div class="sample-card-info">
                             <h3 class="name">@Safe(item.OriginalName)</h3>
                             <div class="info-grid">
-                                <div class="info-item" data-col="id"><strong>ID</strong><span>@item.Id</span></div>
-                                <div class="info-item" data-col="position"><strong>Pozice</strong><span>@Safe(item.Position)</span></div>
                                 <div class="info-item" data-col="supplier"><strong>Dodavatel</strong><span>@Safe(item.Supplier)</span></div>
                                 <div class="info-item" data-col="material"><strong>Materiál</strong><span>@Safe(item.Material)</span></div>
                                 <div class="info-item" data-col="color"><strong>Barva</strong><span>@Safe(item.Color)</span></div>
+                                <div class="info-item" data-col="position"><strong>Pozice</strong><span>@Safe(item.Position)</span></div>
                                 <div class="info-item" data-col="form"><strong>Forma</strong><span>@Safe(item.Form)</span></div>
                                 <div class="info-item" data-col="filler"><strong>Plnivo</strong><span>@Safe(item.Filler)</span></div>
                                 <div class="info-item" data-col="monthlyquantity"><strong>Množství (měsíc)</strong><span>@Safe(item.MonthlyQuantity)</span></div>
@@ -428,13 +618,12 @@
                             </div>
                         </div>
                     </div>
-                    <div class="info-item" data-col="notes" style="margin-top: 8px; font-size: 13px;">
+                    <div class="info-item" data-col="notes" style="margin-top: 8px;">
                         <strong>Poznámky</strong>
                         <span style="white-space: normal;">@Safe(item.Notes)</span>
                     </div>
                     <div class="sample-card-footer">
-                        <a href="@Url.Action("Details", new { id = item.Id })" class="action-btn">Detail</a>
-                        <a href="@Url.Action("Edit", new { id = item.Id })" class="action-btn">Upravit</a>
+                        <a href="@Url.Action("Edit", new { id = item.Id })" class="action-btn primary">Upravit</a>
                         <a href="@Url.Action("Delete", new { id = item.Id })" onclick="return confirm('Opravdu chcete smazat tento vzorek?');" class="action-btn destructive">Smazat</a>
                     </div>
                 </div>
@@ -444,35 +633,69 @@
     </main>
 </div>
 
-<!-- Skripty pro Select2 -->
+<!-- PRVEK PRO ZOBRAZENÍ FOTKY -->
+<div id="image-overlay">
+    <img id="overlay-image" src="" alt="Fullscreen náhled" />
+</div>
+
+<!-- Skripty -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-<!-- Skripty pro Select2 -->
 <script>
     document.addEventListener("DOMContentLoaded", function() {
         // Inicializace Select2
-        $('.multi-select').select2({
-            // Řádek "placeholder" jsme smazali.
-            // Select2 si teď placeholder vezme z 'data-placeholder' atributu v HTML.
-            allowClear: true,
-            closeOnSelect: false
-        });
+        $('.multi-select').select2({ allowClear: true, closeOnSelect: false });
 
+        // Přepínání viditelnosti polí
         const checkboxes = document.querySelectorAll(".col-toggle");
-
-        function toggleField(colName, isVisible) {
-            const fields = document.querySelectorAll(`.info-item[data-col='${colName}']`);
-            fields.forEach(field => {
-                field.style.display = isVisible ? "flex" : "none";
-            });
-        }
-
+    function toggleField(colName, isVisible) {
+        // Nový selektor, který hledá jen uvnitř karet .sample-card
+        document.querySelectorAll(`.sample-card [data-col='${colName}']`).forEach(field => {
+            field.style.display = isVisible ? "flex" : "none";
+        });
+    }
         checkboxes.forEach(cb => {
             const colName = cb.dataset.col;
             toggleField(colName, cb.checked);
-            cb.addEventListener("change", function() {
-                toggleField(colName, this.checked);
+            cb.addEventListener("change", function() { toggleField(colName, this.checked); });
+        });
+
+        // --- NÁHLED OBRÁZKU ---
+        const overlay = document.getElementById('image-overlay');
+        const overlayImage = document.getElementById('overlay-image');
+        let hoverTimer = null;
+
+        // 1. Náhled pro HLAVNÍ obrázek (na HOVER)
+        document.querySelectorAll('.thumb').forEach(thumb => {
+            thumb.addEventListener('mouseenter', () => {
+                hoverTimer = setTimeout(() => {
+                    overlayImage.src = thumb.src;
+                    overlay.classList.add('active');
+                }, 500);
             });
+            thumb.addEventListener('mouseleave', () => {
+                clearTimeout(hoverTimer);
+            });
+        });
+
+        // 2. Náhled pro DODATEČNÉ obrázky (na KLIK)
+        document.querySelectorAll('.gallery-thumb-link').forEach(link => {
+            link.addEventListener('click', function(event) {
+                event.preventDefault();
+                const imageSrc = this.querySelector('img').src;
+                overlayImage.src = imageSrc;
+                overlay.classList.add('active');
+            });
+        });
+
+        // 3. Zavření náhledu
+        function closeOverlay() {
+            overlay.classList.remove('active');
+        }
+        overlay.addEventListener('click', closeOverlay);
+        overlay.addEventListener('mouseleave', closeOverlay);
+        document.addEventListener('keydown', (e) => {
+            if (e.key === "Escape") closeOverlay();
         });
     });
 
