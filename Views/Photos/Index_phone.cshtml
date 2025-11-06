@@ -6,22 +6,21 @@
     Func<PhotoApp.Models.PhotoRecord, string> ImageSrc = item =>
         !string.IsNullOrWhiteSpace(item.ImagePath) ? Url.Content(item.ImagePath) :
         !string.IsNullOrWhiteSpace(item.PhotoPath) ? Url.Content(item.PhotoPath) : null;
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 }
 
-<!-- Head/meta improvements for PWA support -->
+<!-- Head/meta tagy pro PWA a mobilní zařízení -->
 <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#16a34a">
     <link rel="manifest" href="/manifest.json">
-    <!-- Android / Chrome -->
     <meta name="mobile-web-app-capable" content="yes">
-    <!-- iOS -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="apple-touch-icon" href="/icons/icon-192.png">
 </head>
 
 <style>
+    /* === SJEDNOCENÉ GLOBÁLNÍ STYLY === */
     :root {
         --brand: #16a34a;
         --brand-dark: #166534;
@@ -32,6 +31,7 @@
         --pad: 16px;
         --gap: 12px;
         --radius: 16px;
+        /* Jednotná výška spodní lišty pro mobilní zobrazení */
         --bar-height: 96px;
     }
 
@@ -51,7 +51,8 @@
         font-family: system-ui,-apple-system,Segoe UI,Roboto,Ubuntu;
         color: var(--text);
         background: var(--bg);
-        padding-bottom: 96px;
+        /* Odsazení stránky odpovídá výšce spodní lišty */
+        padding-bottom: var(--bar-height);
     }
 
     .container {
@@ -59,25 +60,22 @@
         max-width: 1100px;
         margin: 0 auto;
         padding: var(--pad);
-        box-sizing: border-box;
     }
 
-    /* Header - logo centered and bigger */
+    /* === HLAVIČKA === */
     header {
         background: #fff;
         border-bottom: 2px solid var(--border);
         box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-        width: 100%;
     }
 
     .header-inner {
         display: flex;
         align-items: center;
         justify-content: center;
-        padding: 24px 0;
+        padding: 24px var(--pad);
         max-width: 1100px;
         margin: 0 auto;
-        box-sizing: border-box;
     }
 
     .brand {
@@ -89,25 +87,22 @@
         color: inherit;
     }
 
-    .brand img {
-        height: 120px;
-        width: auto;
-        display: block;
-    }
+        .brand img {
+            height: 120px;
+        }
 
-    .brand h1 {
-        margin: 0;
-        font-size: 24px;
-        font-weight: 700;
-        color: var(--brand-dark);
-        text-align: center;
-    }
+        .brand h1 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--brand-dark);
+            text-align: center;
+        }
 
     .visually-hidden {
         position: absolute;
         width: 1px;
         height: 1px;
-        padding: 0;
         margin: -1px;
         overflow: hidden;
         clip: rect(0, 0, 0, 0);
@@ -115,7 +110,7 @@
         border-width: 0;
     }
 
-    /* Header actions (kept minimal here) */
+    /* === TLAČÍTKA A FORMULÁŘE === */
     .action-btn, .action-pill {
         display: inline-flex;
         align-items: center;
@@ -130,82 +125,71 @@
         cursor: pointer;
     }
 
-    .action-btn.primary {
-        background: var(--brand);
-        color: #fff;
-        border-color: var(--brand-dark);
-    }
+        .action-btn.primary, .action-pill.primary {
+            background: var(--brand);
+            color: #fff;
+            border-color: var(--brand-dark);
+        }
 
-    .action-btn.destructive {
-        background: #ef4444;
-        color: #fff;
-        border-color: #b91c1c;
-    }
+        .action-btn.destructive, .action-pill.destructive {
+            background: #ef4444;
+            color: #fff;
+            border-color: #b91c1c;
+        }
 
     .inline-form {
         margin: 0;
         display: inline-block;
     }
 
-    /* Toolbar/search area remains above the list */
+    /* === LIŠTA S FILTRY === */
     .toolbar {
         background: #fff;
         border: 1px solid var(--border);
         border-radius: var(--radius);
         padding: var(--pad);
         margin-bottom: var(--pad);
-        width: 100%;
-        box-sizing: border-box;
     }
 
-    /* FILTER FORM - 2 sloupce na mobilu, více na desktopu */
     .filter-form {
         display: grid;
         grid-template-columns: repeat(2, 1fr);
         gap: var(--gap);
         align-items: stretch;
-        width: 100%;
-        box-sizing: border-box;
     }
 
-    .filter-form input, .filter-form select {
-        width: 100%;
-        padding: 14px;
-        border-radius: 10px;
-        border: 1px solid var(--border);
-        font-size: 18px;
-        background: #fff;
-        box-sizing: border-box;
-    }
+        .filter-form input, .filter-form select {
+            width: 100%;
+            padding: 14px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            font-size: 18px;
+            background: #fff;
+        }
 
-    /* Vyhledávací pole přes celou šířku */
-    .filter-form input[type="search"] {
-        grid-column: 1 / -1;
-    }
+            .filter-form input[type="search"] {
+                grid-column: 1 / -1;
+            }
 
     .filter-controls {
         display: grid;
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: 1fr 1fr;
         gap: 10px;
         grid-column: 1 / -1;
         margin-top: 4px;
-        width: 100%;
-        box-sizing: border-box;
     }
 
-    .filter-controls .action-btn {
-        width: 100%;
-        padding: 12px;
-        font-size: 18px;
-    }
+        .filter-controls .action-btn {
+            width: 100%;
+            padding: 12px;
+            font-size: 18px;
+        }
 
-    /* Cards - ZLEPŠENO */
+    /* === KARTY POLOŽEK === */
     .card-list {
         display: grid;
         grid-template-columns: 1fr;
         gap: var(--gap);
-        width: 100%;
-        box-sizing: border-box;
         padding-bottom: 16px;
     }
 
@@ -219,16 +203,12 @@
         align-items: center;
         gap: 12px;
         font-size: 16px;
-        width: 100%;
-        box-sizing: border-box;
         box-shadow: 0 2px 8px rgba(0,0,0,.05);
     }
 
-    /* Hlavní obrázek - VĚTŠÍ */
     .thumb {
         width: 100%;
         max-width: 300px;
-        height: auto;
         aspect-ratio: 1;
         object-fit: cover;
         border-radius: 16px;
@@ -242,18 +222,17 @@
         align-items: center;
         gap: 6px;
         text-align: center;
-        width: 100%;
     }
 
-    .card-info div {
-        line-height: 1.4;
-        font-size: 15px;
-    }
+        .card-info div {
+            line-height: 1.4;
+            font-size: 15px;
+        }
 
-    .card-info strong {
-        font-weight: 600;
-        color: #333;
-    }
+        .card-info strong {
+            font-weight: 600;
+            color: #333;
+        }
 
     .card-footer {
         display: flex;
@@ -262,24 +241,23 @@
         justify-content: center;
         margin-top: 12px;
         width: 100%;
-        box-sizing: border-box;
     }
 
-    .card-footer .action-btn {
-        flex: 1;
-        min-width: 90px;
-        padding: 10px 12px;
-        font-size: 14px;
+        .card-footer .action-btn {
+            flex: 1;
+            min-width: 90px;
+            padding: 10px 12px;
+            font-size: 14px;
         }
-    /* Bottom action bar - MENŠÍ VERZE (2/5 z původních 180px = 108px) */
+
+    /* === SPODNÍ LIŠTA === */
     .bottom-bar {
         position: fixed;
         left: 0;
         right: 0;
         bottom: 0;
-        height: 108px;
+        height: var(--bar-height); /* Používá jednotnou výšku */
         background: linear-gradient(180deg, var(--brand), #166534);
-        border-top: 1px solid rgba(0,0,0,0.06);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -316,7 +294,6 @@
             .bottom-bar .action-btn img {
                 width: 29px;
                 height: 29px;
-                display: block;
                 filter: drop-shadow(0 2px 2px rgba(0,0,0,0.25));
             }
 
@@ -327,58 +304,87 @@
                 text-align: center;
             }
 
-    /* Mobile responsive */
-    @@media (max-width: 420px) {
-        .bottom-bar
+            .bottom-bar .action-btn.action-btn-destructive {
+                background: rgba(239, 68, 68, 0.7); /* Červená s průhledností */
+                border-color: rgba(255,255,255,0.1);
+            }
 
-    {
-        height: 96px;
+    /* === PLOVOUCÍ TLAČÍTKO '+' === */
+    .fab {
+        display: none; /* Na desktopu skryté */
+        position: fixed;
+        z-index: 1000;
+        left: 20px;
+        /* Dynamická pozice nad spodní lištou */
+        bottom: calc(var(--bar-height) + 14px);
+        width: 56px;
+        height: 56px;
+        background-color: var(--brand);
+        color: var(--white);
+        border-radius: 50%;
+        box-shadow: 0 6px 10px rgba(0,0,0,0.2);
+        align-items: center;
+        justify-content: center;
+        font-size: 28px;
+        font-weight: 300;
+        text-decoration: none;
+        transition: background-color 0.2s, transform 0.2s;
     }
 
-    .bottom-bar .actions-grid {
-        grid-template-columns: repeat(3, 1fr);
-        gap: 8px;
-    }
-
-    .bottom-bar .action-btn {
-        min-height: 51px;
-    }
-
-        .bottom-bar .action-btn img {
-            width: 25px;
-            height: 25px;
+        .fab:hover {
+            background-color: var(--brand-dark);
+            transform: scale(1.05);
         }
 
-        .bottom-bar .action-btn .label {
-            font-size: 7.5px;
-        }
-
-    }
-
+    /* === PATIČKA === */
     .footer {
         text-align: center;
         font-size: 16px;
-        padding: 20px 0 100px;
+        padding: 20px 0;
         color: #3b6b3b;
-        width: 100%;
     }
 
-    /* Tablet */
-    @@media (min-width: 600px) and (max-width: 767px) {
-        .brand img {
-            height: 100px;
+    /* === RESPONZIVNÍ ZOBRAZENÍ === */
+
+    /* Desktop - 1200px a více */
+    @@media (min-width: 1200px) {
+        .card-list {
+            grid-template-columns: repeat(2, 1fr);
         }
 
-        .brand h1 {
-            font-size: 22px;
+        .filter-form {
+            grid-template-columns: repeat(3, 1fr);
         }
 
-        .thumb {
-            max-width: 350px;
+            .filter-form input[type="search"] {
+                grid-column: 1 / -1;
+            }
+    }
+
+    /* Větší Tablety - skrýváme spodní lištu a FAB */
+    @@media (min-width: 768px) {
+        body {
+            padding-bottom: 0;
+        }
+
+        .bottom-bar {
+            display: none;
+        }
+
+        .fab {
+            display: none;
         }
     }
 
-    /* Mobile responsive */
+    /* Menší Tablety */
+    @@media (max-width: 767px) {
+        .fab {
+            display: flex;
+        }
+        /* Zobrazí se FAB */
+    }
+
+    /* Mobily */
     @@media (max-width: 599px) {
         .brand img {
             height: 90px;
@@ -405,10 +411,10 @@
             gap: 8px;
         }
 
-        .filter-form input, .filter-form select {
-            padding: 12px;
-            font-size: 16px;
-        }
+            .filter-form input, .filter-form select {
+                padding: 12px;
+                font-size: 16px;
+            }
 
         .item-card {
             padding: 14px;
@@ -428,41 +434,19 @@
             gap: 6px;
         }
 
-        .card-footer .action-btn {
-            padding: 9px 10px;
-            font-size: 13px;
-            min-width: 75px;
-        }
-
-        .bottom-bar {
-            height: 200px;
-        }
-
-        .bottom-bar .actions-grid {
-            gap: 6px;
-        }
-
-        .bottom-bar .action-btn {
-            min-height: 48px;
-            padding: 5px;
-        }
-
-        .bottom-bar .action-btn img {
-            width: 22px;
-            height: 22px;
-        }
-
-        .bottom-bar .action-btn .label {
-            font-size: 7px;
-        }
+            .card-footer .action-btn {
+                padding: 9px 10px;
+                font-size: 13px;
+                min-width: 75px;
+            }
 
         .footer {
-            padding: 16px 0 80px;
+            padding-bottom: 20px;
             font-size: 14px;
         }
     }
 
-    /* Extra small - 420px and below */
+    /* Extra malé mobily */
     @@media (max-width: 420px) {
         .brand img {
             height: 80px;
@@ -485,7 +469,7 @@
         }
 
         .card-footer .action-btn {
-            padding: 8px 8px;
+            padding: 8px;
             font-size: 12px;
             min-width: 65px;
         }
@@ -494,44 +478,24 @@
             font-size: 13px;
         }
 
-        .bottom-bar {
-            height: 200px;
-        }
-
         .bottom-bar .actions-grid {
             gap: 6px;
-            max-width: 380px;
         }
 
         .bottom-bar .action-btn {
-            min-height: 42px;
-            padding: 4px;
-            gap: 3px;
+            min-height: 51px;
+            gap: 4px;
+            padding: 5px;
         }
 
-        .bottom-bar .action-btn img {
-            width: 20px;
-            height: 20px;
-        }
+            .bottom-bar .action-btn img {
+                width: 22px;
+                height: 22px;
+            }
 
-        .bottom-bar .action-btn .label {
-            font-size: 6.5px;
-        }
-    }
-
-    /* Desktop layout - rozšíreno */
-    @@media (min-width: 1200px) {
-        .card-list {
-            grid-template-columns: repeat(2, 1fr);
-        }
-
-        .filter-form {
-            grid-template-columns: repeat(3, 1fr);
-        }
-
-        .filter-form input[type="search"] {
-            grid-column: 1 / -1;
-        }
+            .bottom-bar .action-btn .label {
+                font-size: 8px;
+            }
     }
 </style>
 
@@ -545,7 +509,7 @@
 </header>
 
 <main class="container" role="main">
-    <div class="user-actions" style="display:flex;justify-content:flex-end;margin-bottom:8px;">
+    <div class="user-actions" style="display:flex; justify-content:flex-end; margin-bottom:8px; gap: 8px;">
         @if (User?.Identity?.IsAuthenticated ?? false)
         {
             <form asp-controller="Account" asp-action="Logout" method="post" class="inline-form">
@@ -562,7 +526,6 @@
     <div class="toolbar">
         <form method="get" class="filter-form" autocomplete="on">
             <input type="search" name="search" placeholder="Hledat…" value="@(Model?.Search ?? "")" />
-
             <select name="supplier" aria-label="Dodavatel">
                 <option value="">Všichni dodavatelé</option>
                 @foreach (var s in Model?.Suppliers ?? Enumerable.Empty<string>())
@@ -570,7 +533,6 @@
                     <option value="@s" selected="@(s == Model?.Supplier)">@s</option>
                 }
             </select>
-
             <select name="material" aria-label="Materiál">
                 <option value="">Všechny materiály</option>
                 @foreach (var m in Model?.Materials ?? Enumerable.Empty<string>())
@@ -578,7 +540,6 @@
                     <option value="@m" selected="@(m == Model?.Material)">@m</option>
                 }
             </select>
-
             <select name="color" aria-label="Barva">
                 <option value="">Všechny barvy</option>
                 @foreach (var c in Model?.Colors ?? Enumerable.Empty<string>())
@@ -586,7 +547,6 @@
                     <option value="@c" selected="@(c == Model?.Color)">@c</option>
                 }
             </select>
-
             <select name="position" aria-label="Pozice">
                 <option value="">Všechny pozice</option>
                 @foreach (var p in Model?.Positions ?? Enumerable.Empty<string>())
@@ -594,7 +554,6 @@
                     <option value="@p" selected="@(p == Model?.Position)">@p</option>
                 }
             </select>
-
             <div class="filter-controls">
                 <button type="submit" class="action-btn primary">Filtrovat</button>
                 <a href="@Url.Action("Index", "Photos")" class="action-btn">Smazat filtry</a>
@@ -632,22 +591,25 @@
     <div class="footer">Data se ukládají v databázi. Pro zálohu exportujte data ze serveru.</div>
 </main>
 
-<!-- Bottom fixed action bar - 1:1 STEJNÁ JAKO EDIT -->
+<!-- Plovoucí tlačítko pro přidání nového vzorku (pouze pro mobilní zařízení) -->
+<a asp-controller="Photos" asp-action="Create" class="fab" title="Přidat nový vzorek" aria-label="Přidat nový vzorek">
+    +
+</a>
+
+<!-- Spodní navigační lišta (pouze pro mobilní zařízení) -->
 <nav class="bottom-bar" role="navigation" aria-label="Hlavní akce">
-    <div class="actions-grid" role="menu" aria-label="Hlavní akce">
+    <div class="actions-grid" role="menu">
         <a role="menuitem" href="@Url.Action("Create", "Photos")" class="action-btn" title="Nový vzorek">
-            <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 24 24' fill='white'><rect rx='4' width='24' height='24' fill='white' fill-opacity='0'/><path d='M11 11V6h2v5h5v2h-5v5h-2v-5H6v-2z' fill='%23ffffff'/></svg>" alt="Nový" />
+            <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 24 24' fill='white'><path d='M11 11V6h2v5h5v2h-5v5h-2v-5H6v-2z' fill='%23ffffff'/></svg>" alt="Nový" />
             <div class="label">Nový</div>
         </a>
-
         <a role="menuitem" href="@Url.Action("Database", "Admin")" class="action-btn" title="Správa dat">
             <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 24 24' fill='white'><path d='M12 3C7.58 3 4 4.79 4 7v10c0 2.21 3.59 4 8 4s8-1.79 8-4V7c0-2.21-3.58-4-8-4zm6 14c0 .55-2.69 2-6 2s-6-1.45-6-2v-2.23c1.61.78 3.72 1.23 6 1.23s4.39-.45 6-1.23V17zm0-4.55c-1.3.95-3.58 1.55-6 1.55s-4.7-.6-6-1.55V9.64c1.47.83 3.61 1.36 6 1.36s4.53-.53 6-1.36v2.81zM12 9C8.69 9 6 7.55 6 7s2.69-2 6-2 6 1.45 6 2-2.69 2-6 2z' fill='%23ffffff'/></svg>" alt="Správa dat" />
             <div class="label">Správa dat</div>
         </a>
-
         @if (User?.Identity?.IsAuthenticated ?? false)
         {
-            <form asp-controller="Home" asp-action="ClearPhotos" method="post" onsubmit="return confirm('Opravdu vymazat všechny fotky?');" style="margin:0; display:flex; justify-content:center;" role="none">
+            <form asp-controller="Home" asp-action="ClearPhotos" method="post" onsubmit="return confirm('Opravdu vymazat všechny fotky?');" style="margin:0; display:contents;" role="none">
                 @Html.AntiForgeryToken()
                 <button type="submit" class="action-btn action-btn-destructive" title="Vymazat vše" aria-label="Vymazat vše">
                     <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 24 24' fill='white'><path d='M6 19a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z' fill='%23ffffff'/></svg>" alt="Vymazat" />
@@ -659,6 +621,7 @@
 </nav>
 
 <script>
+    // Skript pro Service Worker a PWA install prompt
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
             navigator.serviceWorker.register('/service-worker.js', { scope: '/' })
