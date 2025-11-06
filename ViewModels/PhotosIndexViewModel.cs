@@ -18,13 +18,20 @@ namespace PhotoApp.ViewModels
         public List<string> Positions { get; set; } = new List<string>();
         public List<string> Fillers { get; set; } = new List<string>();
 
+        public List<string> MonthlyQuantities { get; set; } = new List<string>();
+        public List<string> Mfis { get; set; } = new List<string>();
+        public List<string> Forms { get; set; } = new List<string>();
+
         // aktuální filtry (vázané na query string)
         public string Search { get; set; }
         public string Supplier { get; set; }
         public string Material { get; set; }
         public string Type { get; set; }
         public string Color { get; set; }
+        public string MonthlyQuantity { get; set; }
+        public string Mfi { get; set; }
 
+        public string Form { get; set; }
         // nově: aktivní hodnoty
         public string Name { get; set; }
         public string Position { get; set; }

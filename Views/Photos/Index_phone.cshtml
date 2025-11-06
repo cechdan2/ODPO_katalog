@@ -523,7 +523,7 @@
         }
     </div>
 
-    <div class="toolbar">
+@*     <div class="toolbar">
         <form method="get" class="filter-form" autocomplete="on">
             <input type="search" name="search" placeholder="Hledat…" value="@(Model?.Search ?? "")" />
             <select name="supplier" aria-label="Dodavatel">
@@ -559,7 +559,7 @@
                 <a href="@Url.Action("Index", "Photos")" class="action-btn">Smazat filtry</a>
             </div>
         </form>
-    </div>
+    </div> *@
 
     <div class="card-list" role="list">
         @foreach (var item in Model.Items)
