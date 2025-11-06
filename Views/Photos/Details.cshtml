@@ -27,12 +27,12 @@
     /* === GLOBÁLNÍ A MOBILNÍ STYLY (MOBILE-FIRST) === */
     :root {
         --brand: #16a34a;
+        --brand-dark: #166534;
         --border: #dbe7d9;
         --bg: #f4fbf4;
         --text: #0b1f0b;
         --white: #fff;
         --radius: 12px;
-        --bar-height-mobile: 96px; /* Jednotná výška pro mobil */
     }
 
     * {
@@ -44,8 +44,7 @@
         font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
         color: var(--text);
         overflow-x: hidden;
-        /* Odsazení jen pro mobilní zařízení */
-        padding-bottom: var(--bar-height-mobile);
+        padding-bottom: 100px; /* Odsazení pro FAB tlačítka */
     }
 
     .detail-page {
@@ -325,88 +324,58 @@
         }
     }
 
-    /* --- Spodní lišta a FAB - Pouze pro mobil --- */
-    .bottom-bar {
+    /* === PLOVOUCÍ TLAČÍTKA (FAB) === */
+    .fab-group {
         position: fixed;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        height: var(--bar-height-mobile);
-        background: linear-gradient(180deg, var(--brand), #166534);
+        right: 12px;
+        bottom: 12px;
         display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 1500;
-        padding: 10px;
-        box-shadow: 0 -6px 20px rgba(0,0,0,0.12);
+        flex-direction: column-reverse; /* Tlačítka se skládají nahoru */
+        gap: 10px;
+        z-index: 1700;
     }
-
-        .bottom-bar .actions-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-            width: 100%;
-            max-width: 600px;
-        }
-
-        .bottom-bar .action-btn {
-            display: inline-flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 5px;
-            padding: 8px;
-            border-radius: 12px;
-            text-decoration: none;
-            color: #fff;
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.08);
-            min-height: 60px;
-        }
-
-            .bottom-bar .action-btn img {
-                width: 25px;
-                height: 25px;
-                filter: drop-shadow(0 2px 2px rgba(0,0,0,0.25));
-            }
-
-            .bottom-bar .action-btn .label {
-                font-size: 8px;
-                font-weight: 600;
-                color: #fff;
-                text-align: center;
-            }
 
     .fab {
-        display: flex;
-        position: fixed;
-        z-index: 1000;
-        left: 20px;
-        bottom: calc(var(--bar-height-mobile) + 14px); /* Pozice nad lištou */
         width: 56px;
         height: 56px;
-        background-color: var(--brand);
-        color: var(--white);
         border-radius: 50%;
-        box-shadow: 0 6px 10px rgba(0,0,0,0.2);
+        box-shadow: 0 6px 14px rgba(0,0,0,0.18);
+        display: inline-flex;
         align-items: center;
         justify-content: center;
-        font-size: 28px;
-        font-weight: 300;
         text-decoration: none;
+        border: none;
+        cursor: pointer;
+        transition: transform 0.15s ease;
     }
 
-    /* === ZDE JE KLÍČOVÁ OPRAVA === */
+        .fab.primary {
+            background-color: var(--brand);
+            color: var(--white);
+        }
+
+        .fab.secondary {
+            background: #ffffff;
+            color: var(--brand-dark);
+            border: 1px solid var(--border);
+        }
+
+        .fab.destructive {
+            background: #ef4444;
+            color: var(--white);
+        }
+
+        .fab:hover {
+            transform: translateY(-2px);
+        }
+
+
     /* Na desktopu a větších tabletech (768px a více) */
     @@media (min-width: 768px) {
         body {
             padding-bottom: 0; /* Vynulujeme spodní odsazení */
         }
 
-        .bottom-bar, .fab {
-            display: none; /* Skryjeme lištu i tlačítko '+' */
-        }
-        /* Ostatní desktopové styly */
         .layout {
             grid-template-columns: 320px 1fr;
         }
@@ -433,17 +402,18 @@
             grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
             gap: 12px;
         }
+        /* Skrytí FAB na desktopu, protože akce jsou dostupné v obsahu stránky */
+        .fab-group {
+            display: none;
+        }
     }
-
-    /* Na mobilu a menších tabletech (767px a méně) jsou lišta i FAB viditelné */
-
 </style>
 
 <main class="detail-page">
 
     <header style="margin-bottom: 20px;">
         <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
-            <a asp-controller="Photos" asp-action="Index" style="display:inline-block;">
+            <a href="@Url.Action("Index", "Photos")" style="display:inline-block;">
                 <img src="@Url.Content("~/logo.png")" alt="ODPO logo" style="height:40px;width:auto;display:block;" />
             </a>
             <div>
@@ -539,47 +509,41 @@
             </div>
 
             <div class="actions">
-                <a asp-controller="Photos" asp-action="Index" class="btn">Zpět na katalog</a>
+                <a href="@Url.Action("Index", "Photos")" class="btn">Zpět na katalog</a>
                 @if (User.Identity?.IsAuthenticated == true)
                 {
-                    <a asp-controller="Photos" asp-action="Edit" asp-route-id="@Model.Id" class="btn">Upravit vzorek</a>
+                    <a href="@Url.Action("Edit", "Photos", new { id = Model.Id })" class="btn">Upravit vzorek</a>
                 }
             </div>
         </section>
     </div>
 </main>
 
-<!-- Spodní lišta a FAB se zobrazí jen na mobilech díky CSS pravidlům -->
-<nav class="bottom-bar" role="navigation" aria-label="Rychlé akce">
-    <div class="actions-grid" role="menu">
-        <a role="menuitem" href="@Url.Action("Index", "Photos")" class="action-btn" title="Katalog">
-            <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 24 24' fill='white'><path d='M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z' fill='%23ffffff'/></svg>" alt="Katalog" />
-            <div class="label">Katalog</div>
+<!-- FAB tlačítka - zobrazí se jen na mobilech -->
+<div class="fab-group">
+    <a href="@Url.Action("Index", "Photos")" class="fab primary" title="Zpět na katalog">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z" />
+        </svg>
+    </a>
+    @if (User.Identity?.IsAuthenticated == true)
+    {
+        <a href="@Url.Action("Edit", "Photos", new { id = Model.Id })" class="fab secondary" title="Upravit">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+            </svg>
         </a>
-        @if (User.Identity?.IsAuthenticated == true)
-        {
-            <a role="menuitem" href="@Url.Action("Edit", "Photos", new { id = Model.Id })" class="action-btn" title="Upravit">
-                <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 24 24' fill='white'><path d='M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z' fill='%23ffffff'/></svg>" alt="Upravit" />
-                <div class="label">Upravit</div>
-            </a>
-            <a role="menuitem" href="@Url.Action("Delete", "Photos", new { id = Model.Id })" class="action-btn" title="Smazat" onclick="return confirm('Opravdu smazat tento vzorek?');">
-                <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 24 24' fill='white'><path d='M6 19a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z' fill='%23ffffff'/></svg>" alt="Smazat" />
-                <div class="label">Smazat</div>
-            </a>
-        }
-        else
-        {
-            <a role="menuitem" href="@publicUrl" target="_blank" class="action-btn" title="Sdílet">
-                <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 24 24' fill='white'><path d='M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z' fill='%23ffffff'/></svg>" alt="Sdílet" />
-                <div class="label">Sdílet</div>
-            </a>
-        }
-    </div>
-</nav>
-
-<a asp-controller="Photos" asp-action="Create" class="fab" title="Přidat nový vzorek" aria-label="Přidat nový vzorek">
-    +
-</a>
+        <a href="@Url.Action("Delete", "Photos", new { id = Model.Id })" class="fab destructive" title="Smazat" onclick="return confirm('Opravdu smazat tento vzorek?');">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                <line x1="10" y1="11" x2="10" y2="17"></line>
+                <line x1="14" y1="11" x2="14" y2="17"></line>
+            </svg>
+        </a>
+    }
+</div>
 
 <div id="imageLightbox" class="image-lightbox" role="dialog" aria-modal="true" aria-hidden="true">
     <div class="inner" role="document">
@@ -589,7 +553,6 @@
 </div>
 
 <script>
-    // Váš stávající JavaScript kód pro lightbox a nahrávání obrázků
     (function () {
         const lightbox = document.getElementById('imageLightbox');
         const lightboxImg = document.getElementById('lightboxImg');
@@ -647,3 +610,4 @@
         }
     })();
 </script>
+```

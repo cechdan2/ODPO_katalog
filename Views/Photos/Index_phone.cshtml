@@ -6,9 +6,22 @@
     Func<PhotoApp.Models.PhotoRecord, string> ImageSrc = item =>
         !string.IsNullOrWhiteSpace(item.ImagePath) ? Url.Content(item.ImagePath) :
         !string.IsNullOrWhiteSpace(item.PhotoPath) ? Url.Content(item.PhotoPath) : null;
+
+    // Struktura pro snadné generování filtrů v cyklu
+    var filtersToRender = new[]
+    {
+        new { Name = "supplier",        Placeholder = "Dodavatel", AllValues = Model.Suppliers,         SelectedValues = Model.Supplier },
+        new { Name = "material",        Placeholder = "Materiál",  AllValues = Model.Materials,         SelectedValues = Model.Material },
+        new { Name = "color",           Placeholder = "Barva",     AllValues = Model.Colors,            SelectedValues = Model.Color },
+        new { Name = "position",        Placeholder = "Pozice",    AllValues = Model.Positions,         SelectedValues = Model.Position },
+        new { Name = "form",            Placeholder = "Forma",     AllValues = Model.Forms,             SelectedValues = Model.Form },
+        new { Name = "filler",          Placeholder = "Plnivo",    AllValues = Model.Fillers,           SelectedValues = Model.Filler },
+        new { Name = "monthlyQuantity", Placeholder = "Množství",  AllValues = Model.MonthlyQuantities, SelectedValues = Model.MonthlyQuantity },
+        new { Name = "mfi",             Placeholder = "MFI",       AllValues = Model.Mfis,              SelectedValues = Model.Mfi }
+    };
 }
 
-<!-- Head/meta tagy pro PWA a mobilní zařízení -->
+<!-- Head/meta tagy, knihovny pro filtry -->
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#16a34a">
@@ -17,7 +30,35 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="apple-touch-icon" href="/icons/icon-192.png">
+
+    <!-- Knihovny pro pokročilé filtry -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <style>
+        /* Styl pro Select2, aby ladil s designem */
+        .select2-container .select2-selection--multiple {
+            border-radius: 8px !important;
+            border: 1px solid var(--border) !important;
+            padding: 5px !important;
+            min-height: 42px;
+        }
+
+        .select2-container--default .select2-selection--multiple .select2-selection__choice {
+            background-color: var(--brand) !important;
+            color: white !important;
+            border: 1px solid var(--brand-dark) !important;
+        }
+
+        .select2-container--default .select2-selection--multiple .select2-selection__choice__remove {
+            color: white !important;
+        }
+
+        .select2-dropdown {
+            border-radius: 8px !important;
+            border: 1px solid var(--border) !important;
+        }
+    </style>
 </head>
+
 
 <style>
     /* === SJEDNOCENÉ GLOBÁLNÍ STYLY === */
@@ -31,8 +72,7 @@
         --pad: 16px;
         --gap: 12px;
         --radius: 16px;
-        /* Jednotná výška spodní lišty pro mobilní zobrazení */
-        --bar-height: 96px;
+        --bar-height: 0px;
     }
 
     * {
@@ -51,7 +91,6 @@
         font-family: system-ui,-apple-system,Segoe UI,Roboto,Ubuntu;
         color: var(--text);
         background: var(--bg);
-        /* Odsazení stránky odpovídá výšce spodní lišty */
         padding-bottom: var(--bar-height);
     }
 
@@ -143,47 +182,82 @@
     }
 
     /* === LIŠTA S FILTRY === */
-    .toolbar {
+    .filter-panel {
+        position: fixed;
+        left: 12px;
+        /* Změna zde: Posunuto výše, aby se nepřekrývalo s FAB tlačítky */
+        bottom: 215px;
+        width: 360px;
+        max-width: calc(100% - 24px);
         background: #fff;
+        border-radius: 16px;
         border: 1px solid var(--border);
-        border-radius: var(--radius);
-        padding: var(--pad);
-        margin-bottom: var(--pad);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+        z-index: 1600;
+        transform: translateY(20px) scale(0.95);
+        opacity: 0;
+        visibility: hidden;
+        transition: transform 0.2s ease-out, opacity 0.2s ease-out, visibility 0.2s;
+        display: flex;
+        flex-direction: column;
+        max-height: 50vh; /* Snížení maximální výšky, aby se vešlo */
     }
 
-    .filter-form {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: var(--gap);
-        align-items: stretch;
-    }
-
-        .filter-form input, .filter-form select {
-            width: 100%;
-            padding: 14px;
-            border-radius: 10px;
-            border: 1px solid var(--border);
-            font-size: 18px;
-            background: #fff;
+        .filter-panel.open {
+            transform: translateY(0) scale(1);
+            opacity: 1;
+            visibility: visible;
         }
 
-            .filter-form input[type="search"] {
-                grid-column: 1 / -1;
-            }
-
-    .filter-controls {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 10px;
-        grid-column: 1 / -1;
-        margin-top: 4px;
+    .filter-panel-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 16px;
+        border-bottom: 1px solid var(--border);
     }
 
-        .filter-controls .action-btn {
-            width: 100%;
-            padding: 12px;
+        .filter-panel-header h3 {
+            margin: 0;
             font-size: 18px;
+            color: var(--brand-dark);
         }
+
+    .filter-panel-body {
+        padding: 16px;
+        overflow-y: auto;
+    }
+
+    #mobileFilterForm .filter-row {
+        margin-bottom: 12px;
+    }
+
+        #mobileFilterForm .filter-row label {
+            display: block;
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 6px;
+            color: #333;
+        }
+
+    #mobileFilterForm input[type="search"] {
+        width: 100%;
+        padding: 10px;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+        font-size: 15px;
+    }
+
+    .filter-panel-footer {
+        display: flex;
+        gap: 8px;
+        justify-content: flex-end;
+        padding: 12px 16px;
+        border-top: 1px solid var(--border);
+        background: #f9f9f9;
+        border-bottom-left-radius: 16px;
+        border-bottom-right-radius: 16px;
+    }
 
     /* === KARTY POLOŽEK === */
     .card-list {
@@ -201,8 +275,8 @@
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: 12px;
-        font-size: 16px;
+        gap: 16px;
+        font-size: 15px;
         box-shadow: 0 2px 8px rgba(0,0,0,.05);
     }
 
@@ -214,126 +288,86 @@
         border-radius: 16px;
         border: 1.5px solid var(--border);
         background: #f7fef7;
+        cursor: pointer;
     }
 
     .card-info {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 6px;
-        text-align: center;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 6px 16px;
+        width: 100%;
+        max-width: 400px;
     }
 
-        .card-info div {
-            line-height: 1.4;
-            font-size: 15px;
+    .info-item {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 8px;
+        align-items: baseline;
+    }
+
+        .info-item strong {
+            font-weight: 600;
+            color: #555;
         }
 
-        .card-info strong {
-            font-weight: 600;
-            color: #333;
+        .info-item span {
+            font-weight: 500;
+            color: #111;
         }
 
     .card-footer {
         display: flex;
         gap: 8px;
-        flex-wrap: wrap;
         justify-content: center;
-        margin-top: 12px;
+        margin-top: auto;
+        padding-top: 8px;
         width: 100%;
     }
 
         .card-footer .action-btn {
-            flex: 1;
-            min-width: 90px;
-            padding: 10px 12px;
-            font-size: 14px;
+            flex-grow: 1;
+            max-width: 180px;
         }
 
-    /* === SPODNÍ LIŠTA === */
-    .bottom-bar {
+    /* === PLOVOUCÍ TLAČÍTKA (FAB) === */
+    .fab-group {
         position: fixed;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        height: var(--bar-height); /* Používá jednotnou výšku */
-        background: linear-gradient(180deg, var(--brand), #166534);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 1500;
-        padding: 10px;
-        gap: 12px;
-        box-shadow: 0 -6px 20px rgba(0,0,0,0.12);
+        left: 20px;
+        bottom: 12px;
+        display: none;
+        flex-direction: column;
+        gap: 10px;
+        z-index: 1700;
     }
 
-        .bottom-bar .actions-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-            width: 100%;
-            max-width: 600px;
-            padding: 6px;
-        }
-
-        .bottom-bar .action-btn {
-            display: inline-flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 5px;
-            padding: 8px;
-            border-radius: 12px;
-            text-decoration: none;
-            color: #fff;
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.08);
-            min-height: 60px;
-        }
-
-            .bottom-bar .action-btn img {
-                width: 29px;
-                height: 29px;
-                filter: drop-shadow(0 2px 2px rgba(0,0,0,0.25));
-            }
-
-            .bottom-bar .action-btn .label {
-                font-size: 8.5px;
-                font-weight: 600;
-                color: #fff;
-                text-align: center;
-            }
-
-            .bottom-bar .action-btn.action-btn-destructive {
-                background: rgba(239, 68, 68, 0.7); /* Červená s průhledností */
-                border-color: rgba(255,255,255,0.1);
-            }
-
-    /* === PLOVOUCÍ TLAČÍTKO '+' === */
     .fab {
-        display: none; /* Na desktopu skryté */
-        position: fixed;
-        z-index: 1000;
-        left: 20px;
-        /* Dynamická pozice nad spodní lištou */
-        bottom: calc(var(--bar-height) + 14px);
         width: 56px;
         height: 56px;
         background-color: var(--brand);
         color: var(--white);
         border-radius: 50%;
-        box-shadow: 0 6px 10px rgba(0,0,0,0.2);
+        box-shadow: 0 6px 14px rgba(0,0,0,0.18);
+        display: inline-flex;
         align-items: center;
         justify-content: center;
         font-size: 28px;
         font-weight: 300;
         text-decoration: none;
-        transition: background-color 0.2s, transform 0.2s;
+        border: none;
+        cursor: pointer;
+        transition: transform 0.15s ease;
     }
 
+        .fab.secondary {
+            background: #ffffff;
+            color: var(--brand-dark);
+            border: 1px solid var(--border);
+            font-size: 20px;
+        }
+
         .fab:hover {
-            background-color: var(--brand-dark);
-            transform: scale(1.05);
+            transform: translateY(-2px);
         }
 
     /* === PATIČKA === */
@@ -345,46 +379,24 @@
     }
 
     /* === RESPONZIVNÍ ZOBRAZENÍ === */
-
-    /* Desktop - 1200px a více */
     @@media (min-width: 1200px) {
         .card-list {
             grid-template-columns: repeat(2, 1fr);
         }
-
-        .filter-form {
-            grid-template-columns: repeat(3, 1fr);
-        }
-
-            .filter-form input[type="search"] {
-                grid-column: 1 / -1;
-            }
     }
 
-    /* Větší Tablety - skrýváme spodní lištu a FAB */
     @@media (min-width: 768px) {
-        body {
-            padding-bottom: 0;
-        }
-
-        .bottom-bar {
-            display: none;
-        }
-
-        .fab {
-            display: none;
+        .fab-group, .filter-panel {
+            display: none !important;
         }
     }
 
-    /* Menší Tablety */
     @@media (max-width: 767px) {
-        .fab {
+        .fab-group {
             display: flex;
         }
-        /* Zobrazí se FAB */
     }
 
-    /* Mobily */
     @@media (max-width: 599px) {
         .brand img {
             height: 90px;
@@ -402,20 +414,6 @@
             padding: 12px 10px;
         }
 
-        .toolbar {
-            padding: 12px;
-            margin-bottom: 10px;
-        }
-
-        .filter-form {
-            gap: 8px;
-        }
-
-            .filter-form input, .filter-form select {
-                padding: 12px;
-                font-size: 16px;
-            }
-
         .item-card {
             padding: 14px;
             gap: 10px;
@@ -426,7 +424,12 @@
             max-width: 280px;
         }
 
-        .card-info div {
+        .card-info {
+            grid-template-columns: 1fr;
+            max-width: 100%;
+        }
+
+        .info-item strong, .info-item span {
             font-size: 14px;
         }
 
@@ -437,16 +440,22 @@
             .card-footer .action-btn {
                 padding: 9px 10px;
                 font-size: 13px;
-                min-width: 75px;
+                max-width: none;
             }
 
         .footer {
             padding-bottom: 20px;
             font-size: 14px;
         }
+
+        .filter-panel {
+            right: 8px;
+            left: 8px;
+            width: auto;
+            max-width: none;
+        }
     }
 
-    /* Extra malé mobily */
     @@media (max-width: 420px) {
         .brand img {
             height: 80px;
@@ -460,10 +469,6 @@
             padding: 10px 8px;
         }
 
-        .toolbar {
-            padding: 10px;
-        }
-
         .thumb {
             max-width: 240px;
         }
@@ -471,31 +476,11 @@
         .card-footer .action-btn {
             padding: 8px;
             font-size: 12px;
-            min-width: 65px;
         }
 
-        .card-info div {
+        .info-item strong, .info-item span {
             font-size: 13px;
         }
-
-        .bottom-bar .actions-grid {
-            gap: 6px;
-        }
-
-        .bottom-bar .action-btn {
-            min-height: 51px;
-            gap: 4px;
-            padding: 5px;
-        }
-
-            .bottom-bar .action-btn img {
-                width: 22px;
-                height: 22px;
-            }
-
-            .bottom-bar .action-btn .label {
-                font-size: 8px;
-            }
     }
 </style>
 
@@ -507,6 +492,37 @@
         </a>
     </div>
 </header>
+
+<!-- Vylepšený filter panel -->
+<aside id="filterPanel" class="filter-panel" role="dialog" aria-modal="true" aria-labelledby="filterPanelTitle" aria-hidden="true">
+    <div class="filter-panel-header">
+        <h3 id="filterPanelTitle">Filtry</h3>
+        <button type="button" class="action-btn" id="closeFilterBtn" aria-label="Zavřít filtry">&times;</button>
+    </div>
+    <form method="get" id="mobileFilterForm" class="filter-panel-body">
+        <div class="filter-row">
+            <label for="search">Hledat ve všem</label>
+            <input type="search" id="search" name="search" placeholder="Název, kód, poznámka..." value="@(Model?.Search ?? "")" />
+        </div>
+
+        @foreach (var filter in filtersToRender)
+        {
+            <div class="filter-row">
+                <label for="@($"filter-{filter.Name}")">@filter.Placeholder</label>
+                <select id="@($"filter-{filter.Name}")" name="@filter.Name" class="multi-select" multiple="multiple" style="width: 100%;">
+                    @foreach (var val in filter.AllValues)
+                    {
+                        <option value="@val" selected="@(filter.SelectedValues.Contains(val))">@val</option>
+                    }
+                </select>
+            </div>
+        }
+    </form>
+    <div class="filter-panel-footer">
+        <button type="button" class="action-btn" id="resetFiltersBtn">Smazat vše</button>
+        <button type="submit" form="mobileFilterForm" class="action-btn primary">Použít filtry</button>
+    </div>
+</aside>
 
 <main class="container" role="main">
     <div class="user-actions" style="display:flex; justify-content:flex-end; margin-bottom:8px; gap: 8px;">
@@ -523,44 +539,6 @@
         }
     </div>
 
-@*     <div class="toolbar">
-        <form method="get" class="filter-form" autocomplete="on">
-            <input type="search" name="search" placeholder="Hledat…" value="@(Model?.Search ?? "")" />
-            <select name="supplier" aria-label="Dodavatel">
-                <option value="">Všichni dodavatelé</option>
-                @foreach (var s in Model?.Suppliers ?? Enumerable.Empty<string>())
-                {
-                    <option value="@s" selected="@(s == Model?.Supplier)">@s</option>
-                }
-            </select>
-            <select name="material" aria-label="Materiál">
-                <option value="">Všechny materiály</option>
-                @foreach (var m in Model?.Materials ?? Enumerable.Empty<string>())
-                {
-                    <option value="@m" selected="@(m == Model?.Material)">@m</option>
-                }
-            </select>
-            <select name="color" aria-label="Barva">
-                <option value="">Všechny barvy</option>
-                @foreach (var c in Model?.Colors ?? Enumerable.Empty<string>())
-                {
-                    <option value="@c" selected="@(c == Model?.Color)">@c</option>
-                }
-            </select>
-            <select name="position" aria-label="Pozice">
-                <option value="">Všechny pozice</option>
-                @foreach (var p in Model?.Positions ?? Enumerable.Empty<string>())
-                {
-                    <option value="@p" selected="@(p == Model?.Position)">@p</option>
-                }
-            </select>
-            <div class="filter-controls">
-                <button type="submit" class="action-btn primary">Filtrovat</button>
-                <a href="@Url.Action("Index", "Photos")" class="action-btn">Smazat filtry</a>
-            </div>
-        </form>
-    </div> *@
-
     <div class="card-list" role="list">
         @foreach (var item in Model.Items)
         {
@@ -568,19 +546,22 @@
             <div class="item-card" role="listitem">
                 @if (!string.IsNullOrEmpty(src))
                 {
-                    <a href="@Url.Action("Details", new { id = item.Id })" style="width:100%;display:flex;justify-content:center;">
+                    <a href="@Url.Action("Details", new { id = item.Id })" style="width:100%;display:flex;justify-content:center;" title="Zobrazit detail položky">
                         <img src="@src" alt="@item.Name" class="thumb" />
                     </a>
                 }
                 <div class="card-info">
-                    <div><strong>Materiál:</strong> @Safe(item.Material)</div>
-                    <div><strong>Dodavatel:</strong> @Safe(item.Supplier)</div>
-                    <div><strong>Barva:</strong> @Safe(item.Color)</div>
-                    <div><strong>Pozice:</strong> @Safe(item.Position)</div>
+                    <div class="info-item"><strong>Dodavatel:</strong><span>@Safe(item.Supplier)</span></div>
+                    <div class="info-item"><strong>Forma:</strong><span>@Safe(item.Form)</span></div>
+                    <div class="info-item"><strong>Materiál:</strong><span>@Safe(item.Material)</span></div>
+                    <div class="info-item"><strong>Plnivo:</strong><span>@Safe(item.Filler)</span></div>
+                    <div class="info-item"><strong>Barva:</strong><span>@Safe(item.Color)</span></div>
+                    <div class="info-item"><strong>Množství:</strong><span>@Safe(item.MonthlyQuantity)</span></div>
+                    <div class="info-item"><strong>Pozice:</strong><span>@Safe(item.Position)</span></div>
+                    <div class="info-item"><strong>MFI:</strong><span>@Safe(item.Mfi)</span></div>
                 </div>
                 <div class="card-footer">
-                    <a href="@Url.Action("Edit", new { id = item.Id })" class="action-btn">Upravit</a>
-                    <a href="@Url.Action("Details", new { id = item.Id })" class="action-btn primary">Detail</a>
+                    <a href="@Url.Action("Edit", new { id = item.Id })" class="action-btn primary">Upravit</a>
                     <a href="@Url.Action("Delete", new { id = item.Id })" class="action-btn destructive"
                        onclick="return confirm('Opravdu chcete tento vzorek smazat?');">Smazat</a>
                 </div>
@@ -591,65 +572,104 @@
     <div class="footer">Data se ukládají v databázi. Pro zálohu exportujte data ze serveru.</div>
 </main>
 
-<!-- Plovoucí tlačítko pro přidání nového vzorku (pouze pro mobilní zařízení) -->
-<a asp-controller="Photos" asp-action="Create" class="fab" title="Přidat nový vzorek" aria-label="Přidat nový vzorek">
-    +
-</a>
+<div class="fab-group" aria-hidden="false">
+    <a asp-controller="Photos" asp-action="Create" class="fab" title="Přidat nový vzorek" aria-label="Přidat nový vzorek">+</a>
+    <a href="@Url.Action("Database", "Admin")" class="fab secondary" title="Správa dat" aria-label="Správa dat">
+        <span style="line-height:1;">DB</span>
+    </a>
+    <button type="button" class="fab secondary" id="openFilterFab" title="Filtry" aria-label="Otevřít filtry" aria-haspopup="dialog" aria-expanded="false" aria-controls="filterPanel">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M3 5h18M6 12h12M10 19h4" stroke="#166534" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+    </button>
+</div>
 
-<!-- Spodní navigační lišta (pouze pro mobilní zařízení) -->
-<nav class="bottom-bar" role="navigation" aria-label="Hlavní akce">
-    <div class="actions-grid" role="menu">
-        <a role="menuitem" href="@Url.Action("Create", "Photos")" class="action-btn" title="Nový vzorek">
-            <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 24 24' fill='white'><path d='M11 11V6h2v5h5v2h-5v5h-2v-5H6v-2z' fill='%23ffffff'/></svg>" alt="Nový" />
-            <div class="label">Nový</div>
-        </a>
-        <a role="menuitem" href="@Url.Action("Database", "Admin")" class="action-btn" title="Správa dat">
-            <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 24 24' fill='white'><path d='M12 3C7.58 3 4 4.79 4 7v10c0 2.21 3.59 4 8 4s8-1.79 8-4V7c0-2.21-3.58-4-8-4zm6 14c0 .55-2.69 2-6 2s-6-1.45-6-2v-2.23c1.61.78 3.72 1.23 6 1.23s4.39-.45 6-1.23V17zm0-4.55c-1.3.95-3.58 1.55-6 1.55s-4.7-.6-6-1.55V9.64c1.47.83 3.61 1.36 6 1.36s4.53-.53 6-1.36v2.81zM12 9C8.69 9 6 7.55 6 7s2.69-2 6-2 6 1.45 6 2-2.69 2-6 2z' fill='%23ffffff'/></svg>" alt="Správa dat" />
-            <div class="label">Správa dat</div>
-        </a>
-        @if (User?.Identity?.IsAuthenticated ?? false)
-        {
-            <form asp-controller="Home" asp-action="ClearPhotos" method="post" onsubmit="return confirm('Opravdu vymazat všechny fotky?');" style="margin:0; display:contents;" role="none">
-                @Html.AntiForgeryToken()
-                <button type="submit" class="action-btn action-btn-destructive" title="Vymazat vše" aria-label="Vymazat vše">
-                    <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 24 24' fill='white'><path d='M6 19a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z' fill='%23ffffff'/></svg>" alt="Vymazat" />
-                    <div class="label">Vymazat vše</div>
-                </button>
-            </form>
-        }
-    </div>
-</nav>
+<!-- jQuery a Select2 pro filtry -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
 <script>
-    // Skript pro Service Worker a PWA install prompt
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('/service-worker.js', { scope: '/' })
-                .then(registration => {
-                    console.log('Service Worker registered with scope:', registration.scope);
-                })
-                .catch(error => {
-                    console.error('Service Worker registration failed:', error);
-                });
-        });
-    }
+    document.addEventListener('DOMContentLoaded', function () {
+        // --- LOGIKA FILTR PANELU ---
+        const filterPanel = document.getElementById('filterPanel');
+        const openFilterFab = document.getElementById('openFilterFab');
+        const closeFilterBtn = document.getElementById('closeFilterBtn');
+        const resetFiltersBtn = document.getElementById('resetFiltersBtn');
+        const mobileFilterForm = document.getElementById('mobileFilterForm');
 
-    let deferredPrompt;
-    window.addEventListener('beforeinstallprompt', (e) => {
-        e.preventDefault();
-        deferredPrompt = e;
-        console.log('beforeinstallprompt captured');
-    });
-
-    function showInstallPrompt() {
-        if (deferredPrompt) {
-            deferredPrompt.prompt();
-            deferredPrompt.userChoice.then((choiceResult) => {
-                console.log('User choice', choiceResult);
-                deferredPrompt = null;
-            });
-        } else {
-            console.log('No install prompt available');
+        function openFilterPanel() {
+            if (!filterPanel) return;
+            filterPanel.classList.add('open');
+            openFilterFab.setAttribute('aria-expanded', 'true');
         }
-    }
+
+        function closeFilterPanel() {
+            if (!filterPanel) return;
+            filterPanel.classList.remove('open');
+            openFilterFab.setAttribute('aria-expanded', 'false');
+        }
+
+        if (openFilterFab) {
+            openFilterFab.addEventListener('click', openFilterPanel);
+        }
+        if (closeFilterBtn) {
+            closeFilterBtn.addEventListener('click', closeFilterPanel);
+        }
+
+        // --- INICIALIZACE SELECT2 ---
+        $(document).ready(function() {
+            $('.multi-select').each(function() {
+                const placeholder = $(this).closest('.filter-row').find('label').text();
+                $(this).select2({
+                    placeholder: `Vybrat ${placeholder.toLowerCase()}...`,
+                    allowClear: true,
+                    width: '100%',
+                    dropdownParent: $('#filterPanel') // Důležité pro správné zobrazení v panelu
+                });
+            });
+        });
+
+        // --- RESETOVÁNÍ FILTRŮ ---
+        if (resetFiltersBtn) {
+            resetFiltersBtn.addEventListener('click', function () {
+                // Reset textového vyhledávání
+                const searchInput = mobileFilterForm.querySelector('input[type="search"]');
+                if (searchInput) searchInput.value = '';
+
+                // Reset všech Select2 filtrů
+                $('.multi-select').val(null).trigger('change');
+
+                // Okamžité odeslání formuláře pro vyčištění filtrů
+                mobileFilterForm.submit();
+            });
+        }
+
+        // --- ZAVŘENÍ PANELU PŘI KLIKNUTÍ MIMO ---
+        document.addEventListener('click', function(event) {
+            if (!filterPanel || !filterPanel.classList.contains('open')) return;
+
+            const isClickInsidePanel = filterPanel.contains(event.target);
+            const isClickOnFab = openFilterFab.contains(event.target);
+            // Zavřít pouze pokud se nekliká na panel, jeho Select2 dropdown, ani na otevírací tlačítko
+            if (!isClickInsidePanel && !isClickOnFab && !$(event.target).closest('.select2-container').length) {
+                closeFilterPanel();
+            }
+        });
+
+
+        // --- SERVICE WORKER (Ponecháno) ---
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/service-worker.js', { scope: '/' })
+                    .then(registration => console.log('Service Worker: Registered'))
+                    .catch(error => console.error('Service Worker registration failed:', error));
+            });
+        }
+
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+        });
+    });
 </script>

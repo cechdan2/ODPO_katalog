@@ -22,7 +22,6 @@
         --pad: 12px;
         --gap: 8px;
         --radius: 12px;
-        --bar-height: 108px;
     }
 
     * {
@@ -31,7 +30,7 @@
 
     body {
         margin: 0;
-        padding: 0 0 108px 0;
+        padding: 0 0 100px 0; /* Ponechán padding pro obsah, aby nebyl úplně dole */
         font-family: system-ui,-apple-system,Segoe UI,Roboto,Ubuntu;
         color: var(--text);
         background: var(--bg);
@@ -152,15 +151,6 @@
         margin-top: 6px;
     }
 
-    .success-message {
-        background: #d1fae5;
-        border: 1px solid #10b981;
-        color: #065f46;
-        padding: 12px;
-        border-radius: 8px;
-        margin-top: 12px;
-    }
-
     .info-box {
         background: #e0f2fe;
         border: 1px solid #0284c7;
@@ -171,95 +161,43 @@
         font-size: 0.95rem;
     }
 
-    /* Bottom action bar */
-    .bottom-bar {
+    /* === PLOVOUCÍ TLAČÍTKO (FAB) === */
+    .fab-group {
         position: fixed;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        height: 108px;
-        background: linear-gradient(180deg, var(--brand), var(--brand-dark));
-        border-top: 1px solid rgba(0,0,0,0.06);
+        left: 12px; /* Změna: Tlačítko vlevo */
+        bottom: 12px;
         display: flex;
+        flex-direction: column;
+        gap: 10px;
+        z-index: 1700;
+    }
+
+    .fab {
+        width: 56px;
+        height: 56px;
+        background-color: var(--brand);
+        color: var(--white);
+        border-radius: 50%;
+        box-shadow: 0 6px 14px rgba(0,0,0,0.18);
+        display: inline-flex;
         align-items: center;
         justify-content: center;
-        z-index: 1500;
-        padding: 10px;
-        gap: 12px;
-        box-shadow: 0 -6px 20px rgba(0,0,0,0.12);
+        text-decoration: none;
+        border: none;
+        cursor: pointer;
+        transition: transform 0.15s ease;
     }
 
-        .bottom-bar .actions-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-            width: 100%;
-            max-width: 600px;
-            padding: 6px;
+        .fab:hover {
+            transform: translateY(-2px);
         }
 
-        .bottom-bar .action-btn {
-            display: inline-flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 5px;
-            padding: 8px;
-            border-radius: 12px;
-            text-decoration: none;
-            color: #fff;
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.08);
-            min-height: 60px;
-            cursor: pointer;
-        }
-
-            .bottom-bar .action-btn img {
-                width: 29px;
-                height: 29px;
-                display: block;
-                filter: drop-shadow(0 2px 2px rgba(0,0,0,0.25));
-            }
-
-            .bottom-bar .action-btn .label {
-                font-size: 8.5px;
-                font-weight: 600;
-                color: #fff;
-                text-align: center;
-            }
-
-    /* Mobile responsive */
-    @@media (max-width: 420px) {
-        .bottom-bar
-
-    {
-        height: 96px;
-    }
-
-    .bottom-bar .actions-grid {
-        gap: 8px;
-    }
-
-    .bottom-bar .action-btn {
-        min-height: 51px;
-    }
-
-        .bottom-bar .action-btn img {
-            width: 25px;
-            height: 25px;
-        }
-
-        .bottom-bar .action-btn .label {
-            font-size: 7.5px;
-        }
-
-    }
 </style>
 
 <header>
     <div class="container" style="display:flex;align-items:center;gap:12px">
         <div class="page-header" style="display:flex;align-items:center;gap:12px">
-            <a asp-controller="Photos" asp-action="Index" style="display:inline-block;">
+            <a href="@Url.Action("Index", "Photos")" style="display:inline-block;">
                 <img src="@Url.Content("~/logo.png")" alt="ODPO logo" style="height:48px;width:auto;display:block;" />
             </a>
             <div>
@@ -314,8 +252,7 @@
                 </div>
             </div>
 
-            <div class="form-group full" style="display:flex;gap:12px;justify-content:space-between;margin-top:10px;">
-                <a href="@Url.Action("Index", "Photos")" class="btn">Zpět na katalog</a>
+            <div class="form-group full" style="display:flex;gap:12px;justify-content:flex-end;margin-top:10px;">
                 <button id="importBtn" class="btn-primary">Importovat z Excelu</button>
             </div>
         </div>
@@ -324,25 +261,15 @@
     </div>
 </main>
 
-<!-- Bottom fixed action bar -->
-<nav class="bottom-bar" role="navigation" aria-label="Rychlé akce">
-    <div class="actions-grid" role="menu" aria-label="Rychlé akce">
-        <a role="menuitem" href="@Url.Action("Index", "Photos")" class="action-btn" title="Katalog">
-            <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 24 24' fill='white'><path d='M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z' fill='%23ffffff'/></svg>" alt="Katalog" />
-            <div class="label">Katalog</div>
-        </a>
-
-        <a role="menuitem" href="#" class="action-btn" title="Stáhnout zálohu" onclick="document.getElementById('downloadBtn').click(); return false;">
-            <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 24 24' fill='white'><path d='M12 2L4 6v6c0 5 3.9 9.4 8 10 4.1-.6 8-5 8-10V6l-8-4zM11 14v-4h2v4h3l-4 4-4-4h3z' fill='%23ffffff'/></svg>" alt="Záloha" />
-            <div class="label">Záloha</div>
-        </a>
-
-        <a role="menuitem" href="#" class="action-btn" title="Import z Excelu" onclick="document.getElementById('importBtn').click(); return false;">
-            <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 24 24' fill='white'><path d='M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z' fill='%23ffffff'/></svg>" alt="Import" />
-            <div class="label">Import</div>
-        </a>
-    </div>
-</nav>
+<!-- Opravené FAB tlačítko pro návrat zpět -->
+<div class="fab-group">
+    <a href="@Url.Action("Index", "Photos")" class="fab" title="Zpět na katalog" aria-label="Zpět na katalog">
+        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:white;">
+            <path d="M19 12H5"></path>
+            <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+    </a>
+</div>
 
 <script>
     // Stažení zálohy
@@ -440,10 +367,15 @@
         form.append('file', file);
 
         try {
+            // Použití @@Url.Action pro správnou cestu k PhotosControlleru
             const resp = await fetch('@Url.Action("Import", "Photos")', {
                 method: 'POST',
                 body: form,
-                credentials: 'include'
+                credentials: 'include',
+                headers: {
+                    // Potřebné pro anti-forgery token, pokud ho controller vyžaduje
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+                }
             });
 
             if (!resp.ok) {
@@ -464,6 +396,13 @@
 
     // Event listenery
     document.addEventListener('DOMContentLoaded', () => {
+        // Anti-forgery token pro formulář, aby byl dostupný pro JS
+        if (!document.querySelector('input[name="__RequestVerificationToken"]')) {
+            const form = document.createElement('form');
+            form.innerHTML = '@Html.AntiForgeryToken()';
+            document.body.appendChild(form).style.display = 'none';
+        }
+
         const downloadBtn = document.getElementById('downloadBtn');
         if (downloadBtn) downloadBtn.addEventListener('click', downloadBackup);
 

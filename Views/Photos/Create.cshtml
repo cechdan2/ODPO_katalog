@@ -4,6 +4,15 @@
     ViewData["Title"] = "Přidat nový záznam";
 }
 
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#16a34a">
+    <link rel="manifest" href="/manifest.json">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="/icons/icon-192.png">
+</head>
 
 <style>
     :root {
@@ -16,7 +25,6 @@
         --pad: 12px;
         --gap: 8px;
         --radius: 12px;
-        --bar-height: 108px;
     }
 
     * {
@@ -30,7 +38,7 @@
 
     body {
         margin: 0;
-        padding: 0 0 108px 0;
+        padding: 0 0 100px 0;
         width: 100%;
         overflow-x: hidden;
         font-family: system-ui,-apple-system,Segoe UI,Roboto,Ubuntu;
@@ -73,11 +81,11 @@
         color: var(--brand-dark);
     }
 
-    .card, .center-form-container {
+    .center-form-container {
         background: #fff;
         border: 1px solid var(--border);
         border-radius: var(--radius);
-        padding: 2rem 2.2rem 2rem 2.2rem;
+        padding: 2rem 2.2rem;
         margin: 40px auto 0 auto;
         max-width: 720px;
         box-sizing: border-box;
@@ -98,7 +106,7 @@
     .styled-form {
         width: 100%;
         display: grid;
-        grid-template-columns: 1fr 1fr;
+        grid-template-columns: 1fr; /* Jeden sloupec pro přehlednost */
         gap: 12px 18px;
         align-items: start;
         box-sizing: border-box;
@@ -212,288 +220,75 @@
             border: 1px solid var(--border);
         }
 
-    /* Bottom action bar */
-    .bottom-bar {
+    /* === PLOVOUCÍ TLAČÍTKA (FAB) === */
+    .fab-group {
         position: fixed;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        height: 108px;
-        background: linear-gradient(180deg, var(--brand), var(--brand-dark));
-        border-top: 1px solid rgba(0,0,0,0.06);
+        right: 12px;
+        bottom: 12px;
         display: flex;
+        flex-direction: column-reverse; /* Obrácené pořadí pro správné zobrazení */
+        gap: 10px;
+        z-index: 1700;
+    }
+
+    .fab {
+        width: 56px;
+        height: 56px;
+        background-color: var(--brand);
+        color: var(--white);
+        border-radius: 50%;
+        box-shadow: 0 6px 14px rgba(0,0,0,0.18);
+        display: inline-flex;
         align-items: center;
         justify-content: center;
-        z-index: 1500;
-        padding: 10px;
-        gap: 12px;
-        box-shadow: 0 -6px 20px rgba(0,0,0,0.12);
-        width: 100%;
-        box-sizing: border-box;
+        text-decoration: none;
+        border: none;
+        cursor: pointer;
+        transition: transform 0.15s ease;
     }
 
-        .bottom-bar .actions-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
-            width: 100%;
-            max-width: 400px;
-            padding: 6px;
-            box-sizing: border-box;
+        .fab.secondary {
+            background: #ffffff;
+            color: var(--brand-dark);
+            border: 1px solid var(--border);
         }
 
-        .bottom-bar .action-btn {
-            display: inline-flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 5px;
-            padding: 8px;
-            border-radius: 12px;
-            text-decoration: none;
-            color: #fff;
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.08);
-            min-height: 60px;
-            cursor: pointer;
+        .fab:hover {
+            transform: translateY(-2px);
         }
 
-            .bottom-bar .action-btn img {
-                width: 29px;
-                height: 29px;
-                display: block;
-                filter: drop-shadow(0 2px 2px rgba(0,0,0,0.25));
-            }
-
-            .bottom-bar .action-btn .label {
-                font-size: 8.5px;
-                font-weight: 600;
-                color: #fff;
-                text-align: center;
-            }
-
-    /* Tablet - 768px and below */
-    @@media (max-width: 768px) {
-        .container {
-            padding: 14px 12px;
+    /* Na PC (šířka 768px a více) skryjeme FAB tlačítka */
+    @@media (min-width: 768px) {
+        .fab-group {
+            display: none;
         }
-
-        .center-form-container {
-            padding: 1.5rem 1.5rem 1.5rem 1.5rem;
-            margin: 20px auto 0 auto;
-        }
-
+        /* Vrátíme dvousloupcové rozložení pro formulář na desktopu */
         .styled-form {
-            grid-template-columns: 1fr;
-            gap: 10px;
+            grid-template-columns: 1fr 1fr;
         }
     }
 
-    /* Tablet - 640px and below */
+    @@media (max-width: 767px) {
+        /* Tento blok je pro případné budoucí styly jen pro mobily,
+               ale FAB jsou viditelné defaultně, takže zde není potřeba nic měnit. */
+    }
+
     @@media (max-width: 640px) {
-        body {
-            padding: 0 0 96px 0;
-        }
-
-        :root {
-            --bar-height: 96px;
-        }
-
         .container {
             padding: 12px 10px;
         }
 
         .center-form-container {
-            padding: 1.2rem 1rem 1.2rem 1rem;
+            padding: 1.2rem 1rem;
             margin: 20px 8px 0 8px;
-            border-radius: 10px;
-        }
-
-            .center-form-container h2 {
-                margin-bottom: 1.2rem;
-                font-size: 1.3rem;
-            }
-
-        .styled-form {
-            grid-template-columns: 1fr;
-            gap: 8px;
-        }
-
-        .preview-img {
-            width: 140px;
-            height: 140px;
-        }
-
-        .form-group {
-            margin-bottom: 0.4rem;
-        }
-
-        .form-control {
-            padding: 0.5rem 0.7rem;
-            font-size: 16px;
-        }
-
-        textarea.form-control {
-            min-height: 100px;
-        }
-
-        .btn, .btn-primary {
-            padding: 0.6rem 1.2rem;
-            font-size: 1rem;
-        }
-
-        .btn {
-            margin-left: 8px;
-        }
-
-        h1 {
-            font-size: 16px;
-        }
-    }
-
-    /* Mobile - 420px and below */
-    @@media (max-width: 420px) {
-        body {
-            padding: 0 0 100px 0;
-        }
-
-        .container {
-            padding: 10px 8px;
-        }
-
-        header {
-            border-bottom: 1px solid var(--border);
-        }
-
-        .center-form-container {
-            padding: 1rem 0.8rem 1rem 0.8rem;
-            margin: 16px 4px 0 4px;
-            border-radius: 8px;
-        }
-
-            .center-form-container h2 {
-                margin-bottom: 1rem;
-                font-size: 1.2rem;
-            }
-
-        .page-header {
-            flex-direction: column;
-            align-items: flex-start !important;
-        }
-
-        .styled-form {
-            grid-template-columns: 1fr;
-            gap: 6px;
-        }
-
-        .form-group {
-            margin-bottom: 0.3rem;
-        }
-
-            .form-group label {
-                font-size: 0.9rem;
-                margin-bottom: 0.3rem;
-            }
-
-        .form-control {
-            padding: 0.5rem 0.6rem;
-            font-size: 16px;
-        }
-
-        textarea.form-control {
-            min-height: 80px;
-        }
-
-        .validation-summary {
-            font-size: 0.9rem;
-        }
-
-        .field-validation {
-            font-size: 0.85rem;
-        }
-
-        .preview-img {
-            width: 120px;
-            height: 120px;
-        }
-
-        .additional-preview img {
-            width: 70px;
-            height: 70px;
-        }
-
-        .btn-primary, .btn {
-            padding: 0.5rem 1rem;
-            font-size: 0.95rem;
-        }
-
-        .btn {
-            margin-left: 6px;
-        }
-
-        .btn-primary:hover {
-            background: var(--brand-dark);
-        }
-
-        .bottom-bar {
-            height: 100px;
-            padding: 8px;
-            gap: 8px;
-        }
-
-            .bottom-bar .actions-grid {
-                gap: 6px;
-                padding: 4px;
-            }
-
-            .bottom-bar .action-btn {
-                min-height: 48px;
-                padding: 6px;
-            }
-
-                .bottom-bar .action-btn img {
-                    width: 24px;
-                    height: 24px;
-                }
-
-                .bottom-bar .action-btn .label {
-                    font-size: 7px;
-                }
-    }
-
-    /* Extra small - 360px */
-    @@media (max-width: 360px) {
-        .container {
-            padding: 8px 6px;
-        }
-
-        .center-form-container {
-            padding: 0.8rem 0.6rem 0.8rem 0.6rem;
-            margin: 12px 2px 0 2px;
-        }
-
-        .form-control {
-            padding: 0.4rem 0.5rem;
         }
     }
 </style>
 
-<head>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="theme-color" content="#16a34a">
-    <link rel="manifest" href="/manifest.json">
-    <!-- Android / Chrome -->
-    <meta name="mobile-web-app-capable" content="yes">
-    <!-- iOS -->
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="apple-touch-icon" href="/icons/icon-192.png">
-</head>
-
 <header>
     <div class="container" style="display:flex;align-items:center;gap:12px">
         <div class="page-header" style="display:flex;align-items:center;gap:12px">
-            <a asp-controller="Photos" asp-action="Index" style="display:inline-block;">
+            <a href="@Url.Action("Index", "Photos")" style="display:inline-block;">
                 <img src="@Url.Content("~/logo.png")" alt="ODPO logo" style="height:48px;width:auto;display:block;" />
             </a>
             <div>
@@ -513,7 +308,12 @@
 
             <div asp-validation-summary="All" class="validation-summary"></div>
 
-            <!-- left / right grid -->
+            <div class="form-group full">
+                <label asp-for="Name">Název</label>
+                <input asp-for="Name" class="form-control" />
+                <span asp-validation-for="Name" class="field-validation"></span>
+            </div>
+
             <div class="form-group">
                 <label asp-for="Position">Pozice</label>
                 <input asp-for="Position" class="form-control" />
@@ -557,7 +357,7 @@
             </div>
 
             <div class="form-group">
-                <label asp-for="MonthlyQuantity">Množství (měsíc(t))</label>
+                <label asp-for="MonthlyQuantity">Množství (měsíc/t)</label>
                 <input asp-for="MonthlyQuantity" class="form-control" />
                 <span asp-validation-for="MonthlyQuantity" class="field-validation"></span>
             </div>
@@ -566,12 +366,6 @@
                 <label asp-for="Mfi">MFI</label>
                 <input asp-for="Mfi" class="form-control" />
                 <span asp-validation-for="Mfi" class="field-validation"></span>
-            </div>
-
-            <div class="form-group full">
-                <label asp-for="Name">Název</label>
-                <input asp-for="Name" class="form-control" />
-                <span asp-validation-for="Name" class="field-validation"></span>
             </div>
 
             <div class="form-group">
@@ -612,29 +406,31 @@
                 <div id="AdditionalPreview" class="additional-preview"></div>
             </div>
 
-            <!-- actions -->
+            <!-- Tlačítka Uložit a Zpět v desktopovém zobrazení -->
             <div class="form-group full" style="display:flex; gap:12px; justify-content:flex-end; margin-top: 18px;">
-                <a href="@Url.Action("Index")" class="btn">Zpět</a>
-                <button type="submit" class="btn-primary">Uložit</button>
+                <a href="@Url.Action("Index", "Photos")" class="btn">Zrušit</a>
+                <button type="submit" class="btn-primary">Uložit záznam</button>
             </div>
         </form>
     </div>
 </main>
 
-<!-- Bottom fixed action bar (2 tlačítka) -->
-<nav class="bottom-bar" role="navigation" aria-label="Rychlé akce">
-    <div class="actions-grid" role="menu" aria-label="Rychlé akce">
-        <a role="menuitem" href="@Url.Action("Index", "Photos")" class="action-btn" title="Katalog">
-            <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 24 24' fill='white'><path d='M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z' fill='%23ffffff'/></svg>" alt="Katalog" />
-            <div class="label">Katalog</div>
-        </a>
-
-        <a role="menuitem" href="#" class="action-btn" title="Uložit" onclick="document.getElementById('createForm').submit(); return false;">
-            <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 24 24' fill='white'><path d='M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z' fill='%23ffffff'/></svg>" alt="Uložit" />
-            <div class="label">Uložit</div>
-        </a>
-    </div>
-</nav>
+<!-- FAB tlačítka -->
+<div class="fab-group">
+    <a href="@Url.Action("Index", "Photos")" class="fab" title="Zpět na katalog" aria-label="Zpět na katalog">
+        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:white;">
+            <path d="M19 12H5"></path>
+            <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+    </a>
+    <button type="button" class="fab secondary" title="Uložit záznam" aria-label="Uložit záznam" onclick="document.getElementById('createForm').submit();">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+            <polyline points="17 21 17 13 7 13 7 21"></polyline>
+            <polyline points="7 3 7 8 15 8"></polyline>
+        </svg>
+    </button>
+</div>
 
 @section Scripts {
     <script>
