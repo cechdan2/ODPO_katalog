@@ -11,6 +11,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#16a34a">
+    <!-- CSS pro Select2 -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 </head>
 
 <style>
@@ -125,7 +127,7 @@
             border-color: #b91c1c;
         }
 
-    /* === NOVÝ LAYOUT: LEVÝ PANEL + OBSAH === */
+    /* === LAYOUT === */
     .page-layout {
         display: grid;
         grid-template-columns: 280px 1fr;
@@ -136,7 +138,6 @@
         align-items: flex-start;
     }
 
-    /* === LEVÝ "PŘILEPENÝ" PANEL S FILTRY === */
     .filter-sidebar {
         position: sticky;
         top: 80px;
@@ -190,7 +191,7 @@
         font-size: 14px;
     }
 
-    /* === PRAVÝ OBSAH - NOVÉ DLAŽDICE === */
+    /* === DLAŽDICE === */
     .card-grid {
         display: grid;
         grid-template-columns: repeat(2, 1fr);
@@ -265,6 +266,28 @@
         font-size: 12px;
         padding: 20px 0;
     }
+
+    /* Styly pro Select2 */
+    .select2-container .select2-selection--multiple {
+        border: 1px solid var(--border) !important;
+        border-radius: 7px !important;
+        min-height: 38px;
+        padding: 2px;
+    }
+
+    .select2-container--default .select2-selection--multiple .select2-selection__choice {
+        background-color: var(--brand) !important;
+        border-color: var(--brand-dark) !important;
+        color: white !important;
+    }
+
+    .select2-container--default .select2-selection--multiple .select2-selection__choice__remove {
+        color: #fff !important;
+    }
+
+    .select2-container--default .select2-search--inline .select2-search__field {
+        margin-top: 5px;
+    }
 </style>
 
 <header>
@@ -298,60 +321,61 @@
             <h2>Filtrovat</h2>
             <form method="get" class="filter-form">
                 <input type="search" name="search" placeholder="Hledat cokoliv…" value="@(Model?.Search ?? "")" />
-                <select name="supplier">
-                    <option value="">Všichni dodavatelé</option>
-                    @foreach (var s in Model?.Suppliers ?? Enumerable.Empty<string>())
+
+                <select name="supplier" class="multi-select" multiple="multiple" data-placeholder="Filtr pro dodavatele">
+                    <option></option> @* <-- TATO PRÁZDNÁ VOLBA JE KLÍČOVÁ *@
+                    @foreach (var s in Model.Suppliers)
                     {
-                        <option value="@s" selected="@(s == Model?.Supplier)">@s</option>
+                        <option value="@s" selected="@(Model.Supplier.Contains(s))">@s</option>
                     }
                 </select>
-                <select name="material">
-                    <option value="">Všechny materiály</option>
-                    @foreach (var m in Model?.Materials ?? Enumerable.Empty<string>())
+                <select name="material" class="multi-select" multiple="multiple" data-placeholder="Filtr pro materiály">
+                    <option></option>
+                    @foreach (var m in Model.Materials)
                     {
-                        <option value="@m" selected="@(m == Model?.Material)">@m</option>
+                        <option value="@m" selected="@(Model.Material.Contains(m))">@m</option>
                     }
                 </select>
-                <select name="color">
-                    <option value="">Všechny barvy</option>
-                    @foreach (var c in Model?.Colors ?? Enumerable.Empty<string>())
+                <select name="color" class="multi-select" multiple="multiple" data-placeholder="Filtr pro barvy">
+                    <option></option>
+                    @foreach (var c in Model.Colors)
                     {
-                        <option value="@c" selected="@(c == Model?.Color)">@c</option>
+                        <option value="@c" selected="@(Model.Color.Contains(c))">@c</option>
                     }
                 </select>
-                <select name="position">
-                    <option value="">Všechny pozice</option>
-                    @foreach (var p in Model?.Positions ?? Enumerable.Empty<string>())
+                <select name="position" class="multi-select" multiple="multiple" data-placeholder="Filtr pro pozice">
+                    <option></option>
+                    @foreach (var p in Model.Positions)
                     {
-                        <option value="@p" selected="@(p == Model?.Position)">@p</option>
+                        <option value="@p" selected="@(Model.Position.Contains(p))">@p</option>
                     }
                 </select>
-                <select name="form">
-                    <option value="">Všechny formy</option>
-                    @foreach (var f in Model?.Forms ?? Enumerable.Empty<string>())
+                <select name="form" class="multi-select" multiple="multiple" data-placeholder="Filtr pro formy">
+                    <option></option>
+                    @foreach (var f in Model.Forms)
                     {
-                        <option value="@f" selected="@(f == Model?.Form)">@f</option>
+                        <option value="@f" selected="@(Model.Form.Contains(f))">@f</option>
                     }
                 </select>
-                <select name="filler">
-                    <option value="">Všechna plniva</option>
-                    @foreach (var f in Model?.Fillers ?? Enumerable.Empty<string>())
+                <select name="filler" class="multi-select" multiple="multiple" data-placeholder="Filtr pro plniva">
+                    <option></option>
+                    @foreach (var f in Model.Fillers)
                     {
-                        <option value="@f" selected="@(f == Model?.Filler)">@f</option>
+                        <option value="@f" selected="@(Model.Filler.Contains(f))">@f</option>
                     }
                 </select>
-                <select name="monthlyQuantity">
-                    <option value="">Všechna množství</option>
-                    @foreach (var q in Model?.MonthlyQuantities ?? Enumerable.Empty<string>())
+                <select name="monthlyQuantity" class="multi-select" multiple="multiple" data-placeholder="Filtr pro množství">
+                    <option></option>
+                    @foreach (var q in Model.MonthlyQuantities)
                     {
-                        <option value="@q" selected="@(q == Model?.MonthlyQuantity)">@q</option>
+                        <option value="@q" selected="@(Model.MonthlyQuantity.Contains(q))">@q</option>
                     }
                 </select>
-                <select name="mfi">
-                    <option value="">Všechny MFI</option>
-                    @foreach (var mfi in Model?.Mfis ?? Enumerable.Empty<string>())
+                <select name="mfi" class="multi-select" multiple="multiple" data-placeholder="Filtr pro MFI">
+                    <option></option>
+                    @foreach (var m in Model.Mfis)
                     {
-                        <option value="@mfi" selected="@(mfi == Model?.Mfi)">@mfi</option>
+                        <option value="@m" selected="@(Model.Mfi.Contains(m))">@m</option>
                     }
                 </select>
 
@@ -420,8 +444,20 @@
     </main>
 </div>
 
+<!-- Skripty pro Select2 -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<!-- Skripty pro Select2 -->
 <script>
     document.addEventListener("DOMContentLoaded", function() {
+        // Inicializace Select2
+        $('.multi-select').select2({
+            // Řádek "placeholder" jsme smazali.
+            // Select2 si teď placeholder vezme z 'data-placeholder' atributu v HTML.
+            allowClear: true,
+            closeOnSelect: false
+        });
+
         const checkboxes = document.querySelectorAll(".col-toggle");
 
         function toggleField(colName, isVisible) {
