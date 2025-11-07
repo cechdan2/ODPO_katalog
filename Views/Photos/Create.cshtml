@@ -1,7 +1,7 @@
 @model PhotoApp.Models.PhotoRecord
 
 @{
-    ViewData["Title"] = "Přidat nový záznam";
+    ViewData["Title"] = "Add new record";
 }
 
 <head>
@@ -270,7 +270,7 @@
 
     @@media (max-width: 767px) {
         /* Tento blok je pro případné budoucí styly jen pro mobily,
-               ale FAB jsou viditelné defaultně, takže zde není potřeba nic měnit. */
+                   ale FAB jsou viditelné defaultně, takže zde není potřeba nic měnit. */
     }
 
     @@media (max-width: 640px) {
@@ -292,7 +292,7 @@
                 <img src="@Url.Content("~/logo.png")" alt="ODPO logo" style="height:48px;width:auto;display:block;" />
             </a>
             <div>
-                <h1 style="margin:0;font-size:18px;color:var(--brand);">Přidat nový záznam</h1>
+                <h1 style="margin:0;font-size:18px;color:var(--brand);">Add New Record</h1>
                 <div class="muted" style="font-size:13px;">ODPO s.r.o. – Katalog vzorků plastů</div>
             </div>
         </div>
@@ -301,7 +301,7 @@
 
 <main class="container">
     <div class="center-form-container">
-        <h2>Přidat nový záznam</h2>
+        <h2>Add New Record</h2>
 
         <form id="createForm" asp-action="Create" method="post" enctype="multipart/form-data" class="styled-form" novalidate>
             @Html.AntiForgeryToken()
@@ -309,98 +309,152 @@
             <div asp-validation-summary="All" class="validation-summary"></div>
 
             <div class="form-group full">
-                <label asp-for="Name">Název</label>
-                <input asp-for="Name" class="form-control" />
-                <span asp-validation-for="Name" class="field-validation"></span>
-            </div>
-
-            <div class="form-group">
-                <label asp-for="Position">Pozice</label>
-                <input asp-for="Position" class="form-control" />
-                <span asp-validation-for="Position" class="field-validation"></span>
-            </div>
-
-            <div class="form-group">
-                <label asp-for="ExternalId">ID (externí)</label>
-                <input asp-for="ExternalId" class="form-control" />
-                <span asp-validation-for="ExternalId" class="field-validation"></span>
-            </div>
-
-            <div class="form-group">
-                <label asp-for="OriginalName">Původní název</label>
+                <label asp-for="OriginalName">Name</label>
                 <input asp-for="OriginalName" class="form-control" />
                 <span asp-validation-for="OriginalName" class="field-validation"></span>
             </div>
 
             <div class="form-group">
-                <label asp-for="Material">Materiál</label>
-                <input asp-for="Material" class="form-control" />
+                <label asp-for="Position">Position</label>
+                <input asp-for="Position" class="form-control" list="position-list" />
+                @if (ViewBag.Positions != null)
+                {
+                    <datalist id="position-list">
+                        @foreach (var item in ViewBag.Positions)
+                        {
+                            <option value="@item"></option>
+                        }
+                    </datalist>
+                }
+                <span asp-validation-for="Position" class="field-validation"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="Material">Material</label>
+                <input asp-for="Material" class="form-control" list="material-list" />
+                @if (ViewBag.Materials != null)
+                {
+                    <datalist id="material-list">
+                        @foreach (var item in ViewBag.Materials)
+                        {
+                            <option value="@item"></option>
+                        }
+                    </datalist>
+                }
                 <span asp-validation-for="Material" class="field-validation"></span>
             </div>
 
             <div class="form-group">
-                <label asp-for="Form">Forma</label>
-                <input asp-for="Form" class="form-control" />
+                <label asp-for="Form">Form</label>
+                <input asp-for="Form" class="form-control" list="form-list" />
+                @if (ViewBag.Forms != null)
+                {
+                    <datalist id="form-list">
+                        @foreach (var item in ViewBag.Forms)
+                        {
+                            <option value="@item"></option>
+                        }
+                    </datalist>
+                }
                 <span asp-validation-for="Form" class="field-validation"></span>
             </div>
 
             <div class="form-group">
-                <label asp-for="Filler">Plnivo</label>
-                <input asp-for="Filler" class="form-control" />
+                <label asp-for="Filler">Filler</label>
+                <input asp-for="Filler" class="form-control" list="filler-list" />
+                @if (ViewBag.Fillers != null)
+                {
+                    <datalist id="filler-list">
+                        @foreach (var item in ViewBag.Fillers)
+                        {
+                            <option value="@item"></option>
+                        }
+                    </datalist>
+                }
                 <span asp-validation-for="Filler" class="field-validation"></span>
             </div>
 
             <div class="form-group">
-                <label asp-for="Color">Barva</label>
-                <input asp-for="Color" class="form-control" />
+                <label asp-for="Color">Color</label>
+                <input asp-for="Color" class="form-control" list="color-list" />
+                @if (ViewBag.Colors != null)
+                {
+                    <datalist id="color-list">
+                        @foreach (var item in ViewBag.Colors)
+                        {
+                            <option value="@item"></option>
+                        }
+                    </datalist>
+                }
                 <span asp-validation-for="Color" class="field-validation"></span>
             </div>
 
             <div class="form-group">
-                <label asp-for="MonthlyQuantity">Množství (měsíc/t)</label>
-                <input asp-for="MonthlyQuantity" class="form-control" />
+                <label asp-for="MonthlyQuantity">Monthly Quantity (t/month)</label>
+                <input asp-for="MonthlyQuantity" class="form-control" list="monthlyquantity-list" />
+                @if (ViewBag.MonthlyQuantities != null)
+                {
+                    <datalist id="monthlyquantity-list">
+                        @foreach (var item in ViewBag.MonthlyQuantities)
+                        {
+                            <option value="@item"></option>
+                        }
+                    </datalist>
+                }
                 <span asp-validation-for="MonthlyQuantity" class="field-validation"></span>
             </div>
 
             <div class="form-group">
                 <label asp-for="Mfi">MFI</label>
-                <input asp-for="Mfi" class="form-control" />
+                <input asp-for="Mfi" class="form-control" list="mfi-list" />
+                @if (ViewBag.Mfis != null)
+                {
+                    <datalist id="mfi-list">
+                        @foreach (var item in ViewBag.Mfis)
+                        {
+                            <option value="@item"></option>
+                        }
+                    </datalist>
+                }
                 <span asp-validation-for="Mfi" class="field-validation"></span>
             </div>
 
             <div class="form-group">
-                <label asp-for="Supplier">Dodavatel</label>
-                <input asp-for="Supplier" class="form-control" />
+                <label asp-for="Supplier">Supplier</label>
+                <input asp-for="Supplier" class="form-control" list="supplier-list" />
+                @if (ViewBag.Suppliers != null)
+                {
+                    <datalist id="supplier-list">
+                        @foreach (var item in ViewBag.Suppliers)
+                        {
+                            <option value="@item"></option>
+                        }
+                    </datalist>
+                }
                 <span asp-validation-for="Supplier" class="field-validation"></span>
             </div>
 
             <div class="form-group full">
-                <label asp-for="Description">Popis</label>
-                <textarea asp-for="Description" class="form-control" rows="3"></textarea>
-                <span asp-validation-for="Description" class="field-validation"></span>
-            </div>
-
-            <div class="form-group full">
-                <label asp-for="Notes">Poznámky</label>
+                <label asp-for="Notes">Notes</label>
                 <textarea asp-for="Notes" class="form-control" rows="3"></textarea>
                 <span asp-validation-for="Notes" class="field-validation"></span>
             </div>
 
             <div class="form-group">
-                <label for="PhotoFile">Hlavní fotka (soubor)</label>
+                <label for="PhotoFile">Main photo<label>
                 <input type="file" name="PhotoFile" id="PhotoFile" class="form-control-file" accept="image/*" />
                 <span class="field-validation" id="photoError"></span>
             </div>
 
             <div class="form-group">
-                <label for="PhotoPreview">Náhled hlavní fotky</label>
+                <label for="PhotoPreview">View of main photo</label>
                 <div>
                     <img id="PhotoPreview" src="" class="preview-img" alt="Náhled fotky" style="display:none;" />
                 </div>
             </div>
 
             <div class="form-group full">
-                <label for="AdditionalPhotoFiles">Dodatečné fotky (vyberte více najednou)</label>
+                <label for="AdditionalPhotoFiles">Additional phoros (multiplechoice)</label>
                 <input type="file" name="AdditionalPhotoFiles" id="AdditionalPhotoFiles" class="form-control-file" accept="image/*" multiple />
                 <span class="field-validation" id="additionalPhotosError"></span>
                 <div id="AdditionalPreview" class="additional-preview"></div>
@@ -408,8 +462,8 @@
 
             <!-- Tlačítka Uložit a Zpět v desktopovém zobrazení -->
             <div class="form-group full" style="display:flex; gap:12px; justify-content:flex-end; margin-top: 18px;">
-                <a href="@Url.Action("Index", "Photos")" class="btn">Zrušit</a>
-                <button type="submit" class="btn-primary">Uložit záznam</button>
+                <a href="@Url.Action("Index", "Photos")" class="btn">Abort</a>
+                <button type="submit" class="btn-primary">Save record</button>
             </div>
         </form>
     </div>
@@ -417,13 +471,13 @@
 
 <!-- FAB tlačítka -->
 <div class="fab-group">
-    <a href="@Url.Action("Index", "Photos")" class="fab" title="Zpět na katalog" aria-label="Zpět na katalog">
+    <a href="@Url.Action("Index", "Photos")" class="fab" title="Back to catalog" aria-label="Back to catalog">
         <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:white;">
             <path d="M19 12H5"></path>
             <polyline points="12 19 5 12 12 5"></polyline>
         </svg>
     </a>
-    <button type="button" class="fab secondary" title="Uložit záznam" aria-label="Uložit záznam" onclick="document.getElementById('createForm').submit();">
+    <button type="button" class="fab secondary" title="Save record" aria-label="Save record" onclick="document.getElementById('createForm').submit();">
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
             <polyline points="17 21 17 13 7 13 7 21"></polyline>

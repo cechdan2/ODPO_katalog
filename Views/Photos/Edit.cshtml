@@ -1,7 +1,7 @@
 ﻿@model PhotoApp.Models.PhotoRecord
 
 @{
-    ViewData["Title"] = "Upravit vzorek";
+    ViewData["Title"] = "Edit Sample";
 }
 
 <!DOCTYPE html>
@@ -10,207 +10,207 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
     <meta name="theme-color" content="#16a34a">
-    
+
     <!-- PWA manifest -->
     <link rel="manifest" href="/manifest.json">
-    
+
     <!-- Android / Chrome -->
     <meta name="mobile-web-app-capable" content="yes">
-    
+
     <!-- iOS -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="apple-touch-icon" href="/icons/icon-192.png">
-    
+
     <!-- Stylesheets -->
     <link rel="stylesheet" href="~/css/Edit.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/Mobile.css" asp-append-version="true" />
-    
+
     <title>@ViewData["Title"]</title>
 </head>
 <body>
 
-<header>
-    <div class="container" style="display:flex;align-items:center;gap:12px">
-        <div class="page-header" style="display:flex;align-items:center;gap:12px">
-            <a asp-controller="Photos" asp-action="Index" style="display:inline-block;">
-                <img src="@Url.Content("~/logo.png")" alt="ODPO logo" style="height:48px;width:auto;display:block;" />
-            </a>
-            <div>
-                <h1 style="margin:0;font-size:18px;color:var(--brand);">Detail vzorku</h1>
-                <div class="muted" style="font-size:13px;">ODPO s.r.o. – Katalog vzorků plastů</div>
+    <header>
+        <div class="container" style="display:flex;align-items:center;gap:12px">
+            <div class="page-header" style="display:flex;align-items:center;gap:12px">
+                <a asp-controller="Photos" asp-action="Index" style="display:inline-block;">
+                    <img src="@Url.Content("~/logo.png")" alt="ODPO logo" style="height:48px;width:auto;display:block;" />
+                </a>
+                <div>
+                    <h1 style="margin:0;font-size:18px;color:var(--brand);">Sample Details</h1>
+                    <div class="muted" style="font-size:13px;">ODPO s.r.o. – Plastic Samples Catalog</div>
+                </div>
             </div>
         </div>
-    </div>
-</header>
+    </header>
 
-<main class="container">
-    <div class="center-form-container">
-        <h2>Upravit vzorek</h2>
+    <main class="container">
+        <div class="center-form-container">
+            <h2>Edit Sample</h2>
 
-        <form asp-action="Edit" enctype="multipart/form-data" method="post" class="styled-form" novalidate>
-            @Html.AntiForgeryToken()
-            <input type="hidden" asp-for="Id" />
-            <input type="hidden" asp-for="AdditionalPhotos" />
+            <form asp-action="Edit" enctype="multipart/form-data" method="post" class="styled-form" novalidate>
+                @Html.AntiForgeryToken()
+                <input type="hidden" asp-for="Id" />
+                <input type="hidden" asp-for="AdditionalPhotos" />
 
-            <div class="form-group">
-                <label asp-for="Position">Pozice</label>
-                <input asp-for="Position" class="form-control" />
-                <span asp-validation-for="Position" class="field-validation"></span>
-            </div>
+                <div class="form-group">
+                    <label asp-for="Position">Position</label>
+                    <input asp-for="Position" class="form-control" />
+                    <span asp-validation-for="Position" class="field-validation"></span>
+                </div>
 
-            <div class="form-group">
-                <label asp-for="ExternalId">ID</label>
-                <input asp-for="ExternalId" class="form-control" />
-                <span asp-validation-for="ExternalId" class="field-validation"></span>
-            </div>
+                <div class="form-group">
+                    <label asp-for="ExternalId">ID</label>
+                    <input asp-for="ExternalId" class="form-control" />
+                    <span asp-validation-for="ExternalId" class="field-validation"></span>
+                </div>
 
-            <div class="form-group">
-                <label asp-for="Supplier">Dodavatel</label>
-                <input asp-for="Supplier" class="form-control" />
-                <span asp-validation-for="Supplier" class="field-validation"></span>
-            </div>
+                <div class="form-group">
+                    <label asp-for="Supplier">Supplier</label>
+                    <input asp-for="Supplier" class="form-control" />
+                    <span asp-validation-for="Supplier" class="field-validation"></span>
+                </div>
 
-            <div class="form-group full">
-                <label asp-for="OriginalName">Původní název</label>
-                <input asp-for="OriginalName" class="form-control" />
-                <span asp-validation-for="OriginalName" class="field-validation"></span>
-            </div>
+                <div class="form-group full">
+                    <label asp-for="OriginalName">Original Name</label>
+                    <input asp-for="OriginalName" class="form-control" />
+                    <span asp-validation-for="OriginalName" class="field-validation"></span>
+                </div>
 
-            <div class="form-group">
-                <label asp-for="Material">Materiál</label>
-                <input asp-for="Material" class="form-control" />
-                <span asp-validation-for="Material" class="field-validation"></span>
-            </div>
+                <div class="form-group">
+                    <label asp-for="Material">Material</label>
+                    <input asp-for="Material" class="form-control" />
+                    <span asp-validation-for="Material" class="field-validation"></span>
+                </div>
 
-            <div class="form-group">
-                <label asp-for="Form">Forma</label>
-                <input asp-for="Form" class="form-control" />
-                <span asp-validation-for="Form" class="field-validation"></span>
-            </div>
+                <div class="form-group">
+                    <label asp-for="Form">Form</label>
+                    <input asp-for="Form" class="form-control" />
+                    <span asp-validation-for="Form" class="field-validation"></span>
+                </div>
 
-            <div class="form-group">
-                <label asp-for="Filler">Plnivo</label>
-                <input asp-for="Filler" class="form-control" />
-                <span asp-validation-for="Filler" class="field-validation"></span>
-            </div>
+                <div class="form-group">
+                    <label asp-for="Filler">Filler</label>
+                    <input asp-for="Filler" class="form-control" />
+                    <span asp-validation-for="Filler" class="field-validation"></span>
+                </div>
 
-            <div class="form-group">
-                <label asp-for="Color">Barva</label>
-                <input asp-for="Color" class="form-control" />
-                <span asp-validation-for="Color" class="field-validation"></span>
-            </div>
+                <div class="form-group">
+                    <label asp-for="Color">Color</label>
+                    <input asp-for="Color" class="form-control" />
+                    <span asp-validation-for="Color" class="field-validation"></span>
+                </div>
 
-            <div class="form-group full">
-                <label asp-for="Description">Popis</label>
-                <textarea asp-for="Description" class="form-control" rows="3"></textarea>
-                <span asp-validation-for="Description" class="field-validation"></span>
-            </div>
+                <div class="form-group full">
+                    <label asp-for="Description">Description</label>
+                    <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+                    <span asp-validation-for="Description" class="field-validation"></span>
+                </div>
 
-            <div class="form-group">
-                <label asp-for="MonthlyQuantity">Množství (měsíc)</label>
-                <input asp-for="MonthlyQuantity" class="form-control" />
-                <span asp-validation-for="MonthlyQuantity" class="field-validation"></span>
-            </div>
+                <div class="form-group">
+                    <label asp-for="MonthlyQuantity">Quantity (month)</label>
+                    <input asp-for="MonthlyQuantity" class="form-control" />
+                    <span asp-validation-for="MonthlyQuantity" class="field-validation"></span>
+                </div>
 
-            <div class="form-group">
-                <label asp-for="Mfi">MFI</label>
-                <input asp-for="Mfi" class="form-control" />
-                <span asp-validation-for="Mfi" class="field-validation"></span>
-            </div>
+                <div class="form-group">
+                    <label asp-for="Mfi">MFI</label>
+                    <input asp-for="Mfi" class="form-control" />
+                    <span asp-validation-for="Mfi" class="field-validation"></span>
+                </div>
 
-            <div class="form-group full">
-                <label asp-for="Notes">Poznámky</label>
-                <textarea asp-for="Notes" class="form-control" rows="3"></textarea>
-                <span asp-validation-for="Notes" class="field-validation"></span>
-            </div>
+                <div class="form-group full">
+                    <label asp-for="Notes">Notes</label>
+                    <textarea asp-for="Notes" class="form-control" rows="3"></textarea>
+                    <span asp-validation-for="Notes" class="field-validation"></span>
+                </div>
 
-            <div class="form-group full">
-                <label for="PhotoFile">Hlavní fotka (nový soubor)</label>
-                <input type="file" name="PhotoFile" id="PhotoFile" class="form-control-file" accept="image/*" />
-                <span class="field-validation" id="photoError"></span>
-            </div>
+                <div class="form-group full">
+                    <label for="PhotoFile">Main Photo (new file)</label>
+                    <input type="file" name="PhotoFile" id="PhotoFile" class="form-control-file" accept="image/*" />
+                    <span class="field-validation" id="photoError"></span>
+                </div>
 
-            <div class="form-group full">
-                <label>Náhled aktuální hlavní fotky</label>
-                @{
-                    var imageSrc = !string.IsNullOrWhiteSpace(Model.ImagePath) ? Url.Content(Model.ImagePath) : (!string.IsNullOrWhiteSpace(Model.PhotoPath) ? Url.Content(Model.PhotoPath) : null);
-                }
-                @if (!string.IsNullOrEmpty(imageSrc))
-                {
-                    <img id="CurrentPhotoPreview" src="@imageSrc" class="preview-img" alt="Aktuální obrázek" />
-                }
-                else
-                {
-                    <div class="no-image-placeholder">Žádný obrázek</div>
-                }
-            </div>
-
-            <div class="form-group full">
-                <label for="AdditionalPhotoFiles">Dodatečné fotky (vyberte více najednou)</label>
-                <input type="file" name="AdditionalPhotoFiles" id="AdditionalPhotoFiles" class="form-control-file" accept="image/*" multiple />
-                <span class="field-validation" id="additionalPhotosError"></span>
-                
-                @if (!string.IsNullOrWhiteSpace(Model.AdditionalPhotos))
-                {
-                    var existingPhotos = Model.GetAdditionalPhotosList();
-                    <div style="margin-top:10px;">
-                        <strong>Aktuálně nahráno: @existingPhotos.Count foto(ek)</strong>
-                        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">
-                            @foreach (var photo in existingPhotos)
-                            {
-                                <img src="@Url.Content(photo)" style="width:60px;height:60px;object-fit:cover;border-radius:4px;border:1px solid #ddd;" alt="Dodatečná fotka" />
-                            }
-                        </div>
-                    </div>
-                }
-            </div>
-
-            <div class="form-actions">
-                <a href="@Url.Action("Index")" class="btn">Zpět</a>
-                <button type="submit" class="btn-primary">Uložit změny</button>
-            </div>
-        </form>
-    </div>
-</main>
-
-@section Scripts {
-    <script>
-        document.getElementById('PhotoFile')?.addEventListener('change', function (e) {
-            const input = e.target;
-            const err = document.getElementById('photoError');
-            err.textContent = '';
-            const current = document.getElementById('CurrentPhotoPreview');
-            if (input.files && input.files[0]) {
-                const file = input.files[0];
-                if (!file.type.startsWith('image/')) {
-                    err.textContent = 'Prosím vyberte obrázek.';
-                    return;
-                }
-                const reader = new FileReader();
-                reader.onload = function (ev) {
-                    if (current) {
-                        current.src = ev.target.result;
-                    } else {
-                        const img = document.createElement('img');
-                        img.id = 'CurrentPhotoPreview';
-                        img.className = 'preview-img';
-                        img.src = ev.target.result;
-                        const placeholder = input.parentNode.querySelector('.no-image-placeholder');
-                        if (placeholder) {
-                            placeholder.replaceWith(img);
-                        } else {
-                            input.parentNode.appendChild(img);
-                        }
+                <div class="form-group full">
+                    <label>Current Main Photo Preview</label>
+                    @{
+                        var imageSrc = !string.IsNullOrWhiteSpace(Model.ImagePath) ? Url.Content(Model.ImagePath) : (!string.IsNullOrWhiteSpace(Model.PhotoPath) ? Url.Content(Model.PhotoPath) : null);
                     }
-                };
-                reader.readAsDataURL(file);
-            }
-        });
-    </script>
+                    @if (!string.IsNullOrEmpty(imageSrc))
+                    {
+                        <img id="CurrentPhotoPreview" src="@imageSrc" class="preview-img" alt="Current image" />
+                    }
+                    else
+                    {
+                        <div class="no-image-placeholder">No image</div>
+                    }
+                </div>
 
-    <partial name="_ValidationScriptsPartial" />
-}
+                <div class="form-group full">
+                    <label for="AdditionalPhotoFiles">Additional Photos (select multiple)</label>
+                    <input type="file" name="AdditionalPhotoFiles" id="AdditionalPhotoFiles" class="form-control-file" accept="image/*" multiple />
+                    <span class="field-validation" id="additionalPhotosError"></span>
+
+                    @if (!string.IsNullOrWhiteSpace(Model.AdditionalPhotos))
+                    {
+                        var existingPhotos = Model.GetAdditionalPhotosList();
+                        <div style="margin-top:10px;">
+                            <strong>Currently uploaded: @existingPhotos.Count photo(s)</strong>
+                            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">
+                                @foreach (var photo in existingPhotos)
+                                {
+                                    <img src="@Url.Content(photo)" style="width:60px;height:60px;object-fit:cover;border-radius:4px;border:1px solid #ddd;" alt="Additional photo" />
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                <div class="form-actions">
+                    <a href="@Url.Action("Index")" class="btn">Back</a>
+                    <button type="submit" class="btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </main>
+
+    @section Scripts {
+        <script>
+            document.getElementById('PhotoFile')?.addEventListener('change', function (e) {
+                const input = e.target;
+                const err = document.getElementById('photoError');
+                err.textContent = '';
+                const current = document.getElementById('CurrentPhotoPreview');
+                if (input.files && input.files[0]) {
+                    const file = input.files[0];
+                    if (!file.type.startsWith('image/')) {
+                        err.textContent = 'Please select an image.';
+                        return;
+                    }
+                    const reader = new FileReader();
+                    reader.onload = function (ev) {
+                        if (current) {
+                            current.src = ev.target.result;
+                        } else {
+                            const img = document.createElement('img');
+                            img.id = 'CurrentPhotoPreview';
+                            img.className = 'preview-img';
+                            img.src = ev.target.result;
+                            const placeholder = input.parentNode.querySelector('.no-image-placeholder');
+                            if (placeholder) {
+                                placeholder.replaceWith(img);
+                            } else {
+                                input.parentNode.appendChild(img);
+                            }
+                        }
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+        </script>
+
+        <partial name="_ValidationScriptsPartial" />
+    }
 
 </body>
 </html>

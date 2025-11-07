@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="apple-touch-icon" href="/icons/icon-192.png">
 @{
-    ViewData["Title"] = "Detail vzorku";
+    ViewData["Title"] = "Sample Details";
 
     var publicUrl = ViewBag.PublicUrl as string ?? Url.Action("DetailsAnonymous", "Home", new { id = Model.Id }, Context?.Request?.Scheme ?? "https");
     var qrApi = !string.IsNullOrWhiteSpace(publicUrl)
@@ -24,7 +24,7 @@
     var additionalPhotos = Model.GetAdditionalPhotosList();
 }
 <style>
-    /* === GLOBÁLNÍ A MOBILNÍ STYLY (MOBILE-FIRST) === */
+    /* === GLOBAL & MOBILE-FIRST STYLES === */
     :root {
         --brand: #16a34a;
         --brand-dark: #166534;
@@ -44,7 +44,7 @@
         font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
         color: var(--text);
         overflow-x: hidden;
-        padding-bottom: 100px; /* Odsazení pro FAB tlačítka */
+        padding-bottom: 100px; /* space for FAB */
     }
 
     .detail-page {
@@ -324,13 +324,13 @@
         }
     }
 
-    /* === PLOVOUCÍ TLAČÍTKA (FAB) === */
+    /* FAB */
     .fab-group {
         position: fixed;
         right: 12px;
         bottom: 12px;
         display: flex;
-        flex-direction: column-reverse; /* Tlačítka se skládají nahoru */
+        flex-direction: column-reverse;
         gap: 10px;
         z-index: 1700;
     }
@@ -369,11 +369,9 @@
             transform: translateY(-2px);
         }
 
-
-    /* Na desktopu a větších tabletech (768px a více) */
     @@media (min-width: 768px) {
         body {
-            padding-bottom: 0; /* Vynulujeme spodní odsazení */
+            padding-bottom: 0;
         }
 
         .layout {
@@ -402,7 +400,7 @@
             grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
             gap: 12px;
         }
-        /* Skrytí FAB na desktopu, protože akce jsou dostupné v obsahu stránky */
+
         .fab-group {
             display: none;
         }
@@ -417,63 +415,63 @@
                 <img src="@Url.Content("~/logo.png")" alt="ODPO logo" style="height:40px;width:auto;display:block;" />
             </a>
             <div>
-                <h1 style="margin:0;font-size:16px;color:var(--brand);">Detail vzorku</h1>
-                <div class="muted" style="font-size:12px;">ODPO s.r.o. – Katalog vzorků plastů</div>
+                <h1 style="margin:0;font-size:16px;color:var(--brand);">Sample Details</h1>
+                <div class="muted" style="font-size:12px;">ODPO s.r.o. – Plastic Samples Catalog</div>
             </div>
         </div>
     </header>
 
-    <div class="card layout" role="region" aria-label="Detail vzorku">
-        <aside class="media" aria-label="Obrázek a veřejný odkaz">
+    <div class="card layout" role="region" aria-label="Sample details">
+        <aside class="media" aria-label="Image and public link">
             @if (!string.IsNullOrEmpty(imageSrc))
             {
-                <img src="@imageSrc" alt="Fotografie vzorku: @Model.Name" class="detail-img photo-zoom" data-full="@imageSrc" />
+                <img src="@imageSrc" alt="Sample photo: @Model.Name" class="detail-img photo-zoom" data-full="@imageSrc" />
             }
             else
             {
-                <div class="detail-img" style="display:flex;align-items:center;justify-content:center;color:#999;" aria-hidden="true">Žádný obrázek</div>
+                <div class="detail-img" style="display:flex;align-items:center;justify-content:center;color:#999;" aria-hidden="true">No image</div>
             }
 
             <div class="meta">
                 <div class="title">@(!string.IsNullOrWhiteSpace(Model.Name) ? Model.Name : "-")</div>
-                <div class="muted">Upraveno: @SafeDate(Model.UpdatedAt)</div>
+                <div class="muted">Updated: @SafeDate(Model.UpdatedAt)</div>
             </div>
 
-            <div class="qr" aria-label="Veřejný odkaz a QR kód">
-                <div style="font-weight:700;">Veřejný odkaz (QR)</div>
+            <div class="qr" aria-label="Public link and QR code">
+                <div style="font-weight:700;">Public link (QR)</div>
                 @if (!string.IsNullOrWhiteSpace(qrApi))
                 {
-                    <img src="@qrApi" alt="QR kód veřejného detailu" />
-                    <div><a href="@publicUrl" target="_blank" rel="noopener">Otevřít veřejný detail</a></div>
+                    <img src="@qrApi" alt="QR code for public detail" />
+                    <div><a href="@publicUrl" target="_blank" rel="noopener">Open public detail</a></div>
                 }
                 else
                 {
-                    <div class="muted">Veřejný odkaz není dostupný.</div>
+                    <div class="muted">Public link not available.</div>
                 }
             </div>
         </aside>
 
         <section>
-            <h2 style="margin-top:0;margin-bottom:12px;font-size:1.2rem;">Informace o vzorku</h2>
+            <h2 style="margin-top:0;margin-bottom:12px;font-size:1.2rem;">Sample information</h2>
 
             <div class="fields" aria-live="polite">
-                <div class="field"><div class="label">Pozice</div><div class="value">@Safe(Model.Position?.ToString())</div></div>
+                <div class="field"><div class="label">Position</div><div class="value">@Safe(Model.Position?.ToString())</div></div>
                 <div class="field"><div class="label">ID</div><div class="value">@Safe(Model.ExternalId)</div></div>
-                <div class="field full"><div class="label">Dodavatel</div><div class="value">@Safe(Model.Supplier)</div></div>
-                <div class="field full"><div class="label">Původní název</div><div class="value">@Safe(Model.OriginalName)</div></div>
-                <div class="field"><div class="label">Materiál</div><div class="value">@Safe(Model.Material)</div></div>
-                <div class="field"><div class="label">Forma</div><div class="value">@Safe(Model.Form)</div></div>
-                <div class="field"><div class="label">Plnivo</div><div class="value">@Safe(Model.Filler)</div></div>
-                <div class="field"><div class="label">Barva</div><div class="value">@Safe(Model.Color)</div></div>
-                <div class="field full"><div class="label">Popis</div><div class="value">@Safe(Model.Description)</div></div>
-                <div class="field"><div class="label">Množství (měsíc)</div><div class="value">@Safe(Model.MonthlyQuantity?.ToString())</div></div>
+                <div class="field full"><div class="label">Supplier</div><div class="value">@Safe(Model.Supplier)</div></div>
+                <div class="field full"><div class="label">Name</div><div class="value">@Safe(Model.OriginalName)</div></div>
+                <div class="field"><div class="label">Material</div><div class="value">@Safe(Model.Material)</div></div>
+                <div class="field"><div class="label">Form</div><div class="value">@Safe(Model.Form)</div></div>
+                <div class="field"><div class="label">Filler</div><div class="value">@Safe(Model.Filler)</div></div>
+                <div class="field"><div class="label">Color</div><div class="value">@Safe(Model.Color)</div></div>
+                <!-- Description removed as requested -->
+                <div class="field"><div class="label">Quantity (month)</div><div class="value">@Safe(Model.MonthlyQuantity?.ToString())</div></div>
                 <div class="field"><div class="label">MFI</div><div class="value">@Safe(Model.Mfi)</div></div>
-                <div class="field full"><div class="label">Poznámky</div><div class="value">@Safe(Model.Notes)</div></div>
-                <div class="field"><div class="label">Vytvořeno</div><div class="value">@SafeDate(Model.CreatedAt)</div></div>
+                <div class="field full"><div class="label">Notes</div><div class="value">@Safe(Model.Notes)</div></div>
+                <div class="field"><div class="label">Created</div><div class="value">@SafeDate(Model.CreatedAt)</div></div>
             </div>
 
             <div class="additional-photos-section">
-                <h3>Dodatečné fotografie (@additionalPhotos.Count)</h3>
+                <h3>Additional photos (@additionalPhotos.Count)</h3>
 
                 @if (additionalPhotos.Count > 0)
                 {
@@ -481,12 +479,12 @@
                         @foreach (var photoPath in additionalPhotos)
                         {
                             <div class="gallery-item">
-                                <img src="@Url.Content(photoPath)" alt="Dodatečná fotografie" class="photo-zoom" data-full="@Url.Content(photoPath)" />
+                                <img src="@Url.Content(photoPath)" alt="Additional photo" class="photo-zoom" data-full="@Url.Content(photoPath)" />
                                 @if (User.Identity?.IsAuthenticated == true)
                                 {
                                     <form asp-action="DeleteAdditionalPhoto" asp-route-id="@Model.Id" asp-route-photoPath="@photoPath" method="post" style="display:inline;">
                                         @Html.AntiForgeryToken()
-                                        <button type="submit" class="delete-btn" onclick="return confirm('Opravdu smazat tuto fotku?');">Smazat</button>
+                                        <button type="submit" class="delete-btn" onclick="return confirm('Delete this photo?');">Delete</button>
                                     </form>
                                 }
                             </div>
@@ -497,44 +495,44 @@
                 @if (User.Identity?.IsAuthenticated == true)
                 {
                     <div class="upload-form">
-                        <h4>➕ Přidat další fotografie</h4>
+                        <h4>➕ Add more photos</h4>
                         <form asp-action="UploadAdditionalPhotos" asp-route-id="@Model.Id" method="post" enctype="multipart/form-data" id="uploadForm">
                             @Html.AntiForgeryToken()
                             <input type="file" name="AdditionalPhotoFiles" id="quickUploadInput" accept="image/*" multiple />
                             <div id="quickUploadPreview" class="preview-container"></div>
-                            <button type="submit" class="btn-primary" id="uploadBtn" disabled>Nahrát fotky</button>
+                            <button type="submit" class="btn-primary" id="uploadBtn" disabled>Upload photos</button>
                         </form>
                     </div>
                 }
             </div>
 
             <div class="actions">
-                <a href="@Url.Action("Index", "Photos")" class="btn">Zpět na katalog</a>
+                <a href="@Url.Action("Index", "Photos")" class="btn">Back to catalog</a>
                 @if (User.Identity?.IsAuthenticated == true)
                 {
-                    <a href="@Url.Action("Edit", "Photos", new { id = Model.Id })" class="btn">Upravit vzorek</a>
+                    <a href="@Url.Action("Edit", "Photos", new { id = Model.Id })" class="btn">Edit Sample</a>
                 }
             </div>
         </section>
     </div>
 </main>
 
-<!-- FAB tlačítka - zobrazí se jen na mobilech -->
+<!-- FAB (mobile only) -->
 <div class="fab-group">
-    <a href="@Url.Action("Index", "Photos")" class="fab primary" title="Zpět na katalog">
+    <a href="@Url.Action("Index", "Photos")" class="fab primary" title="Back to catalog">
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z" />
         </svg>
     </a>
     @if (User.Identity?.IsAuthenticated == true)
     {
-        <a href="@Url.Action("Edit", "Photos", new { id = Model.Id })" class="fab secondary" title="Upravit">
+        <a href="@Url.Action("Edit", "Photos", new { id = Model.Id })" class="fab secondary" title="Edit">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
                 <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
             </svg>
         </a>
-        <a href="@Url.Action("Delete", "Photos", new { id = Model.Id })" class="fab destructive" title="Smazat" onclick="return confirm('Opravdu smazat tento vzorek?');">
+        <a href="@Url.Action("Delete", "Photos", new { id = Model.Id })" class="fab destructive" title="Delete" onclick="return confirm('Delete this sample?');">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <polyline points="3 6 5 6 21 6"></polyline>
                 <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
@@ -547,8 +545,8 @@
 
 <div id="imageLightbox" class="image-lightbox" role="dialog" aria-modal="true" aria-hidden="true">
     <div class="inner" role="document">
-        <button class="close-btn" id="lightboxClose" aria-label="Zavřít (Esc)">✕</button>
-        <img id="lightboxImg" src="" alt="Zvětšená fotografie" />
+        <button class="close-btn" id="lightboxClose" aria-label="Close (Esc)">✕</button>
+        <img id="lightboxImg" src="" alt="Enlarged photo" />
     </div>
 </div>
 
@@ -564,10 +562,13 @@
             lightboxImg.src = src;
             if (alt) lightboxImg.alt = alt;
             lightbox.classList.add('show');
+            lightbox.setAttribute('aria-hidden', 'false');
         }
 
         function closeLightbox() {
             lightbox.classList.remove('show');
+            lightbox.setAttribute('aria-hidden', 'true');
+            lightboxImg.src = '';
         }
 
         zoomableImages.forEach(img => {
@@ -610,4 +611,3 @@
         }
     })();
 </script>
-```
