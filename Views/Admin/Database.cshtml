@@ -200,9 +200,9 @@
     /* === PLOVOUCÍ TLAČÍTKO (FAB) === */
     .fab-group {
         position: fixed;
-        left: 12px;
-        bottom: 12px;
-        display: none; /* <-- OPRAVA: Výchozí stav je skrytý (pro desktop) */
+        right: 20px;
+        bottom: 20px;
+        display: none;
         flex-direction: column;
         gap: 10px;
         z-index: 1700;
@@ -436,7 +436,7 @@
             }
 
             alert('✅ Restore byl úspěšný!');
-            window.location.href = '/Photos';
+            window.location.href = '/Photos/Index';
         } catch (err) {
             alert('Chyba: ' + err.message);
         } finally {

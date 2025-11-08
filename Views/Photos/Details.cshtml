@@ -277,7 +277,7 @@
                 border-radius: 6px;
                 border: 1px solid var(--border);
             }
-
+    
     /* === VLASTNÍ STYL PRO NAHRÁVÁNÍ SOUBORŮ === */
     .custom-file-wrapper {
         display: flex;
@@ -310,7 +310,6 @@
         align-items: center;
         gap: 8px;
     }
-
         .custom-file-label:hover {
             background: var(--brand-dark);
         }
@@ -378,8 +377,8 @@
     /* FAB */
     .fab-group {
         position: fixed;
-        right: 12px;
-        bottom: 12px;
+        right: 20px; /* Změněno z 12px na 20px */
+        bottom: 20px; /* Změněno z 12px na 20px */
         display: flex;
         flex-direction: column-reverse;
         gap: 10px;
@@ -455,7 +454,7 @@
         .fab-group {
             display: none;
         }
-
+        
         .custom-file-name {
             max-width: 300px;
         }
@@ -583,7 +582,8 @@
 <div class="fab-group">
     <a href="@Url.Action("Index", "Photos")" class="fab primary" title="Back to catalog">
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z" />
+            <path d="M19 12H5"></path>
+            <polyline points="12 19 5 12 12 5"></polyline>
         </svg>
     </a>
     @if (User.Identity?.IsAuthenticated == true)

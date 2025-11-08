@@ -4,15 +4,13 @@
     ViewData["Title"] = "Add new record";
 }
 
-<head>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="theme-color" content="#16a34a">
-    <link rel="manifest" href="/manifest.json">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="apple-touch-icon" href="/icons/icon-192.png">
-</head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="theme-color" content="#16a34a">
+<link rel="manifest" href="/manifest.json">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="/icons/icon-192.png">
 
 <style>
     :root {
@@ -33,14 +31,14 @@
 
     html {
         width: 100%;
-        overflow-x: hidden;
+        /* overflow-x: hidden; <-- ODSTRANĚNO */
     }
 
     body {
         margin: 0;
         padding: 0 0 100px 0;
         width: 100%;
-        overflow-x: hidden;
+        /* overflow-x: hidden; <-- ODSTRANĚNO */
         font-family: system-ui,-apple-system,Segoe UI,Roboto,Ubuntu;
         color: var(--text);
         background: var(--bg);
@@ -106,7 +104,7 @@
     .styled-form {
         width: 100%;
         display: grid;
-        grid-template-columns: 1fr; /* Jeden sloupec pro přehlednost */
+        grid-template-columns: 1fr; /* Jeden sloupec pro mobily */
         gap: 12px 18px;
         align-items: start;
         box-sizing: border-box;
@@ -144,10 +142,58 @@
             border-color: #0078d7;
         }
 
+    /* Skryjeme starý input */
     .form-control-file {
-        margin-top: 0.5rem;
-        font-size: 1rem;
+        display: none;
     }
+
+    /* === VLASTNÍ STYL PRO NAHRÁVÁNÍ SOUBORŮ === */
+    .custom-file-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-top: 8px;
+    }
+
+    .input-file-hidden {
+        width: 0.1px;
+        height: 0.1px;
+        opacity: 0;
+        overflow: hidden;
+        position: absolute;
+        z-index: -1;
+    }
+
+    .custom-file-label {
+        background: var(--brand);
+        color: #fff;
+        padding: 0.6rem 1.2rem;
+        border: none;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+        .custom-file-label:hover {
+            background: var(--brand-dark);
+        }
+
+    .custom-file-name {
+        font-style: italic;
+        color: #555;
+        font-size: 0.9rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 200px;
+    }
+    /* === KONEC STYLU SOUBORŮ === */
+
 
     .btn-primary {
         background: var(--brand);
@@ -223,10 +269,10 @@
     /* === PLOVOUCÍ TLAČÍTKA (FAB) === */
     .fab-group {
         position: fixed;
-        right: 12px;
-        bottom: 12px;
-        display: flex;
-        flex-direction: column-reverse; /* Obrácené pořadí pro správné zobrazení */
+        right: 20px;
+        bottom: 20px;
+        display: flex; /* Změněno z 'none' na 'flex' - viditelné na mobilu */
+        flex-direction: column-reverse; /* Hlavní tlačítko (Uložit) bude dole */
         gap: 10px;
         z-index: 1700;
     }
@@ -252,35 +298,50 @@
             color: var(--brand-dark);
             border: 1px solid var(--border);
         }
+        
+        .fab.upload {
+             background: #0ea5e9; /* Modrá pro upload */
+             color: white;
+        }
 
         .fab:hover {
             transform: translateY(-2px);
         }
 
-    /* Na PC (šířka 768px a více) skryjeme FAB tlačítka */
+    /* Desktopové zobrazení */
     @@media (min-width: 768px) {
         .fab-group {
-            display: none;
+            display: none; /* Skryjeme FAB na desktopu */
         }
-        /* Vrátíme dvousloupcové rozložení pro formulář na desktopu */
+        
         .styled-form {
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: 1fr 1fr; /* Dvousloupcové na desktopu */
+        }
+        
+        .desktop-actions {
+             display: flex; /* Zobrazíme desktopová tlačítka */
         }
     }
 
+    /* Mobilní zobrazení */
     @@media (max-width: 767px) {
-        /* Tento blok je pro případné budoucí styly jen pro mobily,
-                   ale FAB jsou viditelné defaultně, takže zde není potřeba nic měnit. */
-    }
-
-    @@media (max-width: 640px) {
-        .container {
-            padding: 12px 10px;
-        }
+         .desktop-actions {
+            display: none; /* Skryjeme desktopová tlačítka na mobilu */
+         }
 
         .center-form-container {
             padding: 1.2rem 1rem;
-            margin: 20px 8px 0 8px;
+            margin: 20px 0 0 0;
+            border: none;
+            box-shadow: none;
+        }
+
+        .container {
+             padding: 12px 10px;
+        }
+
+        .custom-file-name {
+            max-width: 150px;
         }
     }
 </style>
@@ -441,8 +502,12 @@
             </div>
 
             <div class="form-group">
-                <label for="PhotoFile">Main photo<label>
-                <input type="file" name="PhotoFile" id="PhotoFile" class="form-control-file" accept="image/*" />
+                <label for="PhotoFile">Main photo</label>
+                <div class="custom-file-wrapper">
+                    <input type="file" name="PhotoFile" id="PhotoFile" class="input-file-hidden" accept="image/*" />
+                    <label for="PhotoFile" class="custom-file-label">Select file...</label>
+                    <span id="PhotoFile-name" class="custom-file-name">No file selected</span>
+                </div>
                 <span class="field-validation" id="photoError"></span>
             </div>
 
@@ -454,14 +519,17 @@
             </div>
 
             <div class="form-group full">
-                <label for="AdditionalPhotoFiles">Additional phoros (multiplechoice)</label>
-                <input type="file" name="AdditionalPhotoFiles" id="AdditionalPhotoFiles" class="form-control-file" accept="image/*" multiple />
+                <label for="AdditionalPhotoFiles">Additional photos (multiple)</label>
+                <div class="custom-file-wrapper">
+                    <input type="file" name="AdditionalPhotoFiles" id="AdditionalPhotoFiles" class="input-file-hidden" accept="image/*" multiple />
+                    <label for="AdditionalPhotoFiles" class="custom-file-label">Select files...</label>
+                    <span id="AdditionalPhotoFiles-name" class="custom-file-name">No files selected</span>
+                </div>
                 <span class="field-validation" id="additionalPhotosError"></span>
                 <div id="AdditionalPreview" class="additional-preview"></div>
             </div>
 
-            <!-- Tlačítka Uložit a Zpět v desktopovém zobrazení -->
-            <div class="form-group full" style="display:flex; gap:12px; justify-content:flex-end; margin-top: 18px;">
+            <div class="form-group full desktop-actions" style="gap:12px; justify-content:flex-end; margin-top: 18px;">
                 <a href="@Url.Action("Index", "Photos")" class="btn">Abort</a>
                 <button type="submit" class="btn-primary">Save record</button>
             </div>
@@ -469,76 +537,108 @@
     </div>
 </main>
 
-<!-- FAB tlačítka -->
 <div class="fab-group">
-    <a href="@Url.Action("Index", "Photos")" class="fab" title="Back to catalog" aria-label="Back to catalog">
-        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:white;">
+    <a href="@Url.Action("Index", "Photos")" class="fab secondary" title="Back to catalog" aria-label="Back to catalog">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M19 12H5"></path>
             <polyline points="12 19 5 12 12 5"></polyline>
         </svg>
     </a>
-    <button type="button" class="fab secondary" title="Save record" aria-label="Save record" onclick="document.getElementById('createForm').submit();">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
-            <polyline points="17 21 17 13 7 13 7 21"></polyline>
-            <polyline points="7 3 7 8 15 8"></polyline>
+    
+    <button type="button" class="fab upload" title="Upload main photo" aria-label="Upload main photo" onclick="document.getElementById('PhotoFile').click();">
+         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+             <polyline points="17 8 12 3 7 8"></polyline>
+             <line x1="12" y1="3" x2="12" y2="15"></line>
+         </svg>
+    </button>
+    
+    <button type="submit" form="createForm" class="fab" title="Save record" aria-label="Save record">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"></polyline>
         </svg>
     </button>
 </div>
 
 @section Scripts {
     <script>
-        // Hlavní fotka - náhled
-        document.getElementById('PhotoFile')?.addEventListener('change', function (e) {
-            const input = e.target;
-            const preview = document.getElementById('PhotoPreview');
-            const err = document.getElementById('photoError');
-            err.textContent = '';
-            if (input.files && input.files[0]) {
-                const file = input.files[0];
-                if (!file.type.startsWith('image/')) {
-                    err.textContent = 'Prosím vyberte obrázek.';
-                    preview.style.display = 'none';
-                    preview.src = '';
-                    return;
-                }
-                const reader = new FileReader();
-                reader.onload = function (ev) {
-                    preview.src = ev.target.result;
-                    preview.style.display = 'inline-block';
-                };
-                reader.readAsDataURL(file);
-            } else {
-                preview.style.display = 'none';
-                preview.src = '';
-            }
-        });
-
-        // Dodatečné fotky - náhled
-        document.getElementById('AdditionalPhotoFiles')?.addEventListener('change', function (e) {
-            const input = e.target;
-            const previewContainer = document.getElementById('AdditionalPreview');
-            const err = document.getElementById('additionalPhotosError');
-            err.textContent = '';
-            previewContainer.innerHTML = '';
-
-            if (input.files && input.files.length > 0) {
-                Array.from(input.files).forEach((file, index) => {
+        document.addEventListener('DOMContentLoaded', function() {
+        
+            // Hlavní fotka - náhled
+            document.getElementById('PhotoFile')?.addEventListener('change', function (e) {
+                const input = e.target;
+                const preview = document.getElementById('PhotoPreview');
+                const err = document.getElementById('photoError');
+                err.textContent = '';
+                if (input.files && input.files[0]) {
+                    const file = input.files[0];
                     if (!file.type.startsWith('image/')) {
-                        err.textContent = `Soubor ${file.name} není obrázek.`;
+                        err.textContent = 'Prosím vyberte obrázek.';
+                        preview.style.display = 'none';
+                        preview.src = '';
                         return;
                     }
-
                     const reader = new FileReader();
                     reader.onload = function (ev) {
-                        const img = document.createElement('img');
-                        img.src = ev.target.result;
-                        img.alt = `Náhled dodatečné fotky ${index + 1}`;
-                        previewContainer.appendChild(img);
+                        preview.src = ev.target.result;
+                        preview.style.display = 'inline-block';
                     };
                     reader.readAsDataURL(file);
+                } else {
+                    preview.style.display = 'none';
+                    preview.src = '';
+                }
+            });
+
+            // Dodatečné fotky - náhled
+            document.getElementById('AdditionalPhotoFiles')?.addEventListener('change', function (e) {
+                const input = e.target;
+                const previewContainer = document.getElementById('AdditionalPreview');
+                const err = document.getElementById('additionalPhotosError');
+                err.textContent = '';
+                previewContainer.innerHTML = '';
+
+                if (input.files && input.files.length > 0) {
+                    Array.from(input.files).forEach((file, index) => {
+                        if (!file.type.startsWith('image/')) {
+                            err.textContent = `Soubor ${file.name} není obrázek.`;
+                            return;
+                        }
+
+                        const reader = new FileReader();
+                        reader.onload = function (ev) {
+                            const img = document.createElement('img');
+                            img.src = ev.target.result;
+                            img.alt = `Náhled dodatečné fotky ${index + 1}`;
+                            previewContainer.appendChild(img);
+                        };
+                        reader.readAsDataURL(file);
+                    });
+                }
+            });
+
+            // NOVÝ SKRIPT: Zobrazení názvů souborů
+            function setupFileInput(inputId, spanId) {
+                const input = document.getElementById(inputId);
+                const span = document.getElementById(spanId);
+                if (!input || !span) return;
+
+                input.addEventListener('change', () => {
+                    if (input.files && input.files.length > 0) {
+                        span.textContent = input.files.length === 1 ? input.files[0].name : `${input.files.length} souborů vybráno`;
+                        span.style.fontStyle = 'normal';
+                        span.style.color = '#333';
+                    } else {
+                        span.textContent = input.multiple ? 'No files selected' : 'No file selected';
+                        span.style.fontStyle = 'italic';
+                        span.style.color = '#555';
+                    }
                 });
             }
+
+            setupFileInput('PhotoFile', 'PhotoFile-name');
+            setupFileInput('AdditionalPhotoFiles', 'AdditionalPhotoFiles-name');
+
         });
     </script>
 

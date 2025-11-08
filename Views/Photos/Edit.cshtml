@@ -4,29 +4,234 @@
     ViewData["Title"] = "Edit Sample";
 }
 
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="theme-color" content="#16a34a">
+<link rel="manifest" href="/manifest.json">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="/icons/icon-192.png">
+
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
-    <meta name="theme-color" content="#16a34a">
-
-    <!-- PWA manifest -->
-    <link rel="manifest" href="/manifest.json">
-
-    <!-- Android / Chrome -->
-    <meta name="mobile-web-app-capable" content="yes">
-
-    <!-- iOS -->
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="apple-touch-icon" href="/icons/icon-192.png">
-
-    <!-- Stylesheets -->
     <link rel="stylesheet" href="~/css/Edit.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/Mobile.css" asp-append-version="true" />
 
     <title>@ViewData["Title"]</title>
+
+    <style>
+        :root {
+            --brand: #16a34a;
+            --brand-dark: #166534;
+            --border: #dbe7d9;
+            --bg: #f4fbf4;
+            --text: #0b1f0b;
+            --white: #fff;
+            --radius: 12px;
+        }
+
+        /* === VLASTNÍ STYL PRO NAHRÁVÁNÍ SOUBORŮ === */
+        .custom-file-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-top: 8px;
+        }
+
+        .input-file-hidden {
+            width: 0.1px;
+            height: 0.1px;
+            opacity: 0;
+            overflow: hidden;
+            position: absolute;
+            z-index: -1;
+        }
+
+        /* Skryjeme původní ošklivý input */
+        .form-control-file {
+            display: none;
+        }
+
+        .custom-file-label {
+            background: var(--brand);
+            color: #fff;
+            padding: 0.6rem 1.2rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+            .custom-file-label:hover {
+                background: var(--brand-dark);
+            }
+
+        .custom-file-name {
+            font-style: italic;
+            color: #555;
+            font-size: 0.9rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 200px;
+        }
+        /* === KONEC STYLU SOUBORŮ === */
+
+        /* === NOVÉ STYLY PRO MAZÁNÍ FOTEK === */
+        .existing-photo-item {
+            position: relative;
+            width: 60px;
+            height: 60px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            overflow: hidden; /* Udrží tlačítko v rohu */
+        }
+
+            .existing-photo-item img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+            }
+
+            .existing-photo-item .delete-btn {
+                position: absolute;
+                top: 2px;
+                right: 2px;
+                background: rgba(185, 28, 28, 0.9); /* tmavě červená */
+                color: white;
+                border: none;
+                border-radius: 4px;
+                padding: 2px 4px; /* Menší padding */
+                font-size: 0.7rem; /* Menší font */
+                font-weight: bold;
+                line-height: 1;
+                cursor: pointer;
+                opacity: 0;
+                transition: opacity 0.2s;
+                z-index: 2;
+            }
+
+            .existing-photo-item:hover .delete-btn {
+                opacity: 1;
+            }
+        /* === KONEC STYLŮ PRO MAZÁNÍ === */
+
+        /* === PLOVOUCÍ TLAČÍTKA (FAB) === */
+        .fab-group {
+            position: fixed;
+            right: 20px;
+            bottom: 20px;
+            display: none; /* Skryté na desktopu */
+            flex-direction: column-reverse; /* Hlavní tlačítko je dole */
+            gap: 10px;
+            z-index: 1700;
+        }
+
+        .fab {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            box-shadow: 0 6px 14px rgba(0,0,0,0.18);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            border: none;
+            cursor: pointer;
+            transition: transform 0.15s ease;
+        }
+
+            .fab:hover {
+                transform: translateY(-2px);
+            }
+
+            .fab.primary {
+                background-color: var(--brand);
+                color: var(--white);
+            }
+
+            .fab.secondary {
+                background: #ffffff;
+                color: var(--brand-dark);
+                border: 1px solid var(--border);
+            }
+
+            .fab.destructive {
+                background: #ef4444;
+                color: var(--white);
+            }
+        /* === KONEC FAB STYLŮ === */
+
+
+        /* === OPRAVA RESPONZIVITY (MOBIL) === */
+        @@media (max-width: 768px) {
+            .container {
+                /* Zmenšíme okraje na mobilu */
+                padding-left: 8px;
+                padding-right: 8px;
+            }
+
+            .center-form-container {
+                padding: 1.5rem 1rem;
+                margin-top: 10px;
+                border: none;
+                box-shadow: none;
+            }
+
+                .center-form-container h2 {
+                    font-size: 1.4rem;
+                    margin-bottom: 1.5rem;
+                }
+            /* Klíčová oprava přetékání: */
+            .styled-form {
+                display: block; /* Zrušíme grid na mobilu */
+            }
+
+                .styled-form .form-group {
+                    display: block; /* Zajistíme, aby byly pod sebou */
+                    margin-bottom: 1.25rem;
+                }
+
+                    .styled-form .form-group label {
+                        display: block;
+                        margin-bottom: 6px;
+                        width: 100%;
+                        text-align: left;
+                    }
+
+                .styled-form .form-control,
+                .styled-form input[type="text"],
+                .styled-form input[type="email"],
+                .styled-form input[type="password"],
+                .styled-form input[type="number"],
+                .styled-form input[type="search"],
+                .styled-form select,
+                .styled-form textarea {
+                    width: 100%;
+                    display: block;
+                    box-sizing: border-box;
+                }
+
+            .custom-file-name {
+                max-width: 150px;
+            }
+            /* Skryjeme původní tlačítka na mobilu */
+            .form-actions {
+                display: none;
+            }
+            /* Zobrazíme FAB tlačítka na mobilu */
+            .fab-group {
+                display: flex;
+            }
+        }
+    </style>
 </head>
 <body>
 
@@ -48,7 +253,7 @@
         <div class="center-form-container">
             <h2>Edit Sample</h2>
 
-            <form asp-action="Edit" enctype="multipart/form-data" method="post" class="styled-form" novalidate>
+            <form asp-action="Edit" enctype="multipart/form-data" method="post" class="styled-form" novalidate id="editForm">
                 @Html.AntiForgeryToken()
                 <input type="hidden" asp-for="Id" />
                 <input type="hidden" asp-for="AdditionalPhotos" />
@@ -127,7 +332,11 @@
 
                 <div class="form-group full">
                     <label for="PhotoFile">Main Photo (new file)</label>
-                    <input type="file" name="PhotoFile" id="PhotoFile" class="form-control-file" accept="image/*" />
+                    <div class="custom-file-wrapper">
+                        <input type="file" name="PhotoFile" id="PhotoFile" class="input-file-hidden" accept="image/*" />
+                        <label for="PhotoFile" class="custom-file-label">Select file...</label>
+                        <span id="PhotoFile-name" class="custom-file-name">No file selected</span>
+                    </div>
                     <span class="field-validation" id="photoError"></span>
                 </div>
 
@@ -148,7 +357,11 @@
 
                 <div class="form-group full">
                     <label for="AdditionalPhotoFiles">Additional Photos (select multiple)</label>
-                    <input type="file" name="AdditionalPhotoFiles" id="AdditionalPhotoFiles" class="form-control-file" accept="image/*" multiple />
+                    <div class="custom-file-wrapper">
+                        <input type="file" name="AdditionalPhotoFiles" id="AdditionalPhotoFiles" class="input-file-hidden" accept="image/*" multiple />
+                        <label for="AdditionalPhotoFiles" class="custom-file-label">Select files...</label>
+                        <span id="AdditionalPhotoFiles-name" class="custom-file-name">No files selected</span>
+                    </div>
                     <span class="field-validation" id="additionalPhotosError"></span>
 
                     @if (!string.IsNullOrWhiteSpace(Model.AdditionalPhotos))
@@ -159,7 +372,13 @@
                             <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">
                                 @foreach (var photo in existingPhotos)
                                 {
-                                    <img src="@Url.Content(photo)" style="width:60px;height:60px;object-fit:cover;border-radius:4px;border:1px solid #ddd;" alt="Additional photo" />
+                                    <div class="existing-photo-item">
+                                        <img src="@Url.Content(photo)" alt="Additional photo" />
+                                        <form asp-action="DeleteAdditionalPhoto" asp-route-id="@Model.Id" asp-route-photoPath="@photo" method="post" style="display:inline;" onsubmit="return confirm('Opravdu smazat tuto fotku?');">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="delete-btn" title="Smazat fotku">✕</button>
+                                        </form>
+                                    </div>
                                 }
                             </div>
                         </div>
@@ -174,38 +393,91 @@
         </div>
     </main>
 
+    <div class="fab-group">
+        <a asp-controller="Photos" asp-action="Index" class="fab secondary" title="Back to catalog">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M19 12H5"></path>
+                <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+        </a>
+
+        <a asp-controller="Photos" asp-action="Delete" asp-route-id="@Model.Id" class="fab destructive" title="Delete Sample" onclick="return confirm('Are you sure you want to delete this sample?');">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                <line x1="10" y1="11" x2="10" y2="17"></line>
+                <line x1="14" y1="11" x2="14" y2="17"></line>
+            </svg>
+        </a>
+
+        <button type="submit" form="editForm" class="fab primary" title="Save Changes">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+        </button>
+    </div>
+
+
     @section Scripts {
         <script>
-            document.getElementById('PhotoFile')?.addEventListener('change', function (e) {
-                const input = e.target;
-                const err = document.getElementById('photoError');
-                err.textContent = '';
-                const current = document.getElementById('CurrentPhotoPreview');
-                if (input.files && input.files[0]) {
-                    const file = input.files[0];
-                    if (!file.type.startsWith('image/')) {
-                        err.textContent = 'Please select an image.';
-                        return;
-                    }
-                    const reader = new FileReader();
-                    reader.onload = function (ev) {
-                        if (current) {
-                            current.src = ev.target.result;
-                        } else {
-                            const img = document.createElement('img');
-                            img.id = 'CurrentPhotoPreview';
-                            img.className = 'preview-img';
-                            img.src = ev.target.result;
-                            const placeholder = input.parentNode.querySelector('.no-image-placeholder');
-                            if (placeholder) {
-                                placeholder.replaceWith(img);
-                            } else {
-                                input.parentNode.appendChild(img);
-                            }
+            document.addEventListener('DOMContentLoaded', function() {
+
+                // Původní skript pro náhled hlavního obrázku
+                document.getElementById('PhotoFile')?.addEventListener('change', function (e) {
+                    const input = e.target;
+                    const err = document.getElementById('photoError');
+                    err.textContent = '';
+                    const current = document.getElementById('CurrentPhotoPreview');
+                    if (input.files && input.files[0]) {
+                        const file = input.files[0];
+                        if (!file.type.startsWith('image/')) {
+                            err.textContent = 'Please select an image.';
+                            return;
                         }
-                    };
-                    reader.readAsDataURL(file);
+                        const reader = new FileReader();
+                        reader.onload = function (ev) {
+                            if (current) {
+                                current.src = ev.target.result;
+                            } else {
+                                const img = document.createElement('img');
+                                img.id = 'CurrentPhotoPreview';
+                                img.className = 'preview-img';
+                                img.src = ev.target.result;
+                                const placeholder = input.closest('.form-group').querySelector('.no-image-placeholder');
+                                if (placeholder) {
+                                    placeholder.replaceWith(img);
+                                } else {
+                                    // Fallback, just in case
+                                    input.closest('.custom-file-wrapper').parentNode.appendChild(img);
+                                }
+                            }
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                });
+
+                // Nový skript pro zobrazení názvů vybraných souborů
+                function setupFileInput(inputId, spanId) {
+                    const input = document.getElementById(inputId);
+                    const span = document.getElementById(spanId);
+                    if (!input || !span) return;
+
+                    input.addEventListener('change', () => {
+                        if (input.files && input.files.length > 0) {
+                            span.textContent = input.files.length === 1 ? input.files[0].name : `${input.files.length} files selected`;
+                            span.style.fontStyle = 'normal';
+                            span.style.color = '#333';
+                        } else {
+                            span.textContent = input.multiple ? 'No files selected' : 'No file selected';
+                            span.style.fontStyle = 'italic';
+                            span.style.color = '#555';
+                        }
+                    });
                 }
+
+                setupFileInput('PhotoFile', 'PhotoFile-name');
+                setupFileInput('AdditionalPhotoFiles', 'AdditionalPhotoFiles-name');
+
             });
         </script>
 
