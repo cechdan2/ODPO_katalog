@@ -4,9 +4,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <meta name="theme-color" content="#16a34a">
 <link rel="manifest" href="/manifest.json">
-<!-- Android / Chrome -->
 <meta name="mobile-web-app-capable" content="yes">
-<!-- iOS -->
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="apple-touch-icon" href="/icons/icon-192.png">
@@ -98,12 +96,50 @@
             color: #333;
         }
 
-    .form-control-file {
-        margin-top: 0.5rem;
-        font-size: 1rem;
-        padding: 0.5rem;
-        border: 1px solid #cfd8dc;
-        border-radius: 7px;
+    /* === VLASTNÍ VZHLED PRO INPUT[TYPE=FILE] === */
+    .custom-file-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-top: 8px;
+    }
+
+    .input-file-hidden {
+        width: 0.1px;
+        height: 0.1px;
+        opacity: 0;
+        overflow: hidden;
+        position: absolute;
+        z-index: -1;
+    }
+
+    .custom-file-label {
+        background: var(--brand);
+        color: #fff;
+        padding: 0.6rem 1.2rem;
+        border: none;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+        .custom-file-label:hover {
+            background: var(--brand-dark);
+        }
+
+    .custom-file-name {
+        font-style: italic;
+        color: #555;
+        font-size: 0.9rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 300px;
     }
 
     .btn-primary {
@@ -164,9 +200,9 @@
     /* === PLOVOUCÍ TLAČÍTKO (FAB) === */
     .fab-group {
         position: fixed;
-        left: 12px; /* Změna: Tlačítko vlevo */
+        left: 12px;
         bottom: 12px;
-        display: flex;
+        display: none; /* <-- OPRAVA: Výchozí stav je skrytý (pro desktop) */
         flex-direction: column;
         gap: 10px;
         z-index: 1700;
@@ -192,6 +228,51 @@
             transform: translateY(-2px);
         }
 
+    /* === RESPONZIVNÍ PRAVIDLA === */
+    @@media (max-width: 768px) {
+        .center-form-container {
+            padding: 1.5rem 1rem;
+            margin-top: 20px;
+        }
+
+            .center-form-container h2 {
+                font-size: 1.4rem;
+                margin-bottom: 1.5rem;
+            }
+        /* Pravidla pro všechny formuláře v .styled-form na mobilu */
+        .styled-form .form-group {
+            display: block;
+            margin-bottom: 1.25rem;
+        }
+
+            .styled-form .form-group label {
+                display: block;
+                margin-bottom: 6px;
+                width: 100%;
+                text-align: left;
+            }
+
+            .styled-form .form-group .form-control,
+            .styled-form .form-group input[type="text"],
+            .styled-form .form-group input[type="email"],
+            .styled-form .form-group input[type="password"],
+            .styled-form .form-group input[type="number"],
+            .styled-form .form-group input[type="search"],
+            .styled-form .form-group select,
+            .styled-form .form-group textarea {
+                width: 100%;
+                display: block;
+                box-sizing: border-box;
+            }
+        /* Úprava pro název souboru na mobilu */
+        .custom-file-name {
+            max-width: 150px;
+        }
+        /* OPRAVA: Zobrazíme FAB tlačítko POUZE na mobilu */
+        .fab-group {
+            display: flex;
+        }
+    }
 </style>
 
 <header>
@@ -218,19 +299,25 @@
         </div>
 
         <div class="styled-form">
-            <!-- Stáhnout zálohu -->
             <div class="form-group full">
                 <label>📥 Stáhnout zálohu databáze a fotografií:</label>
                 <button id="downloadBtn" class="btn-primary" style="width:100%;">Stáhnout zálohu (ZIP)</button>
             </div>
 
-            <!-- Oddělovač -->
             <div class="full" style="border-top:2px solid var(--border);margin:20px 0;"></div>
 
-            <!-- Nahrát a obnovit -->
             <div class="form-group full">
-                <label for="restoreFile">📤 Nahrát a obnovit databázi ze zálohy (ZIP):</label>
-                <input type="file" id="restoreFile" class="form-control-file" accept=".zip" />
+                <label>📤 Nahrát a obnovit databázi ze zálohy (ZIP):</label>
+
+                <div class="custom-file-wrapper">
+                    <input type="file" id="restoreFile" class="input-file-hidden" accept=".zip" />
+                    <label for="restoreFile" class="custom-file-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:white;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                        Vybrat soubor...
+                    </label>
+                    <span id="restoreFile-name" class="custom-file-name">Soubor nevybrán</span>
+                </div>
+
                 <div class="field-validation" style="color:#075985;margin-top:8px;">
                     ⚠️ Pozor: Obnovení přepíše aktuální databázi a fotografie!
                 </div>
@@ -240,13 +327,20 @@
                 <button id="restoreBtn" class="btn-primary">Obnovit ze zálohy</button>
             </div>
 
-            <!-- Oddělovač -->
             <div class="full" style="border-top:2px solid var(--border);margin:40px 0 20px 0;"></div>
 
-            <!-- Import z Excelu -->
             <div class="form-group full">
-                <label for="excelFile">📊 Importovat data z Excel souboru (.xlsx, .xls):</label>
-                <input type="file" id="excelFile" class="form-control-file" accept=".xlsx,.xls" />
+                <label>📊 Importovat data z Excel souboru (.xlsx, .xls):</label>
+
+                <div class="custom-file-wrapper">
+                    <input type="file" id="excelFile" class="input-file-hidden" accept=".xlsx,.xls" />
+                    <label for="excelFile" class="custom-file-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:white;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                        Vybrat soubor...
+                    </label>
+                    <span id="excelFile-name" class="custom-file-name">Soubor nevybrán</span>
+                </div>
+
                 <div class="field-validation" style="color:#075985;margin-top:8px;">
                     💡 Excel musí obsahovat sloupce: Position, ExternalId, OriginalName, Material, Form, Filler, Color, Description, MonthlyQuantity, Mfi, Notes, Supplier
                 </div>
@@ -261,7 +355,6 @@
     </div>
 </main>
 
-<!-- Opravené FAB tlačítko pro návrat zpět -->
 <div class="fab-group">
     <a href="@Url.Action("Index", "Photos")" class="fab" title="Zpět na katalog" aria-label="Zpět na katalog">
         <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:white;">
@@ -417,5 +510,28 @@
         if (importBtn && excelFile) {
             importBtn.addEventListener('click', () => uploadImport(excelFile));
         }
+
+        // === KÓD PRO ZOBRAZENÍ NÁZVU SOUBORU ===
+        function setupFileInput(inputId, spanId) {
+            const input = document.getElementById(inputId);
+            const span = document.getElementById(spanId);
+            if (input && span) {
+                input.addEventListener('change', () => {
+                    if (input.files && input.files.length > 0) {
+                        span.textContent = input.files[0].name;
+                        span.style.fontStyle = 'normal';
+                        span.style.color = '#333';
+                    } else {
+                        span.textContent = 'Soubor nevybrán';
+                        span.style.fontStyle = 'italic';
+                        span.style.color = '#555';
+                    }
+                });
+            }
+        }
+
+        // Aplikujeme funkci na oba file inputy
+        setupFileInput('restoreFile', 'restoreFile-name');
+        setupFileInput('excelFile', 'excelFile-name');
     });
 </script>

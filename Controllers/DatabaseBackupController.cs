@@ -19,8 +19,8 @@ namespace PhotoApp.Controllers
         private readonly IServiceProvider _services;
         private readonly IHostApplicationLifetime _appLifetime;
         private readonly IWebHostEnvironment _env;
-        private static readonly SemaphoreSlim _opLock = new SemaphoreSlim(1, 1); 
-        
+        private static readonly SemaphoreSlim _opLock = new(1, 1); // IDE0090: 'new' zjednodušen
+
         private const long MaxUploadBytes = 10L * 1024 * 1024 * 1024; // 10 737 418 240 bytes
 
 
@@ -36,39 +36,52 @@ namespace PhotoApp.Controllers
             _env = env ?? throw new ArgumentNullException(nameof(env));
 
             // Read possible DB config in multiple forms:
-            // - absolute path
-            // - relative path
-            // - full connection string "Data Source=..."
             var cfg = config["SqliteDbPath"]
                       ?? config.GetConnectionString("DefaultConnection")
                       ?? config["ConnectionStrings:Sqlite"];
 
+            string? dbPath;
+            string? connString;
+            var contentRoot = _env.ContentRootPath ?? AppContext.BaseDirectory;
+
             if (string.IsNullOrWhiteSpace(cfg))
             {
                 // default: content root + photoapp.db
-                _dbPath = Path.Combine(_env.ContentRootPath ?? AppContext.BaseDirectory, "photoapp.db");
-                _dbConnString = $"Data Source={_dbPath}";
+                dbPath = Path.Combine(contentRoot, "photoapp.db");
+                connString = $"Data Source={dbPath}";
             }
-            else if (cfg.IndexOf("data source=", StringComparison.OrdinalIgnoreCase) >= 0)
+            // IDE0075: Použito Contains místo IndexOf >= 0
+            else if (cfg.Contains("data source=", StringComparison.OrdinalIgnoreCase))
             {
                 // cfg looks like connection string; parse Data Source out to an absolute path
-                _dbConnString = cfg;
-                _dbPath = ExtractDataSourceFromConnectionString(cfg, _env.ContentRootPath ?? AppContext.BaseDirectory);
+                connString = cfg;
+                // CS8603/CS8600: ExtractDataSource... nyní vrací string? a je třeba ošetřit null
+                dbPath = ExtractDataSourceFromConnectionString(cfg, contentRoot);
+                if (dbPath == null)
+                {
+                    _logger.LogWarning("Could not parse 'Data Source' from connection string, falling back to default. ConnString: {ConnString}", cfg);
+                    dbPath = Path.Combine(contentRoot, "photoapp.db");
+                    connString = $"Data Source={dbPath}"; // Musíme přepsat i connString, byl neplatný
+                }
             }
             else
             {
                 // cfg is a path (absolute or relative to content root)
-                var p = cfg;
-                if (!Path.IsPathRooted(p))
-                    p = Path.GetFullPath(Path.Combine(_env.ContentRootPath ?? AppContext.BaseDirectory, p));
-                _dbPath = p;
-                _dbConnString = $"Data Source={_dbPath}";
+                dbPath = cfg;
+                if (!Path.IsPathRooted(dbPath))
+                    dbPath = Path.GetFullPath(Path.Combine(contentRoot, dbPath));
+                connString = $"Data Source={dbPath}";
             }
 
-            _backupFolder = Path.Combine(_env.ContentRootPath ?? AppContext.BaseDirectory, "db-backups");
+            // CS8618: Tímto přiřazením na konci je kompilátor spokojený
+            _dbPath = dbPath;
+            _dbConnString = connString;
+
+            _backupFolder = Path.Combine(contentRoot, "db-backups");
             try { Directory.CreateDirectory(_backupFolder); } catch { /* ignore */ }
 
-            _logger.LogInformation("DatabaseBackupController initialized. dbPath={DbPath}, connStringPreview={ConnPreview}", _dbPath, _dbConnString?.Substring(0, Math.Min(80, _dbConnString.Length)));
+            // IDE0057: Substring zjednodušen pomocí 'range'
+            _logger.LogInformation("DatabaseBackupController initialized. dbPath={DbPath}, connStringPreview={ConnPreview}", _dbPath, _dbConnString?[..Math.Min(80, _dbConnString.Length)]);
         }
 
         // GET: api/admin/db/backup
@@ -89,13 +102,12 @@ namespace PhotoApp.Controllers
                 var tmpDb = Path.Combine(Path.GetTempPath(), $"photoapp_backup_{DateTime.UtcNow:yyyyMMddHHmmss}_{Guid.NewGuid():N}.db");
                 try
                 {
-                    using (var source = new SqliteConnection(_dbConnString))
-                    using (var dest = new SqliteConnection($"Data Source={tmpDb}"))
-                    {
-                        await source.OpenAsync();
-                        await dest.OpenAsync();
-                        source.BackupDatabase(dest);
-                    }
+                    // IDE0063: 'using' zjednodušen
+                    using var source = new SqliteConnection(_dbConnString);
+                    using var dest = new SqliteConnection($"Data Source={tmpDb}");
+                    await source.OpenAsync();
+                    await dest.OpenAsync();
+                    source.BackupDatabase(dest);
                 }
                 catch (Exception ex)
                 {
@@ -115,48 +127,49 @@ namespace PhotoApp.Controllers
                 var zipName = $"backup_{DateTime.UtcNow:yyyyMMddHHmmss}.zip";
                 var uploadsFolder = Path.Combine(_env.WebRootPath ?? "", "uploads");
 
-                using (var ms = new MemoryStream())
+                // IDE0063: 'using' zjednodušen
+                using var ms = new MemoryStream();
+                using (var zip = new ZipArchive(ms, ZipArchiveMode.Create, true))
                 {
-                    using (var zip = new ZipArchive(ms, ZipArchiveMode.Create, true))
+                    // add database.db entry
+                    var dbEntry = zip.CreateEntry("database.db", CompressionLevel.Optimal);
+                    // IDE0063: 'using' zjednodušen
+                    using (var zs = dbEntry.Open())
+                    using (var fs = System.IO.File.Open(tmpDb, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
                     {
-                        // add database.db entry
-                        var dbEntry = zip.CreateEntry("database.db", CompressionLevel.Optimal);
-                        using (var zs = dbEntry.Open())
-                        using (var fs = System.IO.File.Open(tmpDb, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
-                        {
-                            await fs.CopyToAsync(zs);
-                        }
+                        await fs.CopyToAsync(zs);
+                    }
 
-                        // add uploads recursively
-                        if (Directory.Exists(uploadsFolder))
+                    // add uploads recursively
+                    if (Directory.Exists(uploadsFolder))
+                    {
+                        var files = Directory.GetFiles(uploadsFolder, "*", SearchOption.AllDirectories);
+                        foreach (var file in files)
                         {
-                            var files = Directory.GetFiles(uploadsFolder, "*", SearchOption.AllDirectories);
-                            foreach (var file in files)
+                            var relPath = Path.GetRelativePath(uploadsFolder, file).Replace('\\', '/');
+                            var entryPath = Path.Combine("uploads", relPath).Replace('\\', '/');
+                            var entry = zip.CreateEntry(entryPath, CompressionLevel.Optimal);
+
+                            // try to open with read sharing (retry lightly if needed)
+                            // IDE0063: 'using' zjednodušen
+                            using (var zs = entry.Open())
+                            using (var fs = System.IO.File.Open(file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
                             {
-                                var relPath = Path.GetRelativePath(uploadsFolder, file).Replace('\\', '/');
-                                var entryPath = Path.Combine("uploads", relPath).Replace('\\', '/');
-                                var entry = zip.CreateEntry(entryPath, CompressionLevel.Optimal);
-
-                                // try to open with read sharing (retry lightly if needed)
-                                using (var zs = entry.Open())
-                                using (var fs = System.IO.File.Open(file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
-                                {
-                                    await fs.CopyToAsync(zs);
-                                }
+                                await fs.CopyToAsync(zs);
                             }
                         }
                     }
-
-                    ms.Position = 0;
-                    // schedule tmpDb deletion after response completes
-                    Response.OnCompleted(() =>
-                    {
-                        try { if (System.IO.File.Exists(tmpDb)) System.IO.File.Delete(tmpDb); } catch { }
-                        return Task.CompletedTask;
-                    });
-
-                    return File(ms.ToArray(), "application/zip", zipName);
                 }
+
+                ms.Position = 0;
+                // schedule tmpDb deletion after response completes
+                Response.OnCompleted(() =>
+                {
+                    try { if (System.IO.File.Exists(tmpDb)) System.IO.File.Delete(tmpDb); } catch { }
+                    return Task.CompletedTask;
+                });
+
+                return File(ms.ToArray(), "application/zip", zipName);
             }
             catch (Exception ex)
             {
@@ -192,18 +205,14 @@ namespace PhotoApp.Controllers
             {
                 // 1) save uploaded zip to tmp
                 var zipPath = Path.Combine(tmpFolder, "backup.zip");
+                // IDE0063: 'using' zjednodušen (FileStream je IAsyncDisposable -> await using)
                 await using (var fs = System.IO.File.Create(zipPath))
                 {
                     await backupZip.CopyToAsync(fs);
                 }
 
                 // 2) extract
-                // náhrada bloku pro uložení + rozbalení v RestoreBackup
-                // Po uložení souboru do zipPath:
-                await using (var fs = System.IO.File.Create(zipPath))
-                {
-                    await backupZip.CopyToAsync(fs);
-                }
+                // Původní kód zde měl duplicitní blok pro uložení souboru, ten byl odstraněn.
 
                 // DIAGNOSTIKA: log velikosti a prvních pár bytů (magic)
                 long savedSize = new FileInfo(zipPath).Length;
@@ -211,9 +220,11 @@ namespace PhotoApp.Controllers
 
                 // check for minimal ZIP signature (PK\x03\x04)
                 byte[] header = new byte[4];
+                // IDE0063: 'using' zjednodušen
                 using (var fh = System.IO.File.OpenRead(zipPath))
                 {
-                    await fh.ReadAsync(header, 0, header.Length);
+                    // CA1835: Použito přetížení ReadAsync(Memory<byte>)
+                    await fh.ReadAsync(header);
                 }
                 bool looksLikeZip = header.Length == 4 && header[0] == (byte)'P' && header[1] == (byte)'K' && (header[2] == 3 || header[2] == 5 || header[2] == 7);
                 if (!looksLikeZip)
@@ -225,19 +236,18 @@ namespace PhotoApp.Controllers
                 // Pokusíme se otevřít ZIP virtuálně a vypsat seznam položek - to odhalí poškození
                 try
                 {
-                    using (var zipStream = System.IO.File.OpenRead(zipPath))
-                    using (var zip = new System.IO.Compression.ZipArchive(zipStream, System.IO.Compression.ZipArchiveMode.Read, leaveOpen: false))
+                    // IDE0063: 'using' zjednodušen
+                    using var zipStream = System.IO.File.OpenRead(zipPath);
+                    using var zip = new System.IO.Compression.ZipArchive(zipStream, System.IO.Compression.ZipArchiveMode.Read, leaveOpen: false);
+                    _logger.LogInformation("ZIP contains {Count} entries. First entries: {Names}", zip.Entries.Count, string.Join(", ", zip.Entries.Take(10).Select(e => e.FullName)));
+                    // verify that database.db exists at root
+                    var dbEntry = zip.GetEntry("database.db");
+                    if (dbEntry == null)
                     {
-                        _logger.LogInformation("ZIP contains {Count} entries. First entries: {Names}", zip.Entries.Count, string.Join(", ", zip.Entries.Take(10).Select(e => e.FullName)));
-                        // verify that database.db exists at root
-                        var dbEntry = zip.GetEntry("database.db");
-                        if (dbEntry == null)
-                        {
-                            _logger.LogWarning("ZIP does not contain database.db at root. Entries: {Entries}", string.Join(", ", zip.Entries.Select(e => e.FullName)));
-                            return BadRequest("ZIP does not contain database.db at the root.");
-                        }
-                        // optionally verify uploads entries exist - not mandatory
+                        _logger.LogWarning("ZIP does not contain database.db at root. Entries: {Entries}", string.Join(", ", zip.Entries.Select(e => e.FullName)));
+                        return BadRequest("ZIP does not contain database.db at the root.");
                     }
+                    // optionally verify uploads entries exist - not mandatory
                 }
                 catch (Exception ex)
                 {
@@ -271,7 +281,7 @@ namespace PhotoApp.Controllers
                     await checkConn.OpenAsync();
                     using var checkCmd = checkConn.CreateCommand();
                     checkCmd.CommandText = "PRAGMA integrity_check;";
-                    var res = (string)await checkCmd.ExecuteScalarAsync();
+                    var res = (string?)await checkCmd.ExecuteScalarAsync(); // Ošetření pro případný null výsledek
                     if (!string.Equals(res, "ok", StringComparison.OrdinalIgnoreCase))
                     {
                         return BadRequest($"Uploaded DB failed integrity_check: {res}");
@@ -289,6 +299,7 @@ namespace PhotoApp.Controllers
                 {
                     try
                     {
+                        // IDE0063: 'using' zjednodušen
                         using var source = new SqliteConnection(_dbConnString);
                         using var destFallback = new SqliteConnection($"Data Source={fallback}");
                         await source.OpenAsync();
@@ -304,11 +315,13 @@ namespace PhotoApp.Controllers
                 // 6) Try to close DI DbContexts (best-effort) to minimize locks
                 try
                 {
+                    // IDE0063: 'using' zjednodušen
                     using var scope = _services?.CreateScope();
                     if (scope != null)
                     {
                         var appDb = scope.ServiceProvider.GetService(typeof(AppDbContext)) as AppDbContext;
-                        if (appDb != null)
+                        // Použití 'is not null' pattern matching
+                        if (appDb is not null)
                         {
                             try { await appDb.Database.CloseConnectionAsync(); } catch { /* ignore */ }
                             try { appDb.ChangeTracker.Clear(); } catch { /* ignore */ }
@@ -324,6 +337,7 @@ namespace PhotoApp.Controllers
                 // 7) Import database content into running DB via Backup API
                 try
                 {
+                    // IDE0063: 'using' zjednodušen
                     using var src = new SqliteConnection($"Data Source={extractedDb}");
                     using var dest = new SqliteConnection(_dbConnString);
                     await src.OpenAsync();
@@ -339,6 +353,7 @@ namespace PhotoApp.Controllers
                 // 8) WAL checkpoint if needed
                 try
                 {
+                    // IDE0063: 'using' zjednodušen
                     using var conn = new SqliteConnection(_dbConnString);
                     await conn.OpenAsync();
                     using var cmd = conn.CreateCommand();
@@ -390,7 +405,8 @@ namespace PhotoApp.Controllers
         }
 
         // helper to copy directory recursively
-        private void CopyDirectory(string sourceDir, string targetDir)
+        // CA1822: Metoda označena jako 'static'
+        private static void CopyDirectory(string sourceDir, string targetDir)
         {
             foreach (var dir in Directory.GetDirectories(sourceDir, "*", SearchOption.AllDirectories))
             {
@@ -408,18 +424,21 @@ namespace PhotoApp.Controllers
             }
         }
 
-        private static string ExtractDataSourceFromConnectionString(string connString, string contentRoot)
+        // CS8603: Návratový typ změněn na 'string?' (nullable)
+        private static string? ExtractDataSourceFromConnectionString(string connString, string contentRoot)
         {
             if (string.IsNullOrWhiteSpace(connString)) return null;
             var lower = connString.ToLowerInvariant();
             var key = "data source=";
             var idx = lower.IndexOf(key, StringComparison.OrdinalIgnoreCase);
             if (idx < 0) { key = "datasource="; idx = lower.IndexOf(key, StringComparison.OrdinalIgnoreCase); }
-            if (idx < 0) return null;
+            if (idx < 0) return null; // Vrací null, proto musí být návratový typ 'string?'
             var start = idx + key.Length;
-            var rest = connString.Substring(start).Trim();
+            // IDE0057: Substring zjednodušen pomocí 'range'
+            var rest = connString[start..].Trim();
             var endIdx = rest.IndexOf(';');
-            var path = endIdx >= 0 ? rest.Substring(0, endIdx) : rest;
+            // IDE0057: Substring zjednodušen pomocí 'range'
+            var path = endIdx >= 0 ? rest[..endIdx] : rest;
             path = path.Trim().Trim('"').Trim('\'');
             if (!Path.IsPathRooted(path))
             {
@@ -431,7 +450,8 @@ namespace PhotoApp.Controllers
         // kept for compatibility if some callers still use UploadFileModel
         public class UploadFileModel
         {
-            public Microsoft.AspNetCore.Http.IFormFile File { get; set; }
+            // CS8618: Použito 'null!' pro potlačení varování u vlastnosti vyplněné binderem
+            public Microsoft.AspNetCore.Http.IFormFile File { get; set; } = null!;
         }
     }
 }

@@ -11,7 +11,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#16a34a">
-    <!-- CSS for Select2 -->
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 </head>
 
@@ -27,6 +26,10 @@
         --pad: 12px;
         --gap: 16px;
         --radius: 16px;
+        /* Šířka našeho postranního panelu */
+        --sidebar-width: 320px;
+        /* Výška hlavičky */
+        --header-height: 61px;
     }
 
     * {
@@ -38,16 +41,23 @@
         font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu;
         color: var(--text);
         background: var(--bg);
+        /* === ZMĚNA LAYOUTU: Obsah je odsazen pomocí padding-left === */
+        padding-left: 0; /* Výchozí stav (skryto) */
+        transition: padding-left 0.3s ease-in-out;
     }
 
-    /* === HEADER === */
+    /* === HEADER (UPRAVENO PRO FIXNÍ POZICI) === */
     header {
-        position: sticky;
+        position: fixed; /* Změněno ze sticky */
         top: 0;
         z-index: 100;
         background: #fff;
         border-bottom: 1px solid var(--border);
         box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+        /* === ZMĚNA LAYOUTU: Hlavička se posouvá spolu s obsahem === */
+        left: 0; /* Výchozí stav (skryto) */
+        width: 100%; /* Výchozí stav (skryto) */
+        transition: left 0.3s ease-in-out, width 0.3s ease-in-out;
     }
 
     .header-container {
@@ -129,9 +139,114 @@
     }
 
 
-    /* === SEARCH FIELD STYLE (FINAL VERSION) === */
+    /* === TLAČÍTKO PRO FILTR (ŠIPKA) === */
+    #sidebar-toggle-btn {
+        position: fixed;
+        top: 50%;
+        left: 0; /* === DŮLEŽITÉ: Vždy na left: 0 === */
+        transform: translateY(-50%);
+        z-index: 101; /* Nad obsahem, nad filtrem */
+        background: var(--brand);
+        color: var(--white);
+        border: 1px solid var(--brand-dark);
+        border-left: none;
+        border-radius: 0 12px 12px 0;
+        padding: 16px 4px;
+        cursor: pointer;
+        /* === DŮLEŽITÉ: Bez přechodu pro 'left' === */
+        transition: background-color 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+        #sidebar-toggle-btn:hover {
+            background: var(--brand-dark);
+        }
+
+        #sidebar-toggle-btn .arrow-icon {
+            /* Plynulý přechod pro otáčení */
+            transition: transform 0.3s ease-in-out;
+            stroke: var(--white);
+            /* Výchozí stav (skryto) - šipka ukazuje doprava */
+            transform: rotate(0deg);
+        }
+
+
+    /* === LAYOUT (PŘEPRACOVÁNO) === */
+    .page-layout {
+        /* Toto již není grid, jen kontejner pro hlavní obsah */
+        max-width: 1600px;
+        margin: 0 auto;
+        padding: 20px;
+        /* Odsazení pro fixní hlavičku */
+        padding-top: calc(var(--header-height) + 20px);
+    }
+
+    .filter-sidebar {
+        /* === ZMĚNA LAYOUTU: Změna na position: fixed === */
+        position: fixed;
+        left: 0;
+        top: 0;
+        width: var(--sidebar-width);
+        height: 100vh; /* Plná výška */
+
+        display: flex;
+        flex-direction: column;
+        gap: var(--gap);
+        max-height: 100vh;
+        overflow-y: auto;
+        z-index: 90; /* Pod tlačítkem a hlavičkou */
+        background: var(--bg); /* Pozadí pro překrytí */
+        /* Odsazení pro fixní hlavičku */
+        padding: var(--pad);
+        padding-top: calc(var(--header-height) + var(--pad));
+        /* Výchozí stav (skryto) */
+        transform: translateX(-100%);
+        transition: transform 0.3s ease-in-out;
+    }
+
+    /* === STAV ZOBRAZENÉHO FILTRU (NOVÁ TŘÍDA .filters-visible) === */
+
+    /* Když má body třídu .filters-visible... */
+
+    /* 1. Odsune se celý obsah body */
+    body.filters-visible {
+        padding-left: var(--sidebar-width);
+    }
+
+        /* 2. Odsune se hlavička */
+        body.filters-visible header {
+            left: var(--sidebar-width);
+            width: calc(100% - var(--sidebar-width));
+        }
+
+        /* 3. Zobrazí se (vysune) postranní panel */
+        body.filters-visible .filter-sidebar {
+            transform: translateX(0);
+            /* Přidání stínu pro oddělení */
+            box-shadow: 4px 0 10px rgba(0,0,0,0.1);
+        }
+
+        /* 4. Otočí se šipka (nyní ukazuje doleva) */
+        body.filters-visible #sidebar-toggle-btn .arrow-icon {
+            transform: rotate(180deg);
+        }
+
+
+    /* === ZBYTEK STYLŮ (beze změny) === */
+
+    .filter-section {
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: var(--pad);
+    }
+
+    /* ... (všechny styly pro .filter-section, .filter-form, .filter-row atd. zůstávají stejné) ... */
+
     .filter-toggle-placeholder {
-        width: 20px; /* Same width as checkbox */
+        width: 20px;
         flex-shrink: 0;
     }
 
@@ -140,7 +255,6 @@
         display: flex;
         align-items: center;
         flex-grow: 1;
-        /* Appearance like Select2 filter */
         background-color: var(--white);
         border: 1px solid var(--border);
         border-radius: 7px;
@@ -160,7 +274,7 @@
             width: 20px;
             height: 20px;
             color: #9ca3af;
-            pointer-events: none; /* Icon does not block clicks */
+            pointer-events: none;
         }
 
         .search-input-wrapper input[type="search"] {
@@ -168,7 +282,6 @@
             width: 100%;
             height: 100%;
             padding-left: 38px;
-            /* Reset input appearance */
             border: none;
             background-color: transparent;
             outline: none;
@@ -180,43 +293,13 @@
             color: var(--brand);
         }
 
-
-
-    /* === LAYOUT === */
-    .page-layout {
-        display: grid;
-        grid-template-columns: 320px 1fr;
-        gap: 20px;
-        max-width: 1600px;
-        margin: 0 auto;
-        padding: 20px;
-        align-items: flex-start;
+    .filter-section h2 {
+        margin: 0 0 12px 0;
+        font-size: 16px;
+        color: var(--brand-dark);
+        border-bottom: 1px solid var(--border);
+        padding-bottom: 8px;
     }
-    /* Wider sidebar */
-    .filter-sidebar {
-        position: sticky;
-        top: 80px;
-        display: flex;
-        flex-direction: column;
-        gap: var(--gap);
-        max-height: calc(100vh - 100px);
-        overflow-y: auto;
-    }
-
-    .filter-section {
-        background: #fff;
-        border: 1px solid var(--border);
-        border-radius: var(--radius);
-        padding: var(--pad);
-    }
-
-        .filter-section h2 {
-            margin: 0 0 12px 0;
-            font-size: 16px;
-            color: var(--brand-dark);
-            border-bottom: 1px solid var(--border);
-            padding-bottom: 8px;
-        }
 
     .filter-form {
         display: flex;
@@ -231,7 +314,6 @@
         margin-top: 8px;
     }
 
-    /* === NEW STYLE FOR FILTERS WITH TOGGLES === */
     .filter-row {
         display: flex;
         align-items: center;
@@ -461,122 +543,121 @@
     </div>
 </header>
 
+<button id="sidebar-toggle-btn" title="Přepnout filtry">
+    <svg class="arrow-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+</button>
+
+<aside class="filter-sidebar">
+    <div class="filter-section">
+        <h2>Filter & Display</h2>
+        <form method="get" class="filter-form">
+            <div class="filter-row">
+                <div class="filter-toggle-placeholder"></div>
+
+                <div class="search-input-wrapper">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="search-icon">
+                        <path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z" clip-rule="evenodd" />
+                    </svg>
+                    <input type="search" name="search" placeholder="Search anything…" value="@(Model?.Search ?? "")" />
+                </div>
+            </div>
+
+            <div class="filter-row">
+                <input type="checkbox" class="filter-toggle col-toggle" data-col="supplier" title="Show column" checked />
+                <select name="supplier" class="multi-select" multiple="multiple" data-placeholder="Filter by supplier">
+                    <option></option>
+                    @foreach (var s in Model.Suppliers)
+                    {
+                        <option value="@s" selected="@(Model.Supplier.Contains(s))">@s</option>
+                    }
+                </select>
+            </div>
+            <div class="filter-row">
+                <input type="checkbox" class="filter-toggle col-toggle" data-col="material" title="Show column" checked />
+                <select name="material" class="multi-select" multiple="multiple" data-placeholder="Filter by material">
+                    <option></option>
+                    @foreach (var m in Model.Materials)
+                    {
+                        <option value="@m" selected="@(Model.Material.Contains(m))">@m</option>
+                    }
+                </select>
+            </div>
+            <div class="filter-row">
+                <input type="checkbox" class="filter-toggle col-toggle" data-col="color" title="Show column" checked />
+                <select name="color" class="multi-select" multiple="multiple" data-placeholder="Filter by color">
+                    <option></option>
+                    @foreach (var c in Model.Colors)
+                    {
+                        <option value="@c" selected="@(Model.Color.Contains(c))">@c</option>
+                    }
+                </select>
+            </div>
+            <div class="filter-row">
+                <input type="checkbox" class="filter-toggle col-toggle" data-col="position" title="Show column" checked />
+                <select name="position" class="multi-select" multiple="multiple" data-placeholder="Filter by position">
+                    <option></option>
+                    @foreach (var p in Model.Positions)
+                    {
+                        <option value="@p" selected="@(Model.Position.Contains(p))">@p</option>
+                    }
+                </select>
+            </div>
+            <div class="filter-row">
+                <input type="checkbox" class="filter-toggle col-toggle" data-col="form" title="Show column" checked />
+                <select name="form" class="multi-select" multiple="multiple" data-placeholder="Filter by form">
+                    <option></option>
+                    @foreach (var f in Model.Forms)
+                    {
+                        <option value="@f" selected="@(Model.Form.Contains(f))">@f</option>
+                    }
+                </select>
+            </div>
+            <div class="filter-row">
+                <input type="checkbox" class="filter-toggle col-toggle" data-col="filler" title="Show column" checked />
+                <select name="filler" class="multi-select" multiple="multiple" data-placeholder="Filter by filler">
+                    <option></option>
+                    @foreach (var f in Model.Fillers)
+                    {
+                        <option value="@f" selected="@(Model.Filler.Contains(f))">@f</option>
+                    }
+                </select>
+            </div>
+            <div class="filter-row">
+                <input type="checkbox" class="filter-toggle col-toggle" data-col="monthlyquantity" title="Show column" checked />
+                <select name="monthlyQuantity" class="multi-select" multiple="multiple" data-placeholder="Filter by quantity">
+                    <option></option>
+                    @foreach (var q in Model.MonthlyQuantities)
+                    {
+                        <option value="@q" selected="@(Model.MonthlyQuantity.Contains(q))">@q</option>
+                    }
+                </select>
+            </div>
+            <div class="filter-row">
+                <input type="checkbox" class="filter-toggle col-toggle" data-col="mfi" title="Show column" checked />
+                <select name="mfi" class="multi-select" multiple="multiple" data-placeholder="Filter by MFI">
+                    <option></option>
+                    @foreach (var m in Model.Mfis)
+                    {
+                        <option value="@m" selected="@(Model.Mfi.Contains(m))">@m</option>
+                    }
+                </select>
+            </div>
+            <div class="filter-row">
+                <input type="checkbox" class="filter-toggle col-toggle" data-col="notes" title="Show column" checked />
+                <div style="flex-grow: 1; padding: 8px; border: 1px solid transparent; color: #999;">Notes</div>
+            </div>
+
+            <div class="filter-controls">
+                <button type="submit" class="action-btn primary">Filter</button>
+                <a href="@Url.Action("Index", "Photos")" class="action-btn">Clear</a>
+            </div>
+        </form>
+    </div>
+</aside>
+
 <div class="page-layout">
-    <!-- LEFT PANEL WITH FILTERS -->
-    <aside class="filter-sidebar">
-        <div class="filter-section">
-            <h2>Filter & Display</h2>
-            <form method="get" class="filter-form">
-                <!-- Search container with icon -->
-                <div class="filter-row">
-                    <!-- Empty placeholder to align the field with other filters -->
-                    <div class="filter-toggle-placeholder"></div>
-
-                    <!-- Container that looks like a filter -->
-                    <div class="search-input-wrapper">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="search-icon">
-                            <path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z" clip-rule="evenodd" />
-                        </svg>
-                        <input type="search" name="search" placeholder="Search anything…" value="@(Model?.Search ?? "")" />
-                    </div>
-                </div>
-
-                <!-- NEW FILTER STRUCTURE -->
-                <div class="filter-row">
-                    <input type="checkbox" class="filter-toggle col-toggle" data-col="supplier" title="Show column" checked />
-                    <select name="supplier" class="multi-select" multiple="multiple" data-placeholder="Filter by supplier">
-                        <option></option>
-                        @foreach (var s in Model.Suppliers)
-                        {
-                            <option value="@s" selected="@(Model.Supplier.Contains(s))">@s</option>
-                        }
-                    </select>
-                </div>
-                <div class="filter-row">
-                    <input type="checkbox" class="filter-toggle col-toggle" data-col="material" title="Show column" checked />
-                    <select name="material" class="multi-select" multiple="multiple" data-placeholder="Filter by material">
-                        <option></option>
-                        @foreach (var m in Model.Materials)
-                        {
-                            <option value="@m" selected="@(Model.Material.Contains(m))">@m</option>
-                        }
-                    </select>
-                </div>
-                <div class="filter-row">
-                    <input type="checkbox" class="filter-toggle col-toggle" data-col="color" title="Show column" checked />
-                    <select name="color" class="multi-select" multiple="multiple" data-placeholder="Filter by color">
-                        <option></option>
-                        @foreach (var c in Model.Colors)
-                        {
-                            <option value="@c" selected="@(Model.Color.Contains(c))">@c</option>
-                        }
-                    </select>
-                </div>
-                <div class="filter-row">
-                    <input type="checkbox" class="filter-toggle col-toggle" data-col="position" title="Show column" checked />
-                    <select name="position" class="multi-select" multiple="multiple" data-placeholder="Filter by position">
-                        <option></option>
-                        @foreach (var p in Model.Positions)
-                        {
-                            <option value="@p" selected="@(Model.Position.Contains(p))">@p</option>
-                        }
-                    </select>
-                </div>
-                <div class="filter-row">
-                    <input type="checkbox" class="filter-toggle col-toggle" data-col="form" title="Show column" checked />
-                    <select name="form" class="multi-select" multiple="multiple" data-placeholder="Filter by form">
-                        <option></option>
-                        @foreach (var f in Model.Forms)
-                        {
-                            <option value="@f" selected="@(Model.Form.Contains(f))">@f</option>
-                        }
-                    </select>
-                </div>
-                <div class="filter-row">
-                    <input type="checkbox" class="filter-toggle col-toggle" data-col="filler" title="Show column" checked />
-                    <select name="filler" class="multi-select" multiple="multiple" data-placeholder="Filter by filler">
-                        <option></option>
-                        @foreach (var f in Model.Fillers)
-                        {
-                            <option value="@f" selected="@(Model.Filler.Contains(f))">@f</option>
-                        }
-                    </select>
-                </div>
-                <div class="filter-row">
-                    <input type="checkbox" class="filter-toggle col-toggle" data-col="monthlyquantity" title="Show column" checked />
-                    <select name="monthlyQuantity" class="multi-select" multiple="multiple" data-placeholder="Filter by quantity">
-                        <option></option>
-                        @foreach (var q in Model.MonthlyQuantities)
-                        {
-                            <option value="@q" selected="@(Model.MonthlyQuantity.Contains(q))">@q</option>
-                        }
-                    </select>
-                </div>
-                <div class="filter-row">
-                    <input type="checkbox" class="filter-toggle col-toggle" data-col="mfi" title="Show column" checked />
-                    <select name="mfi" class="multi-select" multiple="multiple" data-placeholder="Filter by MFI">
-                        <option></option>
-                        @foreach (var m in Model.Mfis)
-                        {
-                            <option value="@m" selected="@(Model.Mfi.Contains(m))">@m</option>
-                        }
-                    </select>
-                </div>
-                <div class="filter-row">
-                    <input type="checkbox" class="filter-toggle col-toggle" data-col="notes" title="Show column" checked />
-                    <!-- Placeholder for notes, even though they don't have a filter -->
-                    <div style="flex-grow: 1; padding: 8px; border: 1px solid transparent; color: #999;">Notes</div>
-                </div>
-
-                <div class="filter-controls">
-                    <button type="submit" class="action-btn primary">Filter</button>
-                    <a href="@Url.Action("Index", "Photos")" class="action-btn">Clear</a>
-                </div>
-            </form>
-        </div>
-    </aside>
-
-    <!-- RIGHT CONTENT WITH TILES -->
     <main class="content-area">
         <div class="card-grid">
             @foreach (var item in Model.Items)
@@ -631,18 +712,39 @@
     </main>
 </div>
 
-<!-- ELEMENT FOR IMAGE DISPLAY -->
 <div id="image-overlay">
     <img id="overlay-image" src="" alt="Fullscreen preview" />
 </div>
 
-<!-- Scripts -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
     document.addEventListener("DOMContentLoaded", function() {
         // Initialize Select2
-        $('.multi-select').select2({ allowClear: true, closeOnSelect: false });
+        // Přidán timeout, aby se Select2 správně inicializoval až po případné animaci
+        setTimeout(() => {
+            $('.multi-select').select2({ allowClear: true, closeOnSelect: false });
+        }, 100);
+
+        // --- UPRAVENÁ LOGIKA PRO SKLÁPĚNÍ FILTRU ---
+        const toggleBtn = document.getElementById('sidebar-toggle-btn');
+        const body = document.body;
+
+        // 1. Při načtení stránky zkontrolovat stav v localStorage
+        // Používáme 'filtersVisible' místo 'filtersHidden'
+        if (localStorage.getItem('filtersVisible') === 'true') {
+            body.classList.add('filters-visible');
+        }
+
+        // 2. Při kliknutí na tlačítko přepnout třídu a uložit stav
+        if (toggleBtn) {
+            toggleBtn.addEventListener('click', () => {
+                const isNowVisible = body.classList.toggle('filters-visible');
+                localStorage.setItem('filtersVisible', isNowVisible ? 'true' : 'false');
+            });
+        }
+
+        // --- STÁVAJÍCÍ KÓD ---
 
         // Toggle field visibility
         const checkboxes = document.querySelectorAll(".col-toggle");

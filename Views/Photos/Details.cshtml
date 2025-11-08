@@ -43,7 +43,7 @@
         margin: 0;
         font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
         color: var(--text);
-        overflow-x: hidden;
+        /* overflow-x: hidden;  <-- TOTO BYLO ODSTRANĚNO (způsobovalo přetékání a oříznutí obsahu na mobilu) */
         padding-bottom: 100px; /* space for FAB */
     }
 
@@ -257,9 +257,9 @@
             color: var(--brand);
         }
 
+        /* Skryjeme starý input */
         .upload-form input[type="file"] {
-            margin-bottom: 10px;
-            font-size: 0.9rem;
+            display: none;
         }
 
         .upload-form .preview-container {
@@ -267,6 +267,7 @@
             flex-wrap: wrap;
             gap: 8px;
             margin-top: 10px;
+            margin-bottom: 12px; /* Přidána mezera před tlačítko */
         }
 
             .upload-form .preview-container img {
@@ -276,6 +277,56 @@
                 border-radius: 6px;
                 border: 1px solid var(--border);
             }
+
+    /* === VLASTNÍ STYL PRO NAHRÁVÁNÍ SOUBORŮ === */
+    .custom-file-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 10px;
+    }
+
+    .input-file-hidden {
+        /* Toto je pro .upload-form input[type="file"] */
+        width: 0.1px;
+        height: 0.1px;
+        opacity: 0;
+        overflow: hidden;
+        position: absolute;
+        z-index: -1;
+    }
+
+    .custom-file-label {
+        background: var(--brand);
+        color: #fff;
+        padding: 0.6rem 1.2rem;
+        border: none;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+        .custom-file-label:hover {
+            background: var(--brand-dark);
+        }
+
+    .custom-file-name {
+        font-style: italic;
+        color: #555;
+        font-size: 0.9rem;
+        /* Zabrání přetečení */
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 200px;
+    }
+    /* === KONEC STYLU === */
+
 
     .image-lightbox {
         position: fixed;
@@ -404,6 +455,10 @@
         .fab-group {
             display: none;
         }
+
+        .custom-file-name {
+            max-width: 300px;
+        }
     }
 </style>
 
@@ -463,7 +518,6 @@
                 <div class="field"><div class="label">Form</div><div class="value">@Safe(Model.Form)</div></div>
                 <div class="field"><div class="label">Filler</div><div class="value">@Safe(Model.Filler)</div></div>
                 <div class="field"><div class="label">Color</div><div class="value">@Safe(Model.Color)</div></div>
-                <!-- Description removed as requested -->
                 <div class="field"><div class="label">Quantity (month)</div><div class="value">@Safe(Model.MonthlyQuantity?.ToString())</div></div>
                 <div class="field"><div class="label">MFI</div><div class="value">@Safe(Model.Mfi)</div></div>
                 <div class="field full"><div class="label">Notes</div><div class="value">@Safe(Model.Notes)</div></div>
@@ -498,7 +552,16 @@
                         <h4>➕ Add more photos</h4>
                         <form asp-action="UploadAdditionalPhotos" asp-route-id="@Model.Id" method="post" enctype="multipart/form-data" id="uploadForm">
                             @Html.AntiForgeryToken()
-                            <input type="file" name="AdditionalPhotoFiles" id="quickUploadInput" accept="image/*" multiple />
+
+                            <div class="custom-file-wrapper">
+                                <input type="file" name="AdditionalPhotoFiles" id="quickUploadInput" class="input-file-hidden" accept="image/*" multiple />
+                                <label for="quickUploadInput" class="custom-file-label">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:white;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                                    Select photos...
+                                </label>
+                                <span id="quickUploadFileName" class="custom-file-name"></span>
+                            </div>
+
                             <div id="quickUploadPreview" class="preview-container"></div>
                             <button type="submit" class="btn-primary" id="uploadBtn" disabled>Upload photos</button>
                         </form>
@@ -517,7 +580,6 @@
     </div>
 </main>
 
-<!-- FAB (mobile only) -->
 <div class="fab-group">
     <a href="@Url.Action("Index", "Photos")" class="fab primary" title="Back to catalog">
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -588,13 +650,26 @@
         const quickInput = document.getElementById('quickUploadInput');
         const quickPreview = document.getElementById('quickUploadPreview');
         const uploadBtn = document.getElementById('uploadBtn');
+        const quickFileName = document.getElementById('quickUploadFileName'); // <-- NOVÉ
 
         if (quickInput) {
             quickInput.addEventListener('change', function(e) {
                 quickPreview.innerHTML = '';
                 uploadBtn.disabled = true;
+
+                if (quickFileName) { // <-- NOVÉ
+                    quickFileName.textContent = '';
+                    quickFileName.style.fontStyle = 'italic';
+                }
+
                 if (e.target.files.length > 0) {
                     uploadBtn.disabled = false;
+
+                    if (quickFileName) { // <-- NOVÉ
+                        quickFileName.textContent = e.target.files.length === 1 ? e.target.files[0].name : `${e.target.files.length} souborů vybráno`;
+                        quickFileName.style.fontStyle = 'normal';
+                    }
+
                     Array.from(e.target.files).forEach(file => {
                         if (file.type.startsWith('image/')) {
                             const reader = new FileReader();
