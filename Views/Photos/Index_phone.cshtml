@@ -27,10 +27,8 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="apple-touch-icon" href="/icons/icon-192.png">
-<!-- Head/meta tagy, knihovny pro filtry -->
 <head>
 
-    <!-- Knihovny pro pokročilé filtry -->
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <style>
         /* Styl pro Select2, aby ladil s designem */
@@ -492,7 +490,6 @@
     </div>
 </header>
 
-<!-- Vylepšený filter panel -->
 <aside id="filterPanel" class="filter-panel" role="dialog" aria-modal="true" aria-labelledby="filterPanelTitle" aria-hidden="true">
     <div class="filter-panel-header">
         <h3 id="filterPanelTitle">Filtry</h3>
@@ -583,7 +580,6 @@
     </button>
 </div>
 
-<!-- jQuery a Select2 pro filtry -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
@@ -608,9 +604,20 @@
             openFilterFab.setAttribute('aria-expanded', 'false');
         }
 
+        // ===== ZMĚNA ZDE: Tlačítko nyní funguje jako PŘEPÍNAČ =====
         if (openFilterFab) {
-            openFilterFab.addEventListener('click', openFilterPanel);
+            openFilterFab.addEventListener('click', function() {
+                if (!filterPanel) return;
+                // Zkontrolujeme, zda je panel již otevřený
+                if (filterPanel.classList.contains('open')) {
+                    closeFilterPanel(); // Pokud ano, zavřeme ho
+                } else {
+                    openFilterPanel(); // Pokud ne, otevřeme ho
+                }
+            });
         }
+        // =========================================================
+
         if (closeFilterBtn) {
             closeFilterBtn.addEventListener('click', closeFilterPanel);
         }
