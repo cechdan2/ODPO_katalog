@@ -1,6 +1,6 @@
 ﻿@model PhotoApp.Models.PhotoRecord
 @{
-    ViewData["Title"] = "Smazat vzorek";
+    ViewData["Title"] = "Delete Sample";
 }
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <meta name="theme-color" content="#16a34a">
@@ -155,8 +155,8 @@
                 <img src="@Url.Content("~/logo.png")" alt="ODPO logo" style="height:48px;width:auto;display:block;" />
             </a>
             <div>
-                <h1 style="margin:0;font-size:18px;color:var(--brand);">Smazat vzorek</h1>
-                <div class="muted" style="font-size:13px;">ODPO s.r.o. – Katalog vzorků plastů</div>
+                <h1 style="margin:0;font-size:18px;color:var(--brand);">Delete Sample</h1>
+                <div class="muted" style="font-size:13px;">ODPO s.r.o. – Plastic Sample Catalog</div>
             </div>
         </div>
     </div>
@@ -164,17 +164,8 @@
 
 <main class="container">
     <div class="card">
-        <div class="delete-title">Opravdu chcete smazat tento vzorek?</div>
+        <div class="delete-title">Are you sure you want to delete this sample?</div>
         <dl>
-            <dt>Název</dt>
-            <dd>@Model.Name</dd>
-            <dt>Kód</dt>
-            <dd>@Model.Code</dd>
-            <dt>Typ</dt>
-            <dd>@Model.Type</dd>
-            <dt>Dodavatel</dt>
-            <dd>@Model.Supplier</dd>
-            <dt>Poznámky</dt>
             <dd>@Model.Notes</dd>
             @{
                 var imageSrc = !string.IsNullOrWhiteSpace(Model.ImagePath)
@@ -183,18 +174,18 @@
             }
             @if (!string.IsNullOrEmpty(imageSrc))
             {
-                <dt>Obrázek</dt>
-                <dd><img src="@imageSrc" class="thumb" alt="Obrázek vzorku" /></dd>
+                <dt>Image</dt>
+                <dd><img src="@imageSrc" class="thumb" alt="Sample image" /></dd>
             }
         </dl>
         <form asp-action="Delete" method="post">
             <input type="hidden" asp-for="Id" />
             @Html.AntiForgeryToken()
             <div class="btn-row">
-                <button type="submit" class="btn btn-danger">Smazat</button>
-                <a href="@Url.Action("Index")" class="btn">Zpět</a>
+                <button type="submit" class="btn btn-danger">Delete</button>
+                <a href="@Url.Action("Index")" class="btn">Back</a>
             </div>
         </form>
     </div>
-    <div class="footer">Data se ukládají v databázi. Pro zálohu exportujte data ze serveru.</div>
+    <div class="footer">Data is saved in the database. For backup, export the data from the server.</div>
 </main>

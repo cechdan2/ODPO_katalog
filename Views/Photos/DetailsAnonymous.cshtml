@@ -1,22 +1,20 @@
 ﻿@model PhotoApp.Models.PhotoRecord
 @{
-    ViewData["Title"] = "Veřejný detail vzorku";
+    ViewData["Title"] = "Public Sample Details";
 }
 
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <meta name="theme-color" content="#16a34a">
 <link rel="manifest" href="/manifest.json">
-<!-- Android / Chrome -->
 <meta name="mobile-web-app-capable" content="yes">
-<!-- iOS -->
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="apple-touch-icon" href="/icons/icon-192.png">
 
 
 <style>
-    /* můžete zkopírovat CSS z hlavního Details view, aby to mělo stejný vzhled */
+    /* You can copy CSS from the main Details view to have the same look */
     :root {
         --brand: #16a34a;
         --brand-dark: #166534;
@@ -75,7 +73,7 @@
         color: #444;
     }
 
-    /* zvýrazněné popisky */
+    /* highlighted labels */
     .label {
         font-weight: 700;
         text-transform: uppercase;
@@ -163,18 +161,15 @@
         }
 
     @@media (max-width: 600px) {
-        .detail-card
+        .detail-card {
+            margin: 18px;
+            padding: 1.5rem;
+        }
 
-    {
-        margin: 18px;
-        padding: 1.5rem;
-    }
-
-    .detail-img {
-        width: 180px;
-        height: 180px;
-    }
-
+        .detail-img {
+            width: 180px;
+            height: 180px;
+        }
     }
 </style>
 
@@ -183,8 +178,8 @@
         <div class="page-header" style="display:flex;align-items:center;gap:12px;flex-direction:column;text-align:center;">
             <img src="@Url.Content("~/logo.png")" alt="ODPO logo" style="height:48px;width:auto;display:block;" />
             <div>
-                <h1 style="margin:0;font-size:18px;color:var(--brand);">Detail vzorku</h1>
-                <div class="muted" style="font-size:13px;">ODPO s.r.o. – Katalog vzorků plastů</div>
+                <h1 style="margin:0;font-size:18px;color:var(--brand);">Sample Details</h1>
+                <div class="muted" style="font-size:13px;">ODPO s.r.o. – Plastic Sample Catalog</div>
             </div>
         </div>
     </div>
@@ -193,28 +188,28 @@
 <div class="detail-card">
     @if (!string.IsNullOrEmpty(Model.ImagePath ?? Model.PhotoPath))
     {
-        <img id="sampleImage" src="@Url.Content(Model.ImagePath ?? Model.PhotoPath)" class="detail-img" alt="Foto vzorku" aria-describedby="imgCaption" />
+        <img id="sampleImage" src="@Url.Content(Model.ImagePath ?? Model.PhotoPath)" class="detail-img" alt="Sample Photo" aria-describedby="imgCaption" />
     }
     <div class="detail-title">@Model.Name</div>
     <div class="detail-info">
         <div class="field full">
-            <div class="label">Název</div>
+            <div class="label">Name</div>
             <div class="value">@Model.OriginalName</div>
         </div>
         <div class="field">
-            <div class="label">Plnivo</div>
+            <div class="label">Filler</div>
             <div class="value">@Model.Filler</div>
         </div>
         <div class="field">
-            <div class="label">Barva</div>
+            <div class="label">Color</div>
             <div class="value">@Model.Color</div>
         </div>
         <div class="field">
-            <div class="label">Forma</div>
+            <div class="label">Form</div>
             <div class="value">@Model.Form</div>
         </div>
         <div class="field">
-            <div class="label">Množství (měsíc)</div>
+            <div class="label">Quantity (month)</div>
             <div class="value">@Model.MonthlyQuantity</div>
         </div>
         <div class="field">
@@ -222,16 +217,15 @@
             <div class="value">@Model.Mfi</div>
         </div>
         <div class="field full">
-            <div class="label">Poznámky</div>
+            <div class="label">Notes</div>
             <div class="value">@Model.Notes</div>
         </div>
     </div>
 </div>
 
-<!-- Lightbox overlay -->
 <div id="imgOverlay" class="img-overlay" role="dialog" aria-modal="true" aria-hidden="true">
-    <button type="button" class="close-btn" id="closeOverlay" aria-label="Zavřít náhled">✕</button>
-    <img id="overlayImage" src="" alt="Rozšířený náhled vzorku" />
+    <button type="button" class="close-btn" id="closeOverlay" aria-label="Close preview">✕</button>
+    <img id="overlayImage" src="" alt="Enlarged sample preview" />
     <div id="imgCaption" class="caption">@Model.Name</div>
 </div>
 

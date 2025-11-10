@@ -28,7 +28,7 @@
 
     body {
         margin: 0;
-        padding: 0 0 100px 0; /* Ponechán padding pro obsah, aby nebyl úplně dole */
+        padding: 0 0 100px 0; /* Padding for content not to be hidden by FAB */
         font-family: system-ui,-apple-system,Segoe UI,Roboto,Ubuntu;
         color: var(--text);
         background: var(--bg);
@@ -96,7 +96,7 @@
             color: #333;
         }
 
-    /* === VLASTNÍ VZHLED PRO INPUT[TYPE=FILE] === */
+    /* === CUSTOM STYLE FOR INPUT[TYPE=FILE] === */
     .custom-file-wrapper {
         display: flex;
         align-items: center;
@@ -197,7 +197,7 @@
         font-size: 0.95rem;
     }
 
-    /* === PLOVOUCÍ TLAČÍTKO (FAB) === */
+    /* === FLOATING ACTION BUTTON (FAB) === */
     .fab-group {
         position: fixed;
         right: 20px;
@@ -228,7 +228,7 @@
             transform: translateY(-2px);
         }
 
-    /* === RESPONZIVNÍ PRAVIDLA === */
+    /* === RESPONSIVE RULES === */
     @@media (max-width: 768px) {
         .center-form-container {
             padding: 1.5rem 1rem;
@@ -239,7 +239,7 @@
                 font-size: 1.4rem;
                 margin-bottom: 1.5rem;
             }
-        /* Pravidla pro všechny formuláře v .styled-form na mobilu */
+        /* Rules for all forms in .styled-form on mobile */
         .styled-form .form-group {
             display: block;
             margin-bottom: 1.25rem;
@@ -264,11 +264,11 @@
                 display: block;
                 box-sizing: border-box;
             }
-        /* Úprava pro název souboru na mobilu */
+        /* Fix for file name on mobile */
         .custom-file-name {
             max-width: 150px;
         }
-        /* OPRAVA: Zobrazíme FAB tlačítko POUZE na mobilu */
+        /* Show FAB ONLY on mobile */
         .fab-group {
             display: flex;
         }
@@ -282,8 +282,8 @@
                 <img src="@Url.Content("~/logo.png")" alt="ODPO logo" style="height:48px;width:auto;display:block;" />
             </a>
             <div>
-                <h1 style="margin:0;font-size:18px;color:var(--brand);">Správa dat</h1>
-                <div style="font-size:13px;color:#666;">ODPO s.r.o. – Katalog vzorků plastů</div>
+                <h1 style="margin:0;font-size:18px;color:var(--brand);">Data Management</h1>
+                <div style="font-size:13px;color:#666;">ODPO s.r.o. – Plastic Sample Catalog</div>
             </div>
         </div>
     </div>
@@ -291,63 +291,63 @@
 
 <main class="container">
     <div class="center-form-container">
-        <h2>Správa databáze a importu</h2>
+        <h2>Database and Import Management</h2>
 
         <div class="info-box">
-            ℹ️ <strong>Tip:</strong> Záloha obsahuje databázi a všechny nahrané fotografie zabalené do ZIP archivu.
-            Pravidelně si stahujte zálohy pro ochranu vašich dat.
+            ℹ️ <strong>Tip:</strong> The backup includes the database and all uploaded photos packed into a ZIP archive.
+            Download backups regularly to protect your data.
         </div>
 
         <div class="styled-form">
             <div class="form-group full">
-                <label>📥 Stáhnout zálohu databáze a fotografií:</label>
-                <button id="downloadBtn" class="btn-primary" style="width:100%;">Stáhnout zálohu (ZIP)</button>
+                <label>📥 Download database and photo backup:</label>
+                <button id="downloadBtn" class="btn-primary" style="width:100%;">Download Backup (ZIP)</button>
             </div>
 
             <div class="full" style="border-top:2px solid var(--border);margin:20px 0;"></div>
 
             <div class="form-group full">
-                <label>📤 Nahrát a obnovit databázi ze zálohy (ZIP):</label>
+                <label>📤 Upload and restore database from backup (ZIP):</label>
 
                 <div class="custom-file-wrapper">
                     <input type="file" id="restoreFile" class="input-file-hidden" accept=".zip" />
                     <label for="restoreFile" class="custom-file-label">
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:white;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
-                        Vybrat soubor...
+                        Choose file...
                     </label>
-                    <span id="restoreFile-name" class="custom-file-name">Soubor nevybrán</span>
+                    <span id="restoreFile-name" class="custom-file-name">No file selected</span>
                 </div>
 
                 <div class="field-validation" style="color:#075985;margin-top:8px;">
-                    ⚠️ Pozor: Obnovení přepíše aktuální databázi a fotografie!
+                    ⚠️ Warning: Restoring will overwrite the current database and photos!
                 </div>
             </div>
 
             <div class="form-group full" style="display:flex;gap:12px;justify-content:flex-end;margin-top:10px;">
-                <button id="restoreBtn" class="btn-primary">Obnovit ze zálohy</button>
+                <button id="restoreBtn" class="btn-primary">Restore from Backup</button>
             </div>
 
             <div class="full" style="border-top:2px solid var(--border);margin:40px 0 20px 0;"></div>
 
             <div class="form-group full">
-                <label>📊 Importovat data z Excel souboru (.xlsx, .xls):</label>
+                <label>📊 Import data from Excel file (.xlsx, .xls):</label>
 
                 <div class="custom-file-wrapper">
                     <input type="file" id="excelFile" class="input-file-hidden" accept=".xlsx,.xls" />
                     <label for="excelFile" class="custom-file-label">
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:white;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
-                        Vybrat soubor...
+                        Choose file...
                     </label>
-                    <span id="excelFile-name" class="custom-file-name">Soubor nevybrán</span>
+                    <span id="excelFile-name" class="custom-file-name">No file selected</span>
                 </div>
 
                 <div class="field-validation" style="color:#075985;margin-top:8px;">
-                    💡 Excel musí obsahovat sloupce: Position, ExternalId, OriginalName, Material, Form, Filler, Color, Description, MonthlyQuantity, Mfi, Notes, Supplier
+                    💡 Excel must contain the columns: Position, ExternalId, OriginalName, Material, Form, Filler, Color, Description, MonthlyQuantity, Mfi, Notes, Supplier
                 </div>
             </div>
 
             <div class="form-group full" style="display:flex;gap:12px;justify-content:flex-end;margin-top:10px;">
-                <button id="importBtn" class="btn-primary">Importovat z Excelu</button>
+                <button id="importBtn" class="btn-primary">Import from Excel</button>
             </div>
         </div>
 
@@ -356,7 +356,7 @@
 </main>
 
 <div class="fab-group">
-    <a href="@Url.Action("Index", "Photos")" class="fab" title="Zpět na katalog" aria-label="Zpět na katalog">
+    <a href="@Url.Action("Index", "Photos")" class="fab" title="Back to catalog" aria-label="Back to catalog">
         <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:white;">
             <path d="M19 12H5"></path>
             <polyline points="12 19 5 12 12 5"></polyline>
@@ -365,17 +365,17 @@
 </div>
 
 <script>
-    // Stažení zálohy
+    // Download backup
     async function downloadBackup() {
         const btn = document.getElementById('downloadBtn');
         btn.disabled = true;
-        btn.textContent = '⏳ Vytváření zálohy...';
+        btn.textContent = '⏳ Creating backup...';
 
         try {
             const resp = await fetch('/api/admin/db/backup', { method: 'GET', credentials: 'include' });
             if (!resp.ok) {
                 const t = await resp.text();
-                alert('Chyba při vytváření zálohy: ' + t);
+                alert('Error creating backup: ' + t);
                 return;
             }
             const blob = await resp.blob();
@@ -388,25 +388,25 @@
             a.remove();
             window.URL.revokeObjectURL(url);
         } catch (err) {
-            alert('Chyba: ' + err.message);
+            alert('Error: ' + err.message);
         } finally {
             btn.disabled = false;
-            btn.textContent = 'Stáhnout zálohu (ZIP)';
+            btn.textContent = 'Download Backup (ZIP)';
         }
     }
 
-    // Obnovení ze zálohy
+    // Restore from backup
     async function uploadRestore(fileInput) {
         const file = fileInput?.files?.[0];
-        if (!file) return alert('Vyberte soubor.');
+        if (!file) return alert('Please select a file.');
 
-        if (file.size > 200 * 1024 * 1024) return alert('Soubor je příliš velký (max 200 MB).');
+        if (file.size > 200 * 1024 * 1024) return alert('File is too large (max 200 MB).');
 
-        if (!confirm('Opravdu chcete obnovit databázi? Aktuální data budou přepsána!')) return;
+        if (!confirm('Are you sure you want to restore the database? Current data will be overwritten!')) return;
 
         const btn = document.getElementById('restoreBtn');
         btn.disabled = true;
-        btn.textContent = '⏳ Nahrávání...';
+        btn.textContent = '⏳ Uploading...';
 
         const form = new FormData();
         form.append('backupZip', file);
@@ -435,61 +435,61 @@
                 } catch { /* ignore */ }
             }
 
-            alert('✅ Restore byl úspěšný!');
+            alert('✅ Restore was successful!');
             window.location.href = '/Photos/Index';
         } catch (err) {
-            alert('Chyba: ' + err.message);
+            alert('Error: ' + err.message);
         } finally {
             btn.disabled = false;
-            btn.textContent = 'Obnovit ze zálohy';
+            btn.textContent = 'Restore from Backup';
         }
     }
 
-    // Import z Excelu
+    // Import from Excel
     async function uploadImport(fileInput) {
         const file = fileInput?.files?.[0];
-        if (!file) return alert('Vyberte Excel soubor.');
+        if (!file) return alert('Please select an Excel file.');
 
-        if (!confirm('Opravdu chcete importovat data z Excel souboru?')) return;
+        if (!confirm('Are you sure you want to import data from this Excel file?')) return;
 
         const btn = document.getElementById('importBtn');
         btn.disabled = true;
-        btn.textContent = '⏳ Importování...';
+        btn.textContent = '⏳ Importing...';
 
         const form = new FormData();
         form.append('file', file);
 
         try {
-            // Použití @@Url.Action pro správnou cestu k PhotosControlleru
+            // Use @@Url.Action for the correct path to PhotosController
             const resp = await fetch('@Url.Action("Import", "Photos")', {
                 method: 'POST',
                 body: form,
                 credentials: 'include',
                 headers: {
-                    // Potřebné pro anti-forgery token, pokud ho controller vyžaduje
+                    // Required for anti-forgery token if the controller needs it
                     'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
                 }
             });
 
             if (!resp.ok) {
                 const txt = await resp.text();
-                alert('Import se nezdařil: ' + txt);
+                alert('Import failed: ' + txt);
                 return;
             }
 
-            alert('✅ Import byl úspěšný!');
+            alert('✅ Import was successful!');
             window.location.href = '/Photos';
         } catch (err) {
-            alert('Chyba: ' + err.message);
+            alert('Error: 'D' + err.message);
         } finally {
             btn.disabled = false;
-            btn.textContent = 'Importovat z Excelu';
+            btn.textContent = 'Import from Excel';
         }
     }
 
-    // Event listenery
+    // Event listeners
     document.addEventListener('DOMContentLoaded', () => {
-        // Anti-forgery token pro formulář, aby byl dostupný pro JS
+        // Anti-forgery token for the form, to be available for JS
         if (!document.querySelector('input[name="__RequestVerificationToken"]')) {
             const form = document.createElement('form');
             form.innerHTML = '@Html.AntiForgeryToken()';
@@ -511,7 +511,7 @@
             importBtn.addEventListener('click', () => uploadImport(excelFile));
         }
 
-        // === KÓD PRO ZOBRAZENÍ NÁZVU SOUBORU ===
+        // === CODE TO DISPLAY THE FILENAME ===
         function setupFileInput(inputId, spanId) {
             const input = document.getElementById(inputId);
             const span = document.getElementById(spanId);
@@ -522,7 +522,7 @@
                         span.style.fontStyle = 'normal';
                         span.style.color = '#333';
                     } else {
-                        span.textContent = 'Soubor nevybrán';
+                        span.textContent = 'No file selected';
                         span.style.fontStyle = 'italic';
                         span.style.color = '#555';
                     }
@@ -530,7 +530,7 @@
             }
         }
 
-        // Aplikujeme funkci na oba file inputy
+        // Apply the function to both file inputs
         setupFileInput('restoreFile', 'restoreFile-name');
         setupFileInput('excelFile', 'excelFile-name');
     });

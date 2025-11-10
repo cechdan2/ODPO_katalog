@@ -1,5 +1,5 @@
 ﻿@{
-    ViewData["Title"] = "Přihlášení";
+    ViewData["Title"] = "Log in";
 }
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -15,7 +15,7 @@
         --radius: 12px;
     }
 
-    /* --- Základní styly --- */
+    /* --- Base Styles --- */
     body, html {
         margin: 0;
         padding: 0;
@@ -128,18 +128,18 @@
     }
 
 
-    /* --- VZHLED PRO MOBIL (Centrování na střed) --- */
+    /* --- MOBILE VIEW (Centering) --- */
     @@media (max-width: 767px) {
         .page-header {
-            display: none; /* Skryjeme původní hlavičku */
+            display: none; /* Hide the original header */
         }
 
         .login-wrap {
-            /* Toto je klíčové: Kontejner pro centrování */
+            /* This is key: The centering container */
             display: flex;
             flex-direction: column;
-            justify-content: center; /* Vertikální centrování */
-            align-items: center; /* Horizontální centrování */
+            justify-content: center; /* Vertical centering */
+            align-items: center; /* Horizontal centering */
             padding: 16px;
             box-sizing: border-box;
             width: 100%;
@@ -147,12 +147,12 @@
         }
 
         .login-card {
-            /* Přidáme zpět hlavičku dovnitř karty */
+            /* Add the header back inside the card */
             display: flex;
             flex-direction: column;
             align-items: center;
         }
-            /* Zobrazíme hlavičku, která je uvnitř .login-card */
+            /* Show the header that is inside .login-card */
             .login-card .page-header {
                 display: flex;
                 padding: 0;
@@ -160,14 +160,14 @@
             }
     }
 
-    /* Vzhled pro Desktop */
+    /* Desktop View */
     @@media (min-width: 768px) {
         .login-wrap {
             display: flex;
             justify-content: center;
             padding: 20px 16px;
         }
-        /* Skryjeme hlavičku uvnitř karty, protože na desktopu je vidět ta vnější */
+        /* Hide the header inside the card, as the outer one is visible on desktop */
         .login-card .page-header {
             display: none;
         }
@@ -181,35 +181,33 @@
 
 <header class="page-header">
     <img src="@Url.Content("~/logo.png")" alt="ODPO logo" />
-    <h1>Detail vzorku</h1>
-    <div class="subtext">ODPO s.r.o. – Katalog vzorků plastů</div>
+    <h1>Sample Details</h1> <div class="subtext">ODPO s.r.o. – Plastic Sample Catalog</div>
 </header>
 
 <div class="login-wrap">
     <div class="login-card" role="main">
 
-        <!-- Hlavička pro mobilní zobrazení -->
         <header class="page-header">
             <img src="@Url.Content("~/logo.png")" alt="ODPO logo" />
         </header>
 
-        <h2 id="loginTitle" class="login-title">Přihlášení</h2>
-        <p class="login-sub">Přihlaste se pro přístup ke správě katalogu.</p>
+        <h2 id="loginTitle" class="login-title">Log in</h2>
+        <p class="login-sub">Log in to access catalog management.</p>
 
         <form asp-controller="Account" asp-action="Login" method="post" novalidate>
             @Html.AntiForgeryToken()
             <div asp-validation-summary="All" class="text-danger" role="alert"></div>
             <div class="form-group">
-                <label for="userName">Uživatelské jméno</label>
+                <label for="userName">Username</label>
                 <input type="text" name="userName" class="form-control" id="userName" autocomplete="username" />
             </div>
             <div class="form-group">
-                <label for="password">Heslo</label>
+                <label for="password">Password</label>
                 <input type="password" name="password" class="form-control" id="password" autocomplete="current-password" />
             </div>
             <input type="hidden" name="returnUrl" value="@ViewData["ReturnUrl"]" />
             <div class="form-actions">
-                <button type="submit" class="btn-primary">Přihlásit</button>
+                <button type="submit" class="btn-primary">Log in</button>
             </div>
         </form>
     </div>

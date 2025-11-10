@@ -4,9 +4,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <meta name="theme-color" content="#16a34a">
 <link rel="manifest" href="/manifest.json">
-<!-- Android / Chrome -->
 <meta name="mobile-web-app-capable" content="yes">
-<!-- iOS -->
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="apple-touch-icon" href="/icons/icon-192.png">
@@ -245,8 +243,8 @@
                 <img src="@Url.Content("~/logo.png")" alt="ODPO logo" style="height:48px;width:auto;display:block;" />
             </a>
             <div>
-                <h1 style="margin:0;font-size:18px;color:var(--brand);">Záloha databáze</h1>
-                <div style="font-size:13px;color:#666;">ODPO s.r.o. – Katalog vzorků plastů</div>
+                <h1 style="margin:0;font-size:18px;color:var(--brand);">Database Backup</h1>
+                <div style="font-size:13px;color:#666;">ODPO s.r.o. – Plastic Sample Catalog</div>
             </div>
         </div>
     </div>
@@ -254,27 +252,24 @@
 
 <main class="container">
     <div class="center-form-container">
-        <h2>Záloha a obnova databáze</h2>
+        <h2>Database Backup and Restore</h2>
 
         <div class="styled-form">
-            <!-- Stáhnout zálohu -->
             <div class="form-group full">
-                <label>Stáhnout zálohu databáze:</label>
-                <button id="downloadBtn" class="btn-primary" style="width:100%;">📥 Stáhnout zálohu</button>
+                <label>Download database backup:</label>
+                <button id="downloadBtn" class="btn-primary" style="width:100%;">📥 Download Backup</button>
             </div>
 
-            <!-- Oddělovač -->
             <div class="full" style="border-top:2px solid var(--border);margin:20px 0;"></div>
 
-            <!-- Nahrát a obnovit -->
             <div class="form-group full">
-                <label for="restoreFile">Nahrát a obnovit databázi ze zálohy:</label>
+                <label for="restoreFile">Upload and restore database from backup:</label>
                 <input type="file" id="restoreFile" class="form-control-file" accept=".db,.sqlite,.sqlite3" />
             </div>
 
             <div class="form-group full" style="display:flex;gap:12px;justify-content:flex-end;margin-top:10px;">
-                <a href="@Url.Action("Index", "Photos")" class="btn">Zpět</a>
-                <button id="restoreBtn" class="btn-primary">📤 Nahrát a obnovit</button>
+                <a href="@Url.Action("Index", "Photos")" class="btn">Back</a>
+                <button id="restoreBtn" class="btn-primary">📤 Upload and Restore</button>
             </div>
         </div>
 
@@ -282,17 +277,16 @@
     </div>
 </main>
 
-<!-- Bottom fixed action bar -->
-<nav class="bottom-bar" role="navigation" aria-label="Rychlé akce">
-    <div class="actions-grid" role="menu" aria-label="Rychlé akce">
-        <a role="menuitem" href="@Url.Action("Index", "Photos")" class="action-btn" title="Katalog">
-            <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 24 24' fill='white'><path d='M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z' fill='%23ffffff'/></svg>" alt="Katalog" />
-            <div class="label">Katalog</div>
+<nav class="bottom-bar" role="navigation" aria-label="Quick Actions">
+    <div class="actions-grid" role="menu" aria-label="Quick Actions">
+        <a role="menuitem" href="@Url.Action("Index", "Photos")" class="action-btn" title="Catalog">
+            <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 24 24' fill='white'><path d='M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z' fill='%23ffffff'/></svg>" alt="Catalog" />
+            <div class="label">Catalog</div>
         </a>
 
-        <a role="menuitem" href="#" class="action-btn" title="Stáhnout zálohu" onclick="document.getElementById('downloadBtn').click(); return false;">
-            <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 24 24' fill='white'><path d='M12 2L4 6v6c0 5 3.9 9.4 8 10 4.1-.6 8-5 8-10V6l-8-4zM11 14v-4h2v4h3l-4 4-4-4h3z' fill='%23ffffff'/></svg>" alt="Záloha" />
-            <div class="label">Záloha</div>
+        <a role="menuitem" href="#" class="action-btn" title="Download Backup" onclick="document.getElementById('downloadBtn').click(); return false;">
+            <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 24 24' fill='white'><path d='M12 2L4 6v6c0 5 3.9 9.4 8 10 4.1-.6 8-5 8-10V6l-8-4zM11 14v-4h2v4h3l-4 4-4-4h3z' fill='%23ffffff'/></svg>" alt="Backup" />
+            <div class="label">Backup</div>
         </a>
     </div>
 </nav>

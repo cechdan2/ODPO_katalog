@@ -190,7 +190,6 @@
         top: 0;
         width: var(--sidebar-width);
         height: 100vh; /* Plná výška */
-
         display: flex;
         flex-direction: column;
         gap: var(--gap);
@@ -392,16 +391,46 @@
         border: 1px solid var(--border);
     }
 
+    /* === ZMĚNA ZDE === */
     .sample-card-info {
         flex-grow: 1;
+        display: flex; /* Přidáno */
+        flex-direction: column; /* Přidáno */
     }
 
+        /* Upravený styl pro nadpis .name */
         .sample-card-info .name {
             font-size: 20px;
             font-weight: 700;
             color: var(--brand-dark);
             margin: 0 0 10px 0;
+            /* Styly pro zarovnání (název vlevo, ID vpravo) */
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            gap: 12px;
+            width: 100%;
         }
+
+            /* Nový styl pro text jména */
+            .sample-card-info .name .name-text {
+                flex-grow: 1;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                text-align: left; /* Jméno vlevo */
+            }
+
+            /* Nový styl pro ID */
+            .sample-card-info .name .id-text {
+                font-size: 1rem;
+                font-weight: 500;
+                color: #777;
+                white-space: nowrap;
+                flex-shrink: 0;
+            }
+    /* === KONEC ZMĚNY === */
+
 
     .info-grid {
         display: grid;
@@ -543,7 +572,7 @@
     </div>
 </header>
 
-<button id="sidebar-toggle-btn" title="Přepnout filtry">
+<button id="sidebar-toggle-btn" title="Toggle filters">
     <svg class="arrow-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
         <polyline points="9 18 15 12 9 6"></polyline>
     </svg>
@@ -684,7 +713,10 @@
                             }
                         </div>
                         <div class="sample-card-info">
-                            <h3 class="name">@Safe(item.OriginalName)</h3>
+                            <h3 class="name">
+                                <span class="name-text">@Safe(item.OriginalName)</span>
+                                <span class="id-text">#@item.Id</span>
+                            </h3>
                             <div class="info-grid">
                                 <div class="info-item" data-col="supplier"><strong>Supplier</strong><span>@Safe(item.Supplier)</span></div>
                                 <div class="info-item" data-col="material"><strong>Material</strong><span>@Safe(item.Material)</span></div>
