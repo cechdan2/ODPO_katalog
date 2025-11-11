@@ -277,7 +277,7 @@
                 border-radius: 6px;
                 border: 1px solid var(--border);
             }
-    
+
     /* === VLASTNÍ STYL PRO NAHRÁVÁNÍ SOUBORŮ === */
     .custom-file-wrapper {
         display: flex;
@@ -310,6 +310,7 @@
         align-items: center;
         gap: 8px;
     }
+
         .custom-file-label:hover {
             background: var(--brand-dark);
         }
@@ -454,11 +455,78 @@
         .fab-group {
             display: none;
         }
-        
+
         .custom-file-name {
             max-width: 300px;
         }
     }
+
+    /* === STYLY PRO PDF MODÁL === */
+    .pdf-modal {
+        position: fixed;
+        inset: 0;
+        display: none; /* Skryto defaultně */
+        align-items: center;
+        justify-content: center;
+        background: rgba(0,0,0,0.6);
+        z-index: 9998;
+        padding: 20px;
+    }
+
+    .pdf-modal-content {
+        background: var(--white);
+        border-radius: var(--radius);
+        padding: 24px;
+        box-shadow: 0 4px 20px rgba(0,0,0,.2);
+        max-width: 500px;
+        width: 100%;
+        position: relative;
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+
+    .pdf-modal-close {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background: transparent;
+        border: none;
+        font-size: 1.5rem;
+        cursor: pointer;
+        color: #888;
+    }
+
+        .pdf-modal-close:hover {
+            color: #333;
+        }
+
+    #pdf-column-list {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+        margin-top: 16px;
+        border-top: 1px solid var(--border);
+        padding-top: 16px;
+    }
+
+        #pdf-column-list label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+
+        #pdf-column-list input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+        }
+
+    @@media (max-width: 500px) {
+        #pdf-column-list {
+            grid-template-columns: 1fr; /* Jeden sloupec na malých obrazovkách */
+        }
+    }
+    /* === KONEC STYLŮ PRO PDF MODÁL === */
 </style>
 
 <main class="detail-page">
@@ -570,6 +638,9 @@
 
             <div class="actions">
                 <a href="@Url.Action("Index", "Photos")" class="btn">Back to catalog</a>
+
+                <button type="button" class="btn" id="openPdfModalBtn">Export PDF</button>
+
                 @if (User.Identity?.IsAuthenticated == true)
                 {
                     <a href="@Url.Action("Edit", "Photos", new { id = Model.Id })" class="btn">Edit Sample</a>
@@ -586,6 +657,17 @@
             <polyline points="12 19 5 12 12 5"></polyline>
         </svg>
     </a>
+
+    <button type="button" id="openPdfModalBtnMobile" class="fab secondary" title="Export PDF">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="16" y1="13" x2="8" y2="13"></line>
+            <line x1="16" y1="17" x2="8" y2="17"></line>
+            <polyline points="10 9 9 9 8 9"></polyline>
+        </svg>
+    </button>
+
     @if (User.Identity?.IsAuthenticated == true)
     {
         <a href="@Url.Action("Edit", "Photos", new { id = Model.Id })" class="fab secondary" title="Edit">
@@ -612,12 +694,49 @@
     </div>
 </div>
 
+<div id="pdfModal" class="pdf-modal" role="dialog" aria-modal="true" aria-labelledby="pdfModalTitle" style="display: none;">
+    <div class="pdf-modal-content">
+        <button id="pdfModalClose" class="pdf-modal-close" aria-label="Zavřít">✕</button>
+        <h2 id="pdfModalTitle">Exportovat do PDF</h2>
+        <p>Vyberte položky, které chcete zahrnout do exportu:</p>
+
+        <div id="pdf-column-list">
+            <label><input type="checkbox" value="Photo" checked> <span>Hlavní fotka</span></label>
+            <label><input type="checkbox" value="QrCode" checked> <span>Veřejný odkaz (QR)</span></label>
+            <label><input type="checkbox" value="Id" checked> <span>ID</span></label>
+            <label><input type="checkbox" value="Position" checked> <span>Position</span></label>
+            <label><input type="checkbox" value="Supplier" checked> <span>Supplier</span></label>
+            <label><input type="checkbox" value="OriginalName" checked> <span>Name</span></label>
+            <label><input type="checkbox" value="Material" checked> <span>Material</span></label>
+            <label><input type="checkbox" value="Form" checked> <span>Form</span></label>
+            <label><input type="checkbox" value="Filler" checked> <span>Filler</span></label>
+            <label><input type="checkbox" value="Color" checked> <span>Color</span></label>
+            <label><input type="checkbox" value="MonthlyQuantity" checked> <span>Quantity (month)</span></label>
+            <label><input type="checkbox" value="Mfi" checked> <span>MFI</span></label>
+            <label><input type="checkbox" value="Notes" checked> <span>Notes</span></label>
+            <label><input type="checkbox" value="CreatedAt" checked> <span>Created</span></label>
+            <label><input type="checkbox" value="UpdatedAt" checked> <span>Updated</span></label>
+        </div>
+
+        <button id="generatePdfBtn" class="btn-primary" style="width: 100%; margin-top: 20px;">Vygenerovat PDF</button>
+    </div>
+</div>
+
+
 <script>
     (function () {
         const lightbox = document.getElementById('imageLightbox');
         const lightboxImg = document.getElementById('lightboxImg');
         const closeBtn = document.getElementById('lightboxClose');
         const zoomableImages = document.querySelectorAll('.photo-zoom');
+
+        // --- NOVÉ PRO PDF MODAL ---
+        const pdfModal = document.getElementById('pdfModal');
+        const openPdfBtn = document.getElementById('openPdfModalBtn');
+        const openPdfBtnMobile = document.getElementById('openPdfModalBtnMobile');
+        const closePdfBtn = document.getElementById('pdfModalClose');
+        const generatePdfBtn = document.getElementById('generatePdfBtn');
+        // --- KONEC ---
 
         function openLightbox(src, alt) {
             if (!src) return;
@@ -646,6 +765,46 @@
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape' && lightbox.classList.contains('show')) closeLightbox();
         });
+
+        // --- NOVÁ LOGIKA PRO PDF MODAL ---
+        function openPdfModal() {
+            if (pdfModal) pdfModal.style.display = 'flex';
+        }
+        function closePdfModal() {
+            if (pdfModal) pdfModal.style.display = 'none';
+        }
+        if (openPdfBtn) openPdfBtn.addEventListener('click', openPdfModal);
+        if (openPdfBtnMobile) openPdfBtnMobile.addEventListener('click', openPdfModal);
+        if (closePdfBtn) closePdfBtn.addEventListener('click', closePdfModal);
+
+        if (pdfModal) {
+            pdfModal.addEventListener('click', (e) => {
+                if (e.target === pdfModal) closePdfModal();
+            });
+        }
+
+        if (generatePdfBtn) {
+            generatePdfBtn.addEventListener('click', function() {
+                const checkedBoxes = document.querySelectorAll('#pdf-column-list input[type="checkbox"]:checked');
+                const params = new URLSearchParams();
+
+                checkedBoxes.forEach(cb => {
+                    params.append('columnsToInclude', cb.value);
+                });
+
+                // Pomocí Razor získáme ID aktuálního modelu
+                const baseUrl = '@Url.Action("ExportSinglePdf", "Photos", new { id = Model.Id })';
+                const fullUrl = `${baseUrl}?${params.toString()}`;
+
+                // Otevřeme PDF v novém okně
+                window.open(fullUrl, '_blank');
+
+                // Zavřeme modál
+                closePdfModal();
+            });
+        }
+        // --- KONEC NOVÉ LOGIKY ---
+
 
         const quickInput = document.getElementById('quickUploadInput');
         const quickPreview = document.getElementById('quickUploadPreview');

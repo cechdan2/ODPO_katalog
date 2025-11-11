@@ -363,7 +363,6 @@
         </svg>
     </a>
 </div>
-
 <script>
     // Download backup
     async function downloadBackup() {
@@ -415,7 +414,11 @@
             const resp = await fetch('/api/admin/db/restore', {
                 method: 'POST',
                 body: form,
-                credentials: 'include'
+                credentials: 'include',
+                // === OPRAVA 1: PŘIDÁN ANTI-FORGERY TOKEN ===
+                headers: {
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+                }
             });
 
             if (!resp.ok) {
@@ -457,16 +460,15 @@
         btn.textContent = '⏳ Importing...';
 
         const form = new FormData();
-        form.append('file', file);
+        form.append('file', file); // Klíč musí být 'file', viz [HttpPost] metoda
 
         try {
-            // Use @@Url.Action for the correct path to PhotosController
+            // Použije se správná cesta k PhotosControlleru
             const resp = await fetch('@Url.Action("Import", "Photos")', {
                 method: 'POST',
                 body: form,
                 credentials: 'include',
                 headers: {
-                    // Required for anti-forgery token if the controller needs it
                     'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
                 }
             });
@@ -480,7 +482,8 @@
             alert('✅ Import was successful!');
             window.location.href = '/Photos';
         } catch (err) {
-            alert('Error: 'D' + err.message);
+            // === OPRAVA 2: ODSTRANĚNO 'D' NAVÍC ===
+            alert('Error: ' + err.message);
         } finally {
             btn.disabled = false;
             btn.textContent = 'Import from Excel';
@@ -489,7 +492,7 @@
 
     // Event listeners
     document.addEventListener('DOMContentLoaded', () => {
-        // Anti-forgery token for the form, to be available for JS
+        // Anti-forgery token pro formulář, aby byl dostupný pro JS
         if (!document.querySelector('input[name="__RequestVerificationToken"]')) {
             const form = document.createElement('form');
             form.innerHTML = '@Html.AntiForgeryToken()';
@@ -511,7 +514,7 @@
             importBtn.addEventListener('click', () => uploadImport(excelFile));
         }
 
-        // === CODE TO DISPLAY THE FILENAME ===
+        // === KÓD PRO ZOBRAZENÍ NÁZVU SOUBORU ===
         function setupFileInput(inputId, spanId) {
             const input = document.getElementById(inputId);
             const span = document.getElementById(spanId);
@@ -530,7 +533,7 @@
             }
         }
 
-        // Apply the function to both file inputs
+        // Aplikace funkce na oba file inputs
         setupFileInput('restoreFile', 'restoreFile-name');
         setupFileInput('excelFile', 'excelFile-name');
     });

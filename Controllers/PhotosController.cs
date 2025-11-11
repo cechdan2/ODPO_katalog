@@ -1,15 +1,19 @@
 ﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using OfficeOpenXml;
 using PhotoApp.Data;
 using PhotoApp.Models;
-using System.Linq.Expressions; // Přidáno pro Expression
-using System.Text;
-using System.Text.Json;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
+using System.Linq.Expressions; // Přidáno pro Expression
+using System.Text;
+using System.Text.Json;
+using Microsoft.AspNetCore.Hosting; // <-- Důležité pro _webHostEnvironment
+using System.Net.Http;
+
 
 
 namespace PhotoApp.Controllers;
@@ -21,11 +25,13 @@ public class PhotosController : Controller
     private readonly IWebHostEnvironment _env;
     private const long MaxFileSize = 5 * 1024 * 1024; // 5 MB
     private static readonly string[] PermittedTypes = { "image/jpeg", "image/png", "image/gif", "image/webp" };
+    private readonly IWebHostEnvironment _webHostEnvironment;
 
-    public PhotosController(AppDbContext context, IWebHostEnvironment env)
+    public PhotosController(AppDbContext context, IWebHostEnvironment webHostEnvironment)
     {
         _context = context;
-        _env = env;
+        //_env = env;
+        _webHostEnvironment = webHostEnvironment;
     }
 
     public IActionResult Import()
@@ -71,21 +77,20 @@ public class PhotosController : Controller
     // =========================================================
     // ===                 OPRAVENÁ METODA EXPORT PDF        ===
     // =========================================================
-    [HttpGet] // Používáme [HttpGet], protože JavaScript otevře URL
+    [HttpGet]
     public async Task<IActionResult> ExportPdf(
-    string search, List<string> supplier, List<string> material, List<string> type,
-    List<string> color, List<string> name, List<string> position, List<string> filler,
-    List<string> mfi, List<string> monthlyQuantity, List<string> form,
-    [FromQuery] List<string> columnsToInclude) // Toto je nový parametr!
+        string search, List<string> supplier, List<string> material, List<string> type,
+        List<string> color, List<string> name, List<string> position, List<string> filler,
+        List<string> mfi, List<string> monthlyQuantity, List<string> form,
+        [FromQuery] List<string> columnsToInclude)
     {
-        // 1. Získáme vyfiltrovaný dotaz pomocí naší nové sdílené metody
+        // 1. Získáme vyfiltrovaný dotaz
         var query = GetFilteredQuery(search, supplier, material, type, color, name, position, filler, mfi, monthlyQuantity, form);
 
         // 2. Spustíme dotaz
         var items = await query.OrderBy(p => p.Id).ToListAsync();
 
         // 3. Vytvoříme PDF dokument
-        // QuestPDF vyžaduje globální nastavení licence
         QuestPDF.Settings.License = LicenseType.Community;
 
         var pdfBytes = Document.Create(container =>
@@ -93,24 +98,70 @@ public class PhotosController : Controller
             container.Page(page =>
             {
                 page.Margin(25, Unit.Millimetre);
-                page.Size(PageSizes.A4.Landscape()); // Na šířku pro více sloupců
 
-                // --- OPRAVA 1: Použití lambda syntaxe pro .Text() ---
+                // <-- ZMĚNA: Zpět na orientaci na šířku
+                page.Size(PageSizes.A4.Landscape());
+
+                // --- Vlastní hlavička s logem a oddělením ---
                 page.Header()
-                    .PaddingBottom(1, Unit.Millimetre)
-                    .Text(text => // Použijte lambda 'text'
+                    .PaddingBottom(10) // Odsazení hlavičky od obsahu
+                    .Column(col =>
                     {
-                        // Aplikujte styly na 'span' uvnitř textu
-                        text.Span($"Export vzorků (Počet: {items.Count})")
-                            .SemiBold().FontSize(16);
+                        col.Item().Row(row =>
+                        {
+                            // Levá část: Kontaktní údaje a logo
+                            row.RelativeItem(2).Column(c =>
+                            {
+                                c.Item().Text("odpo s.r.o.")
+                                    .SemiBold().FontSize(14);
+                                c.Item().Text("Riegrova 59, CZ - 388 01 Blatná")
+                                    .FontSize(10);
+                                c.Item().Text("Laboratoř/Laboratory: Radomyšl 248, 387 31 Radomyšl")
+                                    .FontSize(10);
+
+                                // Cesta k logu
+                                // (Zvažte použití IWebHostEnvironment pro spolehlivější cestu)
+                                string logoPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "logo.png");
+
+                                if (System.IO.File.Exists(logoPath))
+                                {
+                                    c.Item().PaddingTop(5)
+                                        .MaxHeight(50)  // Omezení výšky kontejneru
+                                        .Image(logoPath)
+                                        .FitArea();     // Přizpůsobení obrázku kontejneru
+                                }
+                                else
+                                {
+                                    c.Item().PaddingTop(5)
+                                        .Text("Logo nenalezeno! Zkontrolujte cestu k 'wwwroot/logo.png'")
+                                        .FontSize(8).FontColor(Colors.Red.Medium);
+                                }
+                            });
+
+                            // Pravá část: Detaily exportu (datum, počet)
+                            row.RelativeItem(1).Column(c =>
+                            {
+                                c.Item().AlignRight().Text("Export vzorků")
+                                    .SemiBold().FontSize(16);
+                                c.Item().AlignRight().Text($"Datum: {DateTime.Now:d. M. yyyy}")
+                                    .FontSize(9);
+                                c.Item().AlignRight().Text($"Počet: {items.Count}")
+                                    .FontSize(9);
+                            });
+                        });
+
+                        // Horizontální čára pro vizuální oddělení
+                        col.Item().PaddingTop(5).BorderBottom(1)
+                            .BorderColor(Colors.Grey.Medium);
                     });
 
-                // --- OPRAVA 2: Použití .Table() místo .Element() ---
+
+                // --- Obsah (tabulka) ---
                 page.Content().Table(table =>
                 {
+                    // Definice sloupců
                     table.ColumnsDefinition(columns =>
                     {
-                        // Dynamické přidání sloupců podle výběru
                         if (columnsToInclude.Contains("Id")) columns.ConstantColumn(50);
                         if (columnsToInclude.Contains("Supplier")) columns.RelativeColumn();
                         if (columnsToInclude.Contains("Material")) columns.RelativeColumn();
@@ -120,16 +171,14 @@ public class PhotosController : Controller
                         if (columnsToInclude.Contains("Form")) columns.RelativeColumn();
                         if (columnsToInclude.Contains("Filler")) columns.RelativeColumn();
                         if (columnsToInclude.Contains("Mfi")) columns.ConstantColumn(60);
-                        if (columnsToInclude.Contains("Notes")) columns.RelativeColumn(2); // Dvojitá šířka
+                        if (columnsToInclude.Contains("Notes")) columns.RelativeColumn(2);
                     });
 
-                    // --- Hlavička tabulky ---
+                    // Hlavička tabulky
                     table.Header(header =>
                     {
-                        // --- OPRAVA 3: Odstraněno .SemiBold() z metody pro STYL KONTEJNERU ---
                         static IContainer HeaderCellStyle(IContainer c) => c.BorderBottom(1).BorderColor(Colors.Grey.Medium).Padding(4);
 
-                        // --- OPRAVA 4: Přidáno .SemiBold() k volání .Text() ---
                         if (columnsToInclude.Contains("Id")) header.Cell().Element(HeaderCellStyle).Text("ID").SemiBold();
                         if (columnsToInclude.Contains("Supplier")) header.Cell().Element(HeaderCellStyle).Text("Supplier").SemiBold();
                         if (columnsToInclude.Contains("Material")) header.Cell().Element(HeaderCellStyle).Text("Material").SemiBold();
@@ -142,12 +191,11 @@ public class PhotosController : Controller
                         if (columnsToInclude.Contains("Notes")) header.Cell().Element(HeaderCellStyle).Text("Notes").SemiBold();
                     });
 
-                    // --- Data (řádky) ---
+                    // Data (řádky)
                     static IContainer DataCellStyle(IContainer c) => c.BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten2).Padding(4);
 
                     foreach (var item in items)
                     {
-                        // Zde .SemiBold() není, takže je to v pořádku
                         if (columnsToInclude.Contains("Id")) table.Cell().Element(DataCellStyle).Text(item.Id);
                         if (columnsToInclude.Contains("Supplier")) table.Cell().Element(DataCellStyle).Text(item.Supplier);
                         if (columnsToInclude.Contains("Material")) table.Cell().Element(DataCellStyle).Text(item.Material);
@@ -161,6 +209,7 @@ public class PhotosController : Controller
                     }
                 });
 
+                // --- Patička ---
                 page.Footer()
                     .AlignRight()
                     .Text(x =>
@@ -171,13 +220,11 @@ public class PhotosController : Controller
                         x.TotalPages();
                     });
             });
-        }).GeneratePdf(); // Vygeneruje PDF do pole bytů
+        }).GeneratePdf();
 
         // 4. Vrátíme soubor ke stažení
         return File(pdfBytes, "application/pdf", $"Vzorky_Export_{DateTime.Now:yyyy-MM-dd}.pdf");
     }
-
-
     // --- KROK A: SDÍLENÁ METODA POUZE PRO FILTROVÁNÍ (pro PDF) ---
     private IQueryable<PhotoRecord> GetFilteredQuery(
         string search, List<string> supplier, List<string> material, List<string> type,
@@ -211,6 +258,160 @@ public class PhotosController : Controller
         if (monthlyQuantity != null && monthlyQuantity.Any()) baseQuery = baseQuery.Where(p => monthlyQuantity.Contains(p.MonthlyQuantity));
 
         return baseQuery;
+    }
+
+
+    [HttpGet]
+    public async Task<IActionResult> ExportSinglePdf(
+        int id,
+        [FromQuery] List<string> columnsToInclude)
+    {
+        // 1. Najdeme záznam 
+        //    POZOR: Nahraďte 'Photos' skutečným názvem vaší DbSet (viz bod 2 výše)
+        var item = await _context.Photos.FindAsync(id);
+        if (item == null)
+        {
+            return NotFound();
+        }
+
+        QuestPDF.Settings.License = LicenseType.Community;
+
+        var pdfBytes = Document.Create(container =>
+        {
+            container.Page(page =>
+            {
+                page.Margin(25, Unit.Millimetre);
+                page.Size(PageSizes.A4.Portrait()); // Na výšku
+
+                // --- Hlavička (stejná jako v minulém exportu) ---
+                page.Header()
+                    .PaddingBottom(10)
+                    .Column(col =>
+                    {
+                        col.Item().Row(row =>
+                        {
+                            // Levá část
+                            row.RelativeItem(2).Column(c =>
+                            {
+                                c.Item().Text("odpo s.r.o.").SemiBold().FontSize(14);
+                                c.Item().Text("Riegrova 59, CZ - 388 01 Blatná").FontSize(10);
+                                c.Item().Text("Laboratoř/Laboratory: Radomyšl 248, 387 31 Radomyšl").FontSize(10);
+
+                                // Použijeme IWebHostEnvironment pro cestu k logu
+                                string logoPath = Path.Combine(_webHostEnvironment.WebRootPath, "wwwroot/logo.png");
+
+                                if (System.IO.File.Exists(logoPath))
+                                {
+                                    // OPRAVA POŘADÍ: .MaxHeight() je před .Image()
+                                    c.Item().PaddingTop(5).MaxHeight(50).Image(logoPath).FitArea();
+                                }
+                            });
+
+                            // Pravá část
+                            row.RelativeItem(1).Column(c =>
+                            {
+                                c.Item().AlignRight().Text("Detail vzorku").SemiBold().FontSize(16);
+                                c.Item().AlignRight().Text($"ID: {item.Id}").FontSize(9);
+                                c.Item().AlignRight().Text($"Datum: {DateTime.Now:d. M. yyyy}").FontSize(9);
+                            });
+                        });
+                        col.Item().PaddingTop(5).BorderBottom(1).BorderColor(Colors.Grey.Medium);
+                    });
+
+                // --- Obsah stránky ---
+                page.Content().PaddingVertical(10).Column(col =>
+                {
+                    // Pomocná lokální funkce pro vykreslení pole
+                    static void AddField(ColumnDescriptor column, string label, string? value)
+                    {
+                        column.Item().PaddingTop(4).Text(text =>
+                        {
+                            text.Span($"{label}: ").SemiBold();
+                            text.Span(string.IsNullOrWhiteSpace(value) ? "-" : value);
+                        });
+                    }
+
+                    // --- 1. Fotka (pokud je vybrána) ---
+                    if (columnsToInclude.Contains("Photo"))
+                    {
+                        var imageSrc = !string.IsNullOrWhiteSpace(item.ImagePath) ? item.ImagePath : (string.IsNullOrWhiteSpace(item.PhotoPath) ? null : item.PhotoPath);
+
+                        if (!string.IsNullOrWhiteSpace(imageSrc))
+                        {
+                            var physicalPath = Path.Combine(_webHostEnvironment.WebRootPath, imageSrc.TrimStart('~', '/'));
+
+                            if (System.IO.File.Exists(physicalPath))
+                            {
+                                byte[] photoBytes = System.IO.File.ReadAllBytes(physicalPath);
+
+                                // *** OPRAVA POŘADÍ ZDE ***
+                                col.Item().AlignCenter()
+                                    .MaxHeight(250) // <-- Musí být PŘED .Image()
+                                    .Image(photoBytes)
+                                    .FitArea();
+
+                                col.Item().PaddingBottom(10); // Mezera pod fotkou
+                            }
+                        }
+                    }
+
+                    // --- 2. Datová pole (pokud jsou vybrána) ---
+                    if (columnsToInclude.Contains("Id")) AddField(col, "ID", item.Id.ToString());
+                    if (columnsToInclude.Contains("Position")) AddField(col, "Position", item.Position?.ToString());
+                    if (columnsToInclude.Contains("Supplier")) AddField(col, "Supplier", item.Supplier);
+                    if (columnsToInclude.Contains("OriginalName")) AddField(col, "Name", item.OriginalName);
+                    if (columnsToInclude.Contains("Material")) AddField(col, "Material", item.Material);
+                    if (columnsToInclude.Contains("Form")) AddField(col, "Form", item.Form);
+                    if (columnsToInclude.Contains("Filler")) AddField(col, "Filler", item.Filler);
+                    if (columnsToInclude.Contains("Color")) AddField(col, "Color", item.Color);
+                    if (columnsToInclude.Contains("MonthlyQuantity")) AddField(col, "Quantity (month)", item.MonthlyQuantity?.ToString());
+                    if (columnsToInclude.Contains("Mfi")) AddField(col, "MFI", item.Mfi);
+                    if (columnsToInclude.Contains("Notes")) AddField(col, "Notes", item.Notes);
+                    if (columnsToInclude.Contains("CreatedAt")) AddField(col, "Created", (item.CreatedAt == DateTime.MinValue) ? "-" : item.CreatedAt.ToLocalTime().ToString("g"));
+                    if (columnsToInclude.Contains("UpdatedAt")) AddField(col, "Updated", (item.UpdatedAt == DateTime.MinValue) ? "-" : item.UpdatedAt.ToLocalTime().ToString("g"));
+
+                    // --- 3. QR Kód (pokud je vybrán) ---
+                    if (columnsToInclude.Contains("QrCode"))
+                    {
+                        var publicUrl = Url.Action("DetailsAnonymous", "Home", new { id = item.Id }, Request.Scheme ?? "https");
+                        var qrApi = $"https://api.qrserver.com/v1/create-qr-code/?size=150x150&data={System.Uri.EscapeDataString(publicUrl)}";
+
+                        try
+                        {
+                            using (var httpClient = new HttpClient())
+                            {
+                                byte[] qrBytes = httpClient.GetByteArrayAsync(qrApi).Result;
+                                col.Item().PaddingTop(10).Text("Public Link (QR):").SemiBold();
+
+                                // *** OPRAVA POŘADÍ ZDE ***
+                                col.Item()
+                                    .MaxWidth(150) // <-- Musí být PŘED .Image()
+                                    .Image(qrBytes)
+                                    .FitArea();
+                            }
+                        }
+                        catch (Exception)
+                        {
+                            AddField(col, "Public Link (QR)", "Nelze vygenerovat QR kód.");
+                        }
+                    }
+                });
+
+                // --- Patička ---
+                page.Footer()
+                    .AlignRight()
+                    .Text(x =>
+                    {
+                        x.Span("Strana ");
+                        x.CurrentPageNumber();
+                        x.Span(" z ");
+                        x.TotalPages();
+                    });
+            });
+        }).GeneratePdf();
+
+        // 4. Vrátíme soubor
+        return File(pdfBytes, "application/pdf", $"Vzorek_{item.Id}_{item.Name ?? "Detail"}.pdf");
     }
 
     // =================================================================
