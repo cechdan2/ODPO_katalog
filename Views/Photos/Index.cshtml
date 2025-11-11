@@ -681,6 +681,10 @@
             <div class="filter-controls">
                 <button type="submit" class="action-btn primary">Filter</button>
                 <a href="@Url.Action("Index", "Photos")" class="action-btn">Clear</a>
+
+                <button type="button" id="open-pdf-export-btn" class="action-btn" style="grid-column: 1 / -1; background: #f0fdf4; border-color: var(--brand);">
+                    Exportovat do PDF...
+                </button>
             </div>
         </form>
     </div>
@@ -747,6 +751,26 @@
 <div id="image-overlay">
     <img id="overlay-image" src="" alt="Fullscreen preview" />
 </div>
+
+<div id="pdf-export-modal" style="display: none; position: fixed; z-index: 1500; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.5); backdrop-filter: blur(5px); align-items: center; justify-content: center;">
+    <div id="pdf-modal-content" style="background-color: #fefefe; margin: auto; padding: 20px; border: 1px solid #888; width: 90%; max-width: 500px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.3);">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 15px;">
+            <h2 style="margin: 0; font-size: 1.25rem;">Exportovat do PDF</h2>
+            <span id="pdf-modal-close" style="color: #aaa; font-size: 28px; font-weight: bold; cursor: pointer;">&times;</span>
+        </div>
+
+        <p style="margin-top: 0; margin-bottom: 15px; font-size: 14px; color: #555;">Zvolte sloupce, které chcete zahrnout do exportu:</p>
+
+        <div id="pdf-column-list" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;">
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+            <button id="pdf-export-cancel" class="action-btn">Zrušit</button>
+            <button id="pdf-export-download" class="action-btn primary">Stáhnout PDF</button>
+        </div>
+    </div>
+</div>
+
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
@@ -833,7 +857,110 @@
         document.addEventListener('keydown', (e) => {
             if (e.key === "Escape") closeOverlay();
         });
-    });
+
+
+        // --- NOVÝ KÓD PRO EXPORT PDF ---
+
+        const modal = document.getElementById('pdf-export-modal');
+        const modalContent = document.getElementById('pdf-modal-content');
+        const openBtn = document.getElementById('open-pdf-export-btn');
+        const closeBtn = document.getElementById('pdf-modal-close');
+        const cancelBtn = document.getElementById('pdf-export-cancel');
+        const downloadBtn = document.getElementById('pdf-export-download');
+        const columnListDiv = document.getElementById('pdf-column-list');
+
+        // Seznam všech možných sloupců (key: hodnota, value: popisek)
+        const allColumns = {
+            "Id": "ID",
+            "Supplier": "Supplier",
+            "Material": "Material (Naše jméno)",
+            "OriginalName": "Original Name",
+            "Color": "Barva",
+            "Position": "Pozice",
+            "Form": "Forma",
+            "Filler": "Plnivo",
+            "Mfi": "MFI",
+            "Notes": "Poznámky"
+            // Přidejte další, pokud je třeba (např. MonthlyQuantity)
+        };
+
+        // Funkce pro otevření modálního okna
+        function openPdfModal() {
+            // Dynamicky vygenerujeme checkboxy
+            columnListDiv.innerHTML = ''; // Vyčistit staré
+            for (const [key, label] of Object.entries(allColumns)) {
+                columnListDiv.innerHTML += `
+                    <label style="display: flex; align-items: center; gap: 8px; font-size: 14px;">
+                        <input type="checkbox" class="pdf-column-checkbox" value="${key}" checked>
+                        ${label}
+                    </label>
+                `;
+            }
+            modal.style.display = 'flex';
+        }
+
+        // Funkce pro zavření modálního okna
+        function closePdfModal() {
+            modal.style.display = 'none';
+        }
+
+        // Při kliknutí na "Exportovat do PDF..."
+        if (openBtn) {
+            openBtn.addEventListener('click', openPdfModal);
+        }
+
+        // Zavření na křížek nebo "Zrušit"
+        if (closeBtn) closeBtn.addEventListener('click', closePdfModal);
+        if (cancelBtn) cancelBtn.addEventListener('click', closePdfModal);
+
+        // Zavření při kliknutí mimo obsah okna
+        if (modal) {
+            modal.addEventListener('click', function(event) {
+                if (event.target === modal) {
+                    closePdfModal();
+                }
+            });
+        }
+
+        // --- KLÍČOVÁ LOGIKA: Kliknutí na "Stáhnout PDF" ---
+        if (downloadBtn) {
+            downloadBtn.addEventListener('click', function() {
+                // 1. Získáme všechny vybrané sloupce
+                const selectedColumns = [];
+                document.querySelectorAll('.pdf-column-checkbox:checked').forEach(cb => {
+                    selectedColumns.push(cb.value);
+                });
+
+                if (selectedColumns.length === 0) {
+                    alert("Musíte vybrat alespoň jeden sloupec pro export.");
+                    return;
+                }
+
+                // 2. Získáme VŠECHNY parametry z hlavního formuláře
+                const mainForm = document.querySelector('.filter-form');
+                const formData = new FormData(mainForm);
+
+                // 3. Vytvoříme URL s parametry
+                const params = new URLSearchParams(formData); // Toto je jednodušší a zvládne multi-select
+
+                // 4. Přidáme vybrané sloupce do URL (jako pole 'columnsToInclude')
+                selectedColumns.forEach(col => {
+                    params.append('columnsToInclude', col);
+                });
+
+                // 5. Vytvoříme finální URL a spustíme stahování
+                const exportUrl = `@Url.Action("ExportPdf", "Photos")?${params.toString()}`;
+
+                // Otevřeme URL, což spustí stahování souboru
+                window.open(exportUrl, '_blank');
+
+                // 6. Zavřeme modální okno
+                closePdfModal();
+            });
+        }
+        // --- KONEC KÓDU PRO EXPORT PDF ---
+
+    }); // Konec DOMContentLoaded
 
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {

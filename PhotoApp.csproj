@@ -33,6 +33,7 @@
 
     <!-- pro SQLite backup API -->
     <PackageReference Include="Microsoft.Data.Sqlite" Version="8.0.0" />
+    <PackageReference Include="QuestPDF" Version="2025.7.4" />
   </ItemGroup>
 
   <ItemGroup>
