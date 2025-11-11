@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using OfficeOpenXml;
 using PhotoApp.Data;
 using PhotoApp.Models;
+using System.Linq.Expressions; // Přidáno pro Expression
 using System.Text;
 using System.Text.Json;
 
@@ -28,6 +29,7 @@ public class PhotosController : Controller
         return View();
     }
 
+    // --- HLAVNÍ METODA PRO ZOBRAZENÍ (DESKTOP) ---
     [Authorize]
     public async Task<IActionResult> Index(string search, List<string> supplier, List<string> material, List<string> type, List<string> color, List<string> name, List<string> position, List<string> filler, List<string> mfi, List<string> monthlyQuantity, List<string> form)
     {
@@ -37,71 +39,14 @@ public class PhotosController : Controller
             return RedirectToAction("Index_phone", new { search, supplier, material, type, color, name, position, filler, form, mfi, monthlyQuantity });
         }
 
-        IQueryable<PhotoRecord> q = _context.Photos.AsNoTracking().AsQueryable();
-
-        if (!string.IsNullOrWhiteSpace(search))
-        {
-            var s = search.Trim().ToLower();
-            q = q.Where(p =>
-                (p.Name != null && p.Name.ToLower().Contains(s)) ||
-                (p.OriginalName != null && p.OriginalName.ToLower().Contains(s)) ||
-                (p.Description != null && p.Description.ToLower().Contains(s)) ||
-                (p.Notes != null && p.Notes.ToLower().Contains(s)) ||
-                (p.Code != null && p.Code.ToLower().Contains(s))
-            );
-        }
-
-        // --- ZMĚNA: Logika filtrování upravená pro vícenásobný výběr ---
-        if (supplier != null && supplier.Any()) q = q.Where(p => supplier.Contains(p.Supplier));
-        if (material != null && material.Any()) q = q.Where(p => material.Contains(p.Material));
-        if (type != null && type.Any()) q = q.Where(p => type.Contains(p.Type));
-        if (color != null && color.Any()) q = q.Where(p => color.Contains(p.Color));
-        if (name != null && name.Any()) q = q.Where(p => name.Contains(p.Name));
-        if (position != null && position.Any()) q = q.Where(p => position.Contains(p.Position));
-        if (filler != null && filler.Any()) q = q.Where(p => filler.Contains(p.Filler));
-        // --- PŘIDÁNO: Filtrování pro nové parametry ---
-        if (form != null && form.Any()) q = q.Where(p => form.Contains(p.Form));
-        if (mfi != null && mfi.Any()) q = q.Where(p => mfi.Contains(p.Mfi));
-        if (monthlyQuantity != null && monthlyQuantity.Any()) q = q.Where(p => monthlyQuantity.Contains(p.MonthlyQuantity));
-
-
-        var items = await q.OrderByDescending(p => p.UpdatedAt).ToListAsync();
-
-        // Optimalizace: Načtení všech dat pro filtry v jednom dotazu
-        var allPhotosForFilters = await _context.Photos.AsNoTracking().ToListAsync();
-
-        var vm = new PhotoApp.ViewModels.PhotosIndexViewModel
-        {
-            Items = items,
-            Suppliers = allPhotosForFilters.Select(p => p.Supplier).Where(s => !string.IsNullOrEmpty(s)).Distinct().OrderBy(x => x).ToList(),
-            Materials = allPhotosForFilters.Select(p => p.Material).Where(s => !string.IsNullOrEmpty(s)).Distinct().OrderBy(x => x).ToList(),
-            Types = allPhotosForFilters.Select(p => p.Type).Where(s => !string.IsNullOrEmpty(s)).Distinct().OrderBy(x => x).ToList(),
-            Colors = allPhotosForFilters.Select(p => p.Color).Where(s => !string.IsNullOrEmpty(s)).Distinct().OrderBy(x => x).ToList(),
-            Names = allPhotosForFilters.Select(p => p.Name).Where(s => !string.IsNullOrEmpty(s)).Distinct().OrderBy(x => x).ToList(),
-            Positions = allPhotosForFilters.Select(p => p.Position).Where(s => !string.IsNullOrEmpty(s)).Distinct().OrderBy(x => x).ToList(),
-            Fillers = allPhotosForFilters.Select(p => p.Filler).Where(s => !string.IsNullOrEmpty(s)).Distinct().OrderBy(x => x).ToList(),
-            Forms = allPhotosForFilters.Select(p => p.Form).Where(s => !string.IsNullOrEmpty(s)).Distinct().OrderBy(x => x).ToList(),
-            MonthlyQuantities = allPhotosForFilters.Select(p => p.MonthlyQuantity).Where(s => !string.IsNullOrEmpty(s)).Distinct().OrderBy(x => x).ToList(),
-            Mfis = allPhotosForFilters.Select(p => p.Mfi).Where(s => !string.IsNullOrEmpty(s)).Distinct().OrderBy(x => x).ToList(),
-
-            Search = search,
-            Supplier = supplier,
-            Material = material,
-            Type = type,
-            Color = color,
-            // Zde se předpokládá, že ViewModel byl již upraven tak, aby Name byla List<string>
-            // Pokud ne, bude potřeba upravit ViewModel. Prozatím `name` vynechávám, aby nedošlo k chybě.
-            // Name = name, 
-            Position = position,
-            Filler = filler,
-            Form = form,
-            MonthlyQuantity = monthlyQuantity,
-            Mfi = mfi
-        };
+        // Zavolání nové sdílené metody
+        var vm = await GetFilteredViewModel(search, supplier, material, type, color, name, position, filler, mfi, monthlyQuantity, form);
 
         ViewBag.IsMobile = false;
         return View(vm);
     }
+
+    // --- HLAVNÍ METODA PRO ZOBRAZENÍ (MOBIL) ---
     [HttpGet]
     [Authorize]
     public async Task<IActionResult> Index_phone(string search, List<string> supplier, List<string> material, List<string> type, List<string> color, List<string> name, List<string> position, List<string> filler, List<string> form, List<string> mfi, List<string> monthlyQuantity, bool forceDesktop = false)
@@ -112,14 +57,27 @@ public class PhotosController : Controller
             return RedirectToAction("Index", new { search, supplier, material, type, color, name, position, filler, form, mfi, monthlyQuantity });
         }
 
-        // --- Logika pro mobilní zobrazení ---
+        // Zavolání nové sdílené metody
+        var vm = await GetFilteredViewModel(search, supplier, material, type, color, name, position, filler, mfi, monthlyQuantity, form);
 
-        IQueryable<PhotoRecord> q2 = _context.Photos.AsNoTracking().AsQueryable();
+        ViewBag.IsMobile = true;
+        return View("Index_phone", vm);
+    }
+
+    // --- NOVÁ SOUKROMÁ METODA PRO VEŠKEROU LOGIKU FILTROVÁNÍ ---
+    private async Task<PhotoApp.ViewModels.PhotosIndexViewModel> GetFilteredViewModel(
+        string search, List<string> supplier, List<string> material, List<string> type,
+        List<string> color, List<string> name, List<string> position, List<string> filler,
+        List<string> mfi, List<string> monthlyQuantity, List<string> form)
+    {
+        // 1. Základní "před-filtr" (týká se vyhledávání)
+        //    Tento dotaz se aplikuje na VŠECHNY následující dotazy.
+        IQueryable<PhotoRecord> baseQuery = _context.Photos.AsNoTracking().AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(search))
         {
             var s = search.Trim().ToLower();
-            q2 = q2.Where(p =>
+            baseQuery = baseQuery.Where(p =>
                 (p.Name != null && p.Name.ToLower().Contains(s)) ||
                 (p.OriginalName != null && p.OriginalName.ToLower().Contains(s)) ||
                 (p.Description != null && p.Description.ToLower().Contains(s)) ||
@@ -128,40 +86,228 @@ public class PhotosController : Controller
             );
         }
 
-        // --- ZMĚNA: Logika filtrování upravená pro vícenásobný výběr ---
-        if (supplier != null && supplier.Any()) q2 = q2.Where(p => supplier.Contains(p.Supplier));
-        if (material != null && material.Any()) q2 = q2.Where(p => material.Contains(p.Material));
-        if (type != null && type.Any()) q2 = q2.Where(p => type.Contains(p.Type));
-        if (color != null && color.Any()) q2 = q2.Where(p => color.Contains(p.Color));
-        if (name != null && name.Any()) q2 = q2.Where(p => name.Contains(p.Name));
-        if (position != null && position.Any()) q2 = q2.Where(p => position.Contains(p.Position));
-        if (filler != null && filler.Any()) q2 = q2.Where(p => filler.Contains(p.Filler));
-        if (form != null && form.Any()) q2 = q2.Where(p => form.Contains(p.Form));
-        if (mfi != null && mfi.Any()) q2 = q2.Where(p => mfi.Contains(p.Mfi));
-        if (monthlyQuantity != null && monthlyQuantity.Any()) q2 = q2.Where(p => monthlyQuantity.Contains(p.MonthlyQuantity));
+        // 2. Vytvoření oddělených IQueryable pro každý filtr + pro výsledné položky
+        //    Všechny začínají s již aplikovaným 'search' filtrem.
+        var itemsQuery = baseQuery;
+        var supplierQuery = baseQuery;
+        var materialQuery = baseQuery;
+        var typeQuery = baseQuery;
+        var colorQuery = baseQuery;
+        var nameQuery = baseQuery;
+        var positionQuery = baseQuery;
+        var fillerQuery = baseQuery;
+        var formQuery = baseQuery;
+        var mfiQuery = baseQuery;
+        var monthlyQuantityQuery = baseQuery;
 
+        // 3. Křížová aplikace filtrů
+        //    Každý aktivní filtr zužuje:
+        //    a) Finální 'itemsQuery'
+        //    b) VŠECHNY OSTATNÍ dotazy na filtry (ale ne sám sebe)
 
-        var items2 = await q2.OrderByDescending(p => p.UpdatedAt).ToListAsync();
-
-        // Optimalizace: Načtení všech dat pro filtry v jednom dotazu
-        var allPhotosForFilters = await _context.Photos.AsNoTracking().ToListAsync();
-
-        var vm2 = new PhotoApp.ViewModels.PhotosIndexViewModel
+        if (supplier != null && supplier.Any())
         {
-            Items = items2,
-            // Naplnění seznamů pro filtry
-            Suppliers = allPhotosForFilters.Select(p => p.Supplier).Where(s => !string.IsNullOrEmpty(s)).Distinct().OrderBy(x => x).ToList(),
-            Materials = allPhotosForFilters.Select(p => p.Material).Where(s => !string.IsNullOrEmpty(s)).Distinct().OrderBy(x => x).ToList(),
-            Types = allPhotosForFilters.Select(p => p.Type).Where(s => !string.IsNullOrEmpty(s)).Distinct().OrderBy(x => x).ToList(),
-            Colors = allPhotosForFilters.Select(p => p.Color).Where(s => !string.IsNullOrEmpty(s)).Distinct().OrderBy(x => x).ToList(),
-            Names = allPhotosForFilters.Select(p => p.Name).Where(s => !string.IsNullOrEmpty(s)).Distinct().OrderBy(x => x).ToList(),
-            Positions = allPhotosForFilters.Select(p => p.Position).Where(s => !string.IsNullOrEmpty(s)).Distinct().OrderBy(x => x).ToList(),
-            Fillers = allPhotosForFilters.Select(p => p.Filler).Where(s => !string.IsNullOrEmpty(s)).Distinct().OrderBy(x => x).ToList(),
-            Forms = allPhotosForFilters.Select(p => p.Form).Where(s => !string.IsNullOrEmpty(s)).Distinct().OrderBy(x => x).ToList(),
-            MonthlyQuantities = allPhotosForFilters.Select(p => p.MonthlyQuantity).Where(s => !string.IsNullOrEmpty(s)).Distinct().OrderBy(x => x).ToList(),
-            Mfis = allPhotosForFilters.Select(p => p.Mfi).Where(s => !string.IsNullOrEmpty(s)).Distinct().OrderBy(x => x).ToList(),
+            itemsQuery = itemsQuery.Where(p => supplier.Contains(p.Supplier));
+            // supplierQuery zůstává (nezúžíme ho)
+            materialQuery = materialQuery.Where(p => supplier.Contains(p.Supplier));
+            typeQuery = typeQuery.Where(p => supplier.Contains(p.Supplier));
+            colorQuery = colorQuery.Where(p => supplier.Contains(p.Supplier));
+            nameQuery = nameQuery.Where(p => supplier.Contains(p.Supplier));
+            positionQuery = positionQuery.Where(p => supplier.Contains(p.Supplier));
+            fillerQuery = fillerQuery.Where(p => supplier.Contains(p.Supplier));
+            formQuery = formQuery.Where(p => supplier.Contains(p.Supplier));
+            mfiQuery = mfiQuery.Where(p => supplier.Contains(p.Supplier));
+            monthlyQuantityQuery = monthlyQuantityQuery.Where(p => supplier.Contains(p.Supplier));
+        }
 
-            // Přiřazení aktivních (vybraných) filtrů
+        if (material != null && material.Any())
+        {
+            itemsQuery = itemsQuery.Where(p => material.Contains(p.Material));
+            supplierQuery = supplierQuery.Where(p => material.Contains(p.Material));
+            // materialQuery zůstává
+            typeQuery = typeQuery.Where(p => material.Contains(p.Material));
+            colorQuery = colorQuery.Where(p => material.Contains(p.Material));
+            nameQuery = nameQuery.Where(p => material.Contains(p.Material));
+            positionQuery = positionQuery.Where(p => material.Contains(p.Material));
+            fillerQuery = fillerQuery.Where(p => material.Contains(p.Material));
+            formQuery = formQuery.Where(p => material.Contains(p.Material));
+            mfiQuery = mfiQuery.Where(p => material.Contains(p.Material));
+            monthlyQuantityQuery = monthlyQuantityQuery.Where(p => material.Contains(p.Material));
+        }
+
+        if (type != null && type.Any())
+        {
+            itemsQuery = itemsQuery.Where(p => type.Contains(p.Type));
+            supplierQuery = supplierQuery.Where(p => type.Contains(p.Type));
+            materialQuery = materialQuery.Where(p => type.Contains(p.Type));
+            // typeQuery zůstává
+            colorQuery = colorQuery.Where(p => type.Contains(p.Type));
+            nameQuery = nameQuery.Where(p => type.Contains(p.Type));
+            positionQuery = positionQuery.Where(p => type.Contains(p.Type));
+            fillerQuery = fillerQuery.Where(p => type.Contains(p.Type));
+            formQuery = formQuery.Where(p => type.Contains(p.Type));
+            mfiQuery = mfiQuery.Where(p => type.Contains(p.Type));
+            monthlyQuantityQuery = monthlyQuantityQuery.Where(p => type.Contains(p.Type));
+        }
+
+        if (color != null && color.Any())
+        {
+            itemsQuery = itemsQuery.Where(p => color.Contains(p.Color));
+            supplierQuery = supplierQuery.Where(p => color.Contains(p.Color));
+            materialQuery = materialQuery.Where(p => color.Contains(p.Color));
+            typeQuery = typeQuery.Where(p => color.Contains(p.Color));
+            // colorQuery zůstává
+            nameQuery = nameQuery.Where(p => color.Contains(p.Color));
+            positionQuery = positionQuery.Where(p => color.Contains(p.Color));
+            fillerQuery = fillerQuery.Where(p => color.Contains(p.Color));
+            formQuery = formQuery.Where(p => color.Contains(p.Color));
+            mfiQuery = mfiQuery.Where(p => color.Contains(p.Color));
+            monthlyQuantityQuery = monthlyQuantityQuery.Where(p => color.Contains(p.Color));
+        }
+
+        if (name != null && name.Any())
+        {
+            itemsQuery = itemsQuery.Where(p => name.Contains(p.Name));
+            supplierQuery = supplierQuery.Where(p => name.Contains(p.Name));
+            materialQuery = materialQuery.Where(p => name.Contains(p.Name));
+            typeQuery = typeQuery.Where(p => name.Contains(p.Name));
+            colorQuery = colorQuery.Where(p => name.Contains(p.Name));
+            // nameQuery zůstává
+            positionQuery = positionQuery.Where(p => name.Contains(p.Name));
+            fillerQuery = fillerQuery.Where(p => name.Contains(p.Name));
+            formQuery = formQuery.Where(p => name.Contains(p.Name));
+            mfiQuery = mfiQuery.Where(p => name.Contains(p.Name));
+            monthlyQuantityQuery = monthlyQuantityQuery.Where(p => name.Contains(p.Name));
+        }
+
+        if (position != null && position.Any())
+        {
+            itemsQuery = itemsQuery.Where(p => position.Contains(p.Position));
+            supplierQuery = supplierQuery.Where(p => position.Contains(p.Position));
+            materialQuery = materialQuery.Where(p => position.Contains(p.Position));
+            typeQuery = typeQuery.Where(p => position.Contains(p.Position));
+            colorQuery = colorQuery.Where(p => position.Contains(p.Position));
+            nameQuery = nameQuery.Where(p => position.Contains(p.Position));
+            // positionQuery zůstává
+            fillerQuery = fillerQuery.Where(p => position.Contains(p.Position));
+            formQuery = formQuery.Where(p => position.Contains(p.Position));
+            mfiQuery = mfiQuery.Where(p => position.Contains(p.Position));
+            monthlyQuantityQuery = monthlyQuantityQuery.Where(p => position.Contains(p.Position));
+        }
+
+        if (filler != null && filler.Any())
+        {
+            itemsQuery = itemsQuery.Where(p => filler.Contains(p.Filler));
+            supplierQuery = supplierQuery.Where(p => filler.Contains(p.Filler));
+            materialQuery = materialQuery.Where(p => filler.Contains(p.Filler));
+            typeQuery = typeQuery.Where(p => filler.Contains(p.Filler));
+            colorQuery = colorQuery.Where(p => filler.Contains(p.Filler));
+            nameQuery = nameQuery.Where(p => filler.Contains(p.Filler));
+            positionQuery = positionQuery.Where(p => filler.Contains(p.Filler));
+            // fillerQuery zůstává
+            formQuery = formQuery.Where(p => filler.Contains(p.Filler));
+            mfiQuery = mfiQuery.Where(p => filler.Contains(p.Filler));
+            monthlyQuantityQuery = monthlyQuantityQuery.Where(p => filler.Contains(p.Filler));
+        }
+
+        if (form != null && form.Any())
+        {
+            itemsQuery = itemsQuery.Where(p => form.Contains(p.Form));
+            supplierQuery = supplierQuery.Where(p => form.Contains(p.Form));
+            materialQuery = materialQuery.Where(p => form.Contains(p.Form));
+            typeQuery = typeQuery.Where(p => form.Contains(p.Form));
+            colorQuery = colorQuery.Where(p => form.Contains(p.Form));
+            nameQuery = nameQuery.Where(p => form.Contains(p.Form));
+            positionQuery = positionQuery.Where(p => form.Contains(p.Form));
+            fillerQuery = fillerQuery.Where(p => form.Contains(p.Form));
+            // formQuery zůstává
+            mfiQuery = mfiQuery.Where(p => form.Contains(p.Form));
+            monthlyQuantityQuery = monthlyQuantityQuery.Where(p => form.Contains(p.Form));
+        }
+
+        if (mfi != null && mfi.Any())
+        {
+            itemsQuery = itemsQuery.Where(p => mfi.Contains(p.Mfi));
+            supplierQuery = supplierQuery.Where(p => mfi.Contains(p.Mfi));
+            materialQuery = materialQuery.Where(p => mfi.Contains(p.Mfi));
+            typeQuery = typeQuery.Where(p => mfi.Contains(p.Mfi));
+            colorQuery = colorQuery.Where(p => mfi.Contains(p.Mfi));
+            nameQuery = nameQuery.Where(p => mfi.Contains(p.Mfi));
+            positionQuery = positionQuery.Where(p => mfi.Contains(p.Mfi));
+            fillerQuery = fillerQuery.Where(p => mfi.Contains(p.Mfi));
+            formQuery = formQuery.Where(p => mfi.Contains(p.Mfi));
+            // mfiQuery zůstává
+            monthlyQuantityQuery = monthlyQuantityQuery.Where(p => mfi.Contains(p.Mfi));
+        }
+
+        if (monthlyQuantity != null && monthlyQuantity.Any())
+        {
+            itemsQuery = itemsQuery.Where(p => monthlyQuantity.Contains(p.MonthlyQuantity));
+            supplierQuery = supplierQuery.Where(p => monthlyQuantity.Contains(p.MonthlyQuantity));
+            materialQuery = materialQuery.Where(p => monthlyQuantity.Contains(p.MonthlyQuantity));
+            typeQuery = typeQuery.Where(p => monthlyQuantity.Contains(p.MonthlyQuantity));
+            colorQuery = colorQuery.Where(p => monthlyQuantity.Contains(p.MonthlyQuantity));
+            nameQuery = nameQuery.Where(p => monthlyQuantity.Contains(p.MonthlyQuantity));
+            positionQuery = positionQuery.Where(p => monthlyQuantity.Contains(p.MonthlyQuantity));
+            fillerQuery = fillerQuery.Where(p => monthlyQuantity.Contains(p.MonthlyQuantity));
+            formQuery = formQuery.Where(p => monthlyQuantity.Contains(p.MonthlyQuantity));
+            mfiQuery = mfiQuery.Where(p => monthlyQuantity.Contains(p.MonthlyQuantity));
+            // monthlyQuantityQuery zůstává
+        }
+
+
+        // 4. Asynchronní spuštění VŠECH dotazů
+        //    Spustíme dotazy na seznamy filtrů paralelně pro efektivitu
+
+        var itemsTask = itemsQuery
+            .OrderByDescending(p => p.UpdatedAt)
+            .ToListAsync();
+
+        // Pomocná lokální funkce pro zjednodušení dotazů na filtry
+        static Task<List<string>> GetFilterOptions(IQueryable<PhotoRecord> query, Expression<Func<PhotoRecord, string>> selector)
+        {
+            return query
+                .Select(selector)
+                .Where(s => !string.IsNullOrEmpty(s))
+                .Distinct()
+                .OrderBy(x => x)
+                .ToListAsync();
+        }
+
+        // Paralelní spuštění všech dotazů na filtry
+        var suppliersTask = GetFilterOptions(supplierQuery, p => p.Supplier);
+        var materialsTask = GetFilterOptions(materialQuery, p => p.Material);
+        var typesTask = GetFilterOptions(typeQuery, p => p.Type);
+        var colorsTask = GetFilterOptions(colorQuery, p => p.Color);
+        var namesTask = GetFilterOptions(nameQuery, p => p.Name);
+        var positionsTask = GetFilterOptions(positionQuery, p => p.Position);
+        var fillersTask = GetFilterOptions(fillerQuery, p => p.Filler);
+        var formsTask = GetFilterOptions(formQuery, p => p.Form);
+        var mfisTask = GetFilterOptions(mfiQuery, p => p.Mfi);
+        var monthlyQuantitiesTask = GetFilterOptions(monthlyQuantityQuery, p => p.MonthlyQuantity);
+
+        // Počkáme, až se VŠECHNY dotazy dokončí
+        await Task.WhenAll(
+            itemsTask, suppliersTask, materialsTask, typesTask, colorsTask,
+            namesTask, positionsTask, fillersTask, formsTask, mfisTask, monthlyQuantitiesTask
+        );
+
+        // 5. Sestavení ViewModelu z výsledků
+        var vm = new PhotoApp.ViewModels.PhotosIndexViewModel
+        {
+            Items = itemsTask.Result,
+            Suppliers = suppliersTask.Result,
+            Materials = materialsTask.Result,
+            Types = typesTask.Result,
+            Colors = colorsTask.Result,
+            Names = namesTask.Result,
+            Positions = positionsTask.Result,
+            Fillers = fillersTask.Result,
+            Forms = formsTask.Result,
+            MonthlyQuantities = monthlyQuantitiesTask.Result,
+            Mfis = mfisTask.Result,
+
+            // Uložení aktuálně vybraných hodnot
             Search = search,
             Supplier = supplier,
             Material = material,
@@ -171,13 +317,14 @@ public class PhotosController : Controller
             Position = position,
             Filler = filler,
             Form = form,
-            Mfi = mfi,
-            MonthlyQuantity = monthlyQuantity
+            MonthlyQuantity = monthlyQuantity,
+            Mfi = mfi
         };
 
-        ViewBag.IsMobile = true;
-        return View("Index_phone", vm2);
+        return vm;
     }
+
+
     public IActionResult Create() => View();
 
     [HttpPost]
