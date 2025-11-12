@@ -449,6 +449,7 @@
     }
 
     // Import from Excel
+    // Import from Excel
     async function uploadImport(fileInput) {
         const file = fileInput?.files?.[0];
         if (!file) return alert('Please select an Excel file.');
@@ -460,10 +461,9 @@
         btn.textContent = '⏳ Importing...';
 
         const form = new FormData();
-        form.append('file', file); // Klíč musí být 'file', viz [HttpPost] metoda
+        form.append('excelFile', file);
 
         try {
-            // Použije se správná cesta k PhotosControlleru
             const resp = await fetch('@Url.Action("Import", "Photos")', {
                 method: 'POST',
                 body: form,
@@ -473,23 +473,46 @@
                 }
             });
 
-            if (!resp.ok) {
-                const txt = await resp.text();
-                alert('Import failed: ' + txt);
+            // 🔹 ZMĚNA: Načteme odpověď jako JSON, ať už je to chyba nebo úspěch
+            let data;
+            try {
+                data = await resp.json();
+            } catch (e) {
+                // Pokud server vrátil něco jiného než JSON (např. HTML chybu)
+                alert('Import failed: Server returned an invalid response.');
                 return;
             }
 
-            alert('✅ Import was successful!');
-            window.location.href = '/Photos';
+            // 🔹 ZMĚNA: Zpracování chybové odpovědi (400, 500)
+            if (!resp.ok) {
+                alert('Import failed: ' + (data.message || 'Unknown server error.'));
+                return;
+            }
+
+            // 🔹 ZMĚNA: Zpracování úspěšné odpovědi (200 OK)
+            if (data.success) {
+                let successMessage = "✅ " + data.message;
+
+                // Přidáme varování, pokud nějaká jsou
+                if (data.warnings && data.warnings.length > 0) {
+                    successMessage += "\n\nVarování:\n" + data.warnings.join("\n");
+                }
+
+                alert(successMessage);
+                // Přesměrujeme na URL, které poslal server
+                window.location.href = data.redirectUrl || '/Photos/Index';
+            } else {
+                // Pro případ, že by server vrátil 200 OK, ale { success: false }
+                alert('Import failed: ' + (data.message || 'Unknown error.'));
+            }
+
         } catch (err) {
-            // === OPRAVA 2: ODSTRANĚNO 'D' NAVÍC ===
             alert('Error: ' + err.message);
         } finally {
             btn.disabled = false;
             btn.textContent = 'Import from Excel';
         }
     }
-
     // Event listeners
     document.addEventListener('DOMContentLoaded', () => {
         // Anti-forgery token pro formulář, aby byl dostupný pro JS
