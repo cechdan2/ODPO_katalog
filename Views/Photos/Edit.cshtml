@@ -38,18 +38,23 @@
             align-items: center;
             gap: 12px;
             margin-top: 8px;
+            position: relative;
         }
 
+        /* Hidden input stays accessible: place it over the label but invisible.
+           Using display:none breaks label-for in some browsers, so keep it in flow. */
         .input-file-hidden {
-            width: 0.1px;
-            height: 0.1px;
-            opacity: 0;
-            overflow: hidden;
             position: absolute;
-            z-index: -1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+            z-index: 2;
         }
 
-        /* Skryjeme původní ošklivý input */
+        /* Skryjeme původní ošklivý input třídy pokud by existovala */
         .form-control-file {
             display: none;
         }
@@ -67,6 +72,8 @@
             display: inline-flex;
             align-items: center;
             gap: 8px;
+            position: relative; /* label is the visible button */
+            z-index: 1;
         }
 
             .custom-file-label:hover {
@@ -333,8 +340,10 @@
                 <div class="form-group full">
                     <label for="PhotoFile">Main Photo (new file)</label>
                     <div class="custom-file-wrapper">
-                        <input type="file" name="PhotoFile" id="PhotoFile" class="input-file-hidden" accept="image/*" />
-                        <label for="PhotoFile" class="custom-file-label">Select file...</label>
+                        <!-- input is positioned over the label so clicking visible label opens picker reliably -->
+                        <label class="custom-file-label" for="PhotoFile">Select file...
+                            <input type="file" name="PhotoFile" id="PhotoFile" class="input-file-hidden" accept="image/*" />
+                        </label>
                         <span id="PhotoFile-name" class="custom-file-name">No file selected</span>
                     </div>
                     <span class="field-validation" id="photoError"></span>
@@ -358,8 +367,9 @@
                 <div class="form-group full">
                     <label for="AdditionalPhotoFiles">Additional Photos (select multiple)</label>
                     <div class="custom-file-wrapper">
-                        <input type="file" name="AdditionalPhotoFiles" id="AdditionalPhotoFiles" class="input-file-hidden" accept="image/*" multiple />
-                        <label for="AdditionalPhotoFiles" class="custom-file-label">Select files...</label>
+                        <label class="custom-file-label" for="AdditionalPhotoFiles">Select files...
+                            <input type="file" name="AdditionalPhotoFiles" id="AdditionalPhotoFiles" class="input-file-hidden" accept="image/*" multiple />
+                        </label>
                         <span id="AdditionalPhotoFiles-name" class="custom-file-name">No files selected</span>
                     </div>
                     <span class="field-validation" id="additionalPhotosError"></span>
@@ -417,72 +427,78 @@
         </button>
     </div>
 
+    <!-- Script moved inline (not inside @@section) so it always runs even if layout doesn't render the section) -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
 
-    @section Scripts {
-        <script>
-            document.addEventListener('DOMContentLoaded', function() {
-
-                // Původní skript pro náhled hlavního obrázku
-                document.getElementById('PhotoFile')?.addEventListener('change', function (e) {
-                    const input = e.target;
-                    const err = document.getElementById('photoError');
-                    err.textContent = '';
-                    const current = document.getElementById('CurrentPhotoPreview');
-                    if (input.files && input.files[0]) {
-                        const file = input.files[0];
-                        if (!file.type.startsWith('image/')) {
-                            err.textContent = 'Please select an image.';
-                            return;
-                        }
-                        const reader = new FileReader();
-                        reader.onload = function (ev) {
-                            if (current) {
-                                current.src = ev.target.result;
+            // Původní skript pro náhled hlavního obrázku
+            document.getElementById('PhotoFile')?.addEventListener('change', function (e) {
+                const input = e.target;
+                const err = document.getElementById('photoError');
+                err.textContent = '';
+                const current = document.getElementById('CurrentPhotoPreview');
+                if (input.files && input.files[0]) {
+                    const file = input.files[0];
+                    if (!file.type.startsWith('image/')) {
+                        err.textContent = 'Please select an image.';
+                        return;
+                    }
+                    const reader = new FileReader();
+                    reader.onload = function (ev) {
+                        if (current) {
+                            current.src = ev.target.result;
+                        } else {
+                            const img = document.createElement('img');
+                            img.id = 'CurrentPhotoPreview';
+                            img.className = 'preview-img';
+                            img.src = ev.target.result;
+                            const placeholder = input.closest('.form-group').querySelector('.no-image-placeholder');
+                            if (placeholder) {
+                                placeholder.replaceWith(img);
                             } else {
-                                const img = document.createElement('img');
-                                img.id = 'CurrentPhotoPreview';
-                                img.className = 'preview-img';
-                                img.src = ev.target.result;
-                                const placeholder = input.closest('.form-group').querySelector('.no-image-placeholder');
-                                if (placeholder) {
-                                    placeholder.replaceWith(img);
-                                } else {
-                                    // Fallback, just in case
-                                    input.closest('.custom-file-wrapper').parentNode.appendChild(img);
-                                }
+                                // Fallback, just in case
+                                input.closest('.custom-file-wrapper').parentNode.appendChild(img);
                             }
-                        };
-                        reader.readAsDataURL(file);
+                        }
+                    };
+                    reader.readAsDataURL(file);
+
+                    // Update the filename span
+                    const span = document.getElementById('PhotoFile-name');
+                    if (span) {
+                        span.textContent = input.files[0].name;
+                        span.style.fontStyle = 'normal';
+                        span.style.color = '#333';
+                    }
+                }
+            });
+
+            // Nový skript pro zobrazení názvů vybraných souborů
+            function setupFileInput(inputId, spanId) {
+                const input = document.getElementById(inputId);
+                const span = document.getElementById(spanId);
+                if (!input || !span) return;
+
+                input.addEventListener('change', () => {
+                    if (input.files && input.files.length > 0) {
+                        span.textContent = input.files.length === 1 ? input.files[0].name : `${input.files.length} files selected`;
+                        span.style.fontStyle = 'normal';
+                        span.style.color = '#333';
+                    } else {
+                        span.textContent = input.multiple ? 'No files selected' : 'No file selected';
+                        span.style.fontStyle = 'italic';
+                        span.style.color = '#555';
                     }
                 });
+            }
 
-                // Nový skript pro zobrazení názvů vybraných souborů
-                function setupFileInput(inputId, spanId) {
-                    const input = document.getElementById(inputId);
-                    const span = document.getElementById(spanId);
-                    if (!input || !span) return;
+            setupFileInput('PhotoFile', 'PhotoFile-name');
+            setupFileInput('AdditionalPhotoFiles', 'AdditionalPhotoFiles-name');
 
-                    input.addEventListener('change', () => {
-                        if (input.files && input.files.length > 0) {
-                            span.textContent = input.files.length === 1 ? input.files[0].name : `${input.files.length} files selected`;
-                            span.style.fontStyle = 'normal';
-                            span.style.color = '#333';
-                        } else {
-                            span.textContent = input.multiple ? 'No files selected' : 'No file selected';
-                            span.style.fontStyle = 'italic';
-                            span.style.color = '#555';
-                        }
-                    });
-                }
+        });
+    </script>
 
-                setupFileInput('PhotoFile', 'PhotoFile-name');
-                setupFileInput('AdditionalPhotoFiles', 'AdditionalPhotoFiles-name');
 
-            });
-        </script>
-
-        <partial name="_ValidationScriptsPartial" />
-    }
 
 </body>
 </html>

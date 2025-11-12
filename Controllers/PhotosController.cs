@@ -11,10 +11,7 @@ using QuestPDF.Infrastructure;
 using System.Linq.Expressions; // Přidáno pro Expression
 using System.Text;
 using System.Text.Json;
-using Microsoft.AspNetCore.Hosting; // <-- Důležité pro _webHostEnvironment
 using System.Net.Http;
-
-
 
 namespace PhotoApp.Controllers;
 
@@ -25,13 +22,11 @@ public class PhotosController : Controller
     private readonly IWebHostEnvironment _env;
     private const long MaxFileSize = 5 * 1024 * 1024; // 5 MB
     private static readonly string[] PermittedTypes = { "image/jpeg", "image/png", "image/gif", "image/webp" };
-    private readonly IWebHostEnvironment _webHostEnvironment;
 
-    public PhotosController(AppDbContext context, IWebHostEnvironment webHostEnvironment)
+    public PhotosController(AppDbContext context, IWebHostEnvironment env)
     {
         _context = context;
-        //_env = env;
-        _webHostEnvironment = webHostEnvironment;
+        _env = env;
     }
 
     public IActionResult Import()
@@ -121,7 +116,7 @@ public class PhotosController : Controller
 
                                 // Cesta k logu
                                 // (Zvažte použití IWebHostEnvironment pro spolehlivější cestu)
-                                string logoPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "logo.png");
+                                string logoPath = Path.Combine(_env.WebRootPath, "logo.png");
 
                                 if (System.IO.File.Exists(logoPath))
                                 {
@@ -298,7 +293,7 @@ public class PhotosController : Controller
                                 c.Item().Text("Laboratoř/Laboratory: Radomyšl 248, 387 31 Radomyšl").FontSize(10);
 
                                 // Použijeme IWebHostEnvironment pro cestu k logu
-                                string logoPath = Path.Combine(_webHostEnvironment.WebRootPath, "wwwroot/logo.png");
+                                string logoPath = Path.Combine(_env.WebRootPath, "logo.png");
 
                                 if (System.IO.File.Exists(logoPath))
                                 {
@@ -338,7 +333,7 @@ public class PhotosController : Controller
 
                         if (!string.IsNullOrWhiteSpace(imageSrc))
                         {
-                            var physicalPath = Path.Combine(_webHostEnvironment.WebRootPath, imageSrc.TrimStart('~', '/'));
+                            var physicalPath = Path.Combine(_env.WebRootPath, imageSrc.TrimStart('~', '/'));
 
                             if (System.IO.File.Exists(physicalPath))
                             {
