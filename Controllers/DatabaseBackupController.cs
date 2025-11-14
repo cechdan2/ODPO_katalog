@@ -12,8 +12,8 @@ namespace PhotoApp.Controllers
     [Authorize]
     public class DatabaseBackupController : ControllerBase
     {
-        private readonly string _dbPath;           // absolute path to the sqlite file
-        private readonly string _dbConnString;     // connection string used to open the DB
+        private readonly string _dbPath;            // absolute path to the sqlite file
+        private readonly string _dbConnString;      // connection string used to open the DB
         private readonly string _backupFolder;
         private readonly ILogger<DatabaseBackupController> _logger;
         private readonly IServiceProvider _services;
@@ -37,8 +37,8 @@ namespace PhotoApp.Controllers
 
             // Read possible DB config in multiple forms:
             var cfg = config["SqliteDbPath"]
-                      ?? config.GetConnectionString("DefaultConnection")
-                      ?? config["ConnectionStrings:Sqlite"];
+                        ?? config.GetConnectionString("DefaultConnection")
+                        ?? config["ConnectionStrings:Sqlite"];
 
             string? dbPath;
             string? connString;
@@ -90,6 +90,11 @@ namespace PhotoApp.Controllers
         public async Task<IActionResult> GetBackup()
         {
             await _opLock.WaitAsync();
+
+            // Cesty k dočasným souborům deklarujeme zde, abychom je viděli v 'catch' bloku
+            string tmpDb = "";
+            string tmpZipPath = "";
+
             try
             {
                 if (!System.IO.File.Exists(_dbPath))
@@ -99,10 +104,9 @@ namespace PhotoApp.Controllers
                 }
 
                 // 1) create a consistent tmp copy of DB using BackupDatabase
-                var tmpDb = Path.Combine(Path.GetTempPath(), $"photoapp_backup_{DateTime.UtcNow:yyyyMMddHHmmss}_{Guid.NewGuid():N}.db");
+                tmpDb = Path.Combine(Path.GetTempPath(), $"photoapp_backup_{DateTime.UtcNow:yyyyMMddHHmmss}_{Guid.NewGuid():N}.db");
                 try
                 {
-                    // IDE0063: 'using' zjednodušen
                     using var source = new SqliteConnection(_dbConnString);
                     using var dest = new SqliteConnection($"Data Source={tmpDb}");
                     await source.OpenAsync();
@@ -123,17 +127,18 @@ namespace PhotoApp.Controllers
                     }
                 }
 
-                // 2) create zip in memory (stream) containing the tmp db and uploads folder
+                // 2) create zip ON DISK (instead of MemoryStream)
                 var zipName = $"backup_{DateTime.UtcNow:yyyyMMddHHmmss}.zip";
                 var uploadsFolder = Path.Combine(_env.WebRootPath ?? "", "uploads");
+                // Vytvoříme ZIP v dočasné složce na disku
+                tmpZipPath = Path.Combine(Path.GetTempPath(), $"photoapp_zip_{Guid.NewGuid():N}.zip");
 
-                // IDE0063: 'using' zjednodušen
-                using var ms = new MemoryStream();
-                using (var zip = new ZipArchive(ms, ZipArchiveMode.Create, true))
+                // 'await using' zajistí správné uzavření FileStreamu
+                await using (var fileStream = new FileStream(tmpZipPath, FileMode.Create, FileAccess.Write, FileShare.None))
+                using (var zip = new ZipArchive(fileStream, ZipArchiveMode.Create, leaveOpen: false)) // false = uzavřít FileStream spolu se ZipArchive
                 {
                     // add database.db entry
                     var dbEntry = zip.CreateEntry("database.db", CompressionLevel.Optimal);
-                    // IDE0063: 'using' zjednodušen
                     using (var zs = dbEntry.Open())
                     using (var fs = System.IO.File.Open(tmpDb, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
                     {
@@ -150,8 +155,6 @@ namespace PhotoApp.Controllers
                             var entryPath = Path.Combine("uploads", relPath).Replace('\\', '/');
                             var entry = zip.CreateEntry(entryPath, CompressionLevel.Optimal);
 
-                            // try to open with read sharing (retry lightly if needed)
-                            // IDE0063: 'using' zjednodušen
                             using (var zs = entry.Open())
                             using (var fs = System.IO.File.Open(file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
                             {
@@ -159,21 +162,39 @@ namespace PhotoApp.Controllers
                             }
                         }
                     }
-                }
+                } // Zde se uzavře ZipArchive i FileStream. Soubor tmpZipPath je kompletní na disku.
 
-                ms.Position = 0;
-                // schedule tmpDb deletion after response completes
+                // schedule tmpDb deletion after response completes (toto zůstává)
                 Response.OnCompleted(() =>
                 {
                     try { if (System.IO.File.Exists(tmpDb)) System.IO.File.Delete(tmpDb); } catch { }
                     return Task.CompletedTask;
                 });
 
-                return File(ms.ToArray(), "application/zip", zipName);
+                // 3) Stream the generated zip file from disk
+                // Otevřeme soubor pro čtení a použijeme FileOptions.DeleteOnClose
+                // To zajistí, že OS soubor smaže ihned po tom, co ASP.NET dokončí jeho odesílání.
+                var readStream = new FileStream(tmpZipPath,
+                                            FileMode.Open,
+                                            FileAccess.Read,
+                                            FileShare.Read,
+                                            4096, // buffer
+                                            FileOptions.Asynchronous | FileOptions.DeleteOnClose);
+
+                // Vynulujeme cestu, aby se 'catch' blok (v případě chyby při vracení File) 
+                // nebo 'finally' blok nepokoušel smazat soubor, o který se už stará OS.
+                tmpZipPath = "";
+
+                return File(readStream, "application/zip", zipName);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error while creating DB+uploads backup");
+
+                // Úklid v případě chyby
+                try { if (!string.IsNullOrEmpty(tmpDb) && System.IO.File.Exists(tmpDb)) System.IO.File.Delete(tmpDb); } catch { }
+                try { if (!string.IsNullOrEmpty(tmpZipPath) && System.IO.File.Exists(tmpZipPath)) System.IO.File.Delete(tmpZipPath); } catch { }
+
                 return StatusCode(500, "Failed to create backup: " + ex.Message);
             }
             finally
@@ -187,7 +208,7 @@ namespace PhotoApp.Controllers
         public IActionResult Ui() => Redirect("/Admin/Database");
 
         // POST: api/admin/db/restore
-        // accepts a ZIP that contains database.db and uploads/* and restores both
+        // (Metoda RestoreBackup a zbytek třídy zůstává beze změny)
         [HttpPost("restore")]
         [RequestSizeLimit(MaxUploadBytes)]
         public async Task<IActionResult> RestoreBackup([FromForm] Microsoft.AspNetCore.Http.IFormFile backupZip)
