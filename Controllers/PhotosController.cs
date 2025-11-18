@@ -30,6 +30,23 @@ public class PhotosController : Controller
         _env = env;
     }
 
+    // --- POMOCNÁ METODA PRO PARSOVÁNÍ MFI ---
+    // Bere řetězec "32/55/88", vrátí 32 (double). Pokud nelze, vrátí null.
+    private double? ParseMfi(string mfiString)
+    {
+        if (string.IsNullOrWhiteSpace(mfiString)) return null;
+
+        // Vezmeme část před prvním lomítkem a odstraníme mezery
+        var firstPart = mfiString.Split('/')[0].Trim();
+
+        // Zkusíme převést na číslo (akceptuje tečku i čárku)
+        if (double.TryParse(firstPart, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out double result))
+        {
+            return result;
+        }
+        return null;
+    }
+
     public IActionResult Import()
     {
         return View();
@@ -37,16 +54,20 @@ public class PhotosController : Controller
 
     // --- HLAVNÍ METODA PRO ZOBRAZENÍ (DESKTOP) ---
     [Authorize]
-    public async Task<IActionResult> Index(string search, List<string> supplier, List<string> material, List<string> type, List<string> color, List<string> name, List<string> position, List<string> filler, List<string> mfi, List<string> monthlyQuantity, List<string> form)
+    public async Task<IActionResult> Index(
+        string search, List<string> supplier, List<string> material, List<string> type,
+        List<string> color, List<string> name, List<string> position, List<string> filler,
+        List<string> mfi, List<string> monthlyQuantity, List<string> form,
+        double? minMfi, double? maxMfi) // PŘIDÁNY PARAMETRY
     {
         // Detekce mobilu, pokud ano, přesměruj na mobilní verzi se všemi parametry
         if (Request.Headers["User-Agent"].ToString().Contains("Mobile"))
         {
-            return RedirectToAction("Index_phone", new { search, supplier, material, type, color, name, position, filler, form, mfi, monthlyQuantity });
+            return RedirectToAction("Index_phone", new { search, supplier, material, type, color, name, position, filler, form, mfi, monthlyQuantity, minMfi, maxMfi });
         }
 
         // Zavolání nové sdílené metody
-        var vm = await GetFilteredViewModel(search, supplier, material, type, color, name, position, filler, mfi, monthlyQuantity, form);
+        var vm = await GetFilteredViewModel(search, supplier, material, type, color, name, position, filler, mfi, monthlyQuantity, form, minMfi, maxMfi);
 
         ViewBag.IsMobile = false;
         return View(vm);
@@ -55,16 +76,21 @@ public class PhotosController : Controller
     // --- HLAVNÍ METODA PRO ZOBRAZENÍ (MOBIL) ---
     [HttpGet]
     [Authorize]
-    public async Task<IActionResult> Index_phone(string search, List<string> supplier, List<string> material, List<string> type, List<string> color, List<string> name, List<string> position, List<string> filler, List<string> form, List<string> mfi, List<string> monthlyQuantity, bool forceDesktop = false)
+    public async Task<IActionResult> Index_phone(
+        string search, List<string> supplier, List<string> material, List<string> type,
+        List<string> color, List<string> name, List<string> position, List<string> filler,
+        List<string> form, List<string> mfi, List<string> monthlyQuantity,
+        double? minMfi, double? maxMfi, // PŘIDÁNY PARAMETRY
+        bool forceDesktop = false)
     {
         if (forceDesktop)
         {
             // Přesměrování na desktopovou verzi se všemi filtry
-            return RedirectToAction("Index", new { search, supplier, material, type, color, name, position, filler, form, mfi, monthlyQuantity });
+            return RedirectToAction("Index", new { search, supplier, material, type, color, name, position, filler, form, mfi, monthlyQuantity, minMfi, maxMfi });
         }
 
         // Zavolání nové sdílené metody
-        var vm = await GetFilteredViewModel(search, supplier, material, type, color, name, position, filler, mfi, monthlyQuantity, form);
+        var vm = await GetFilteredViewModel(search, supplier, material, type, color, name, position, filler, mfi, monthlyQuantity, form, minMfi, maxMfi);
 
         ViewBag.IsMobile = true;
         return View("Index_phone", vm);
@@ -78,15 +104,31 @@ public class PhotosController : Controller
         string search, List<string> supplier, List<string> material, List<string> type,
         List<string> color, List<string> name, List<string> position, List<string> filler,
         List<string> mfi, List<string> monthlyQuantity, List<string> form,
+        double? minMfi, double? maxMfi, // PŘIDÁNY PARAMETRY I SEM
         [FromQuery] List<string> columnsToInclude)
     {
-        // 1. Získáme vyfiltrovaný dotaz
+        // 1. Získáme vyfiltrovaný dotaz (základní stringové filtry)
         var query = GetFilteredQuery(search, supplier, material, type, color, name, position, filler, mfi, monthlyQuantity, form);
 
-        // 2. Spustíme dotaz
-        var items = await query.OrderBy(p => p.Material).ToListAsync();
+        // 2. Spustíme dotaz a načteme data do paměti
+        var itemsList = await query.OrderBy(p => p.Material).ToListAsync();
 
-        // 3. Vytvoříme PDF dokument
+        // 3. Aplikujeme MFI filtr v paměti (protože SQL neumí split/parse tak snadno)
+        if (minMfi.HasValue || maxMfi.HasValue)
+        {
+            itemsList = itemsList.Where(p => {
+                var val = ParseMfi(p.Mfi);
+                if (!val.HasValue) return false; // Pokud to není číslo, skrýt
+
+                bool condition = true;
+                if (minMfi.HasValue) condition &= (val.Value >= minMfi.Value);
+                if (maxMfi.HasValue) condition &= (val.Value <= maxMfi.Value);
+
+                return condition;
+            }).ToList();
+        }
+
+        // 4. Vytvoříme PDF dokument
         QuestPDF.Settings.License = LicenseType.Community;
 
         var pdfBytes = Document.Create(container =>
@@ -116,7 +158,6 @@ public class PhotosController : Controller
                                     .FontSize(10);
 
                                 // Cesta k logu
-                                // (Zvažte použití IWebHostEnvironment pro spolehlivější cestu)
                                 string logoPath = Path.Combine(_env.WebRootPath, "logo.png");
 
                                 if (System.IO.File.Exists(logoPath))
@@ -137,11 +178,11 @@ public class PhotosController : Controller
                             // Pravá část: Detaily exportu (datum, počet)
                             row.RelativeItem(1).Column(c =>
                             {
-                                c.Item().AlignRight().Text("Export vzorků")
+                                c.Item().AlignRight().Text("Sample Export") // Anglicky
                                     .SemiBold().FontSize(16);
-                                c.Item().AlignRight().Text($"Datum: {DateTime.Now:d. M. yyyy}")
+                                c.Item().AlignRight().Text($"Date: {DateTime.Now:d. M. yyyy}") // Anglicky
                                     .FontSize(9);
-                                c.Item().AlignRight().Text($"Počet: {items.Count}")
+                                c.Item().AlignRight().Text($"Count: {itemsList.Count}") // Anglicky
                                     .FontSize(9);
                             });
                         });
@@ -190,7 +231,7 @@ public class PhotosController : Controller
                     // Data (řádky)
                     static IContainer DataCellStyle(IContainer c) => c.BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten2).Padding(4);
 
-                    foreach (var item in items)
+                    foreach (var item in itemsList)
                     {
                         if (columnsToInclude.Contains("Id")) table.Cell().Element(DataCellStyle).Text(item.Id);
                         if (columnsToInclude.Contains("Supplier")) table.Cell().Element(DataCellStyle).Text(item.Supplier);
@@ -210,18 +251,19 @@ public class PhotosController : Controller
                     .AlignRight()
                     .Text(x =>
                     {
-                        x.Span("Strana ");
+                        x.Span("Page ");
                         x.CurrentPageNumber();
-                        x.Span(" z ");
+                        x.Span(" of ");
                         x.TotalPages();
                     });
             });
         }).GeneratePdf();
 
         // 4. Vrátíme soubor ke stažení
-        return File(pdfBytes, "application/pdf", $"Vzorky_Export_{DateTime.Now:yyyy-MM-dd}.pdf");
+        return File(pdfBytes, "application/pdf", $"Samples_Export_{DateTime.Now:yyyy-MM-dd}.pdf");
     }
-    // --- KROK A: SDÍLENÁ METODA POUZE PRO FILTROVÁNÍ (pro PDF) ---
+
+    // --- KROK A: SDÍLENÁ METODA POUZE PRO FILTROVÁNÍ (pro PDF - String část) ---
     private IQueryable<PhotoRecord> GetFilteredQuery(
         string search, List<string> supplier, List<string> material, List<string> type,
         List<string> color, List<string> name, List<string> position, List<string> filler,
@@ -250,7 +292,10 @@ public class PhotosController : Controller
         if (position != null && position.Any()) baseQuery = baseQuery.Where(p => position.Contains(p.Position));
         if (filler != null && filler.Any()) baseQuery = baseQuery.Where(p => filler.Contains(p.Filler));
         if (form != null && form.Any()) baseQuery = baseQuery.Where(p => form.Contains(p.Form));
+
+        // MFI Stringový filtr (pro přesnou shodu, pokud je zadán)
         if (mfi != null && mfi.Any()) baseQuery = baseQuery.Where(p => mfi.Contains(p.Mfi));
+
         if (monthlyQuantity != null && monthlyQuantity.Any()) baseQuery = baseQuery.Where(p => monthlyQuantity.Contains(p.MonthlyQuantity));
 
         return baseQuery;
@@ -306,9 +351,9 @@ public class PhotosController : Controller
                             // Pravá část
                             row.RelativeItem(1).Column(c =>
                             {
-                                c.Item().AlignRight().Text("Detail vzorku").SemiBold().FontSize(16);
+                                c.Item().AlignRight().Text("Sample Detail").SemiBold().FontSize(16); // Anglicky
                                 c.Item().AlignRight().Text($"ID: {item.Id}").FontSize(9);
-                                c.Item().AlignRight().Text($"Datum: {DateTime.Now:d. M. yyyy}").FontSize(9);
+                                c.Item().AlignRight().Text($"Date: {DateTime.Now:d. M. yyyy}").FontSize(9); // Anglicky
                             });
                         });
                         col.Item().PaddingTop(5).BorderBottom(1).BorderColor(Colors.Grey.Medium);
@@ -388,7 +433,7 @@ public class PhotosController : Controller
                         }
                         catch (Exception)
                         {
-                            AddField(col, "Public Link (QR)", "Nelze vygenerovat QR kód.");
+                            AddField(col, "Public Link (QR)", "Cannot generate QR.");
                         }
                     }
                 });
@@ -398,25 +443,26 @@ public class PhotosController : Controller
                     .AlignRight()
                     .Text(x =>
                     {
-                        x.Span("Strana ");
+                        x.Span("Page ");
                         x.CurrentPageNumber();
-                        x.Span(" z ");
+                        x.Span(" of ");
                         x.TotalPages();
                     });
             });
         }).GeneratePdf();
 
         // 4. Vrátíme soubor
-        return File(pdfBytes, "application/pdf", $"Vzorek_{item.Id}_{item.Name ?? "Detail"}.pdf");
+        return File(pdfBytes, "application/pdf", $"Sample_{item.Id}_{item.Name ?? "Detail"}.pdf");
     }
 
     // =================================================================
-    // ===                 OPRAVENÁ METODA PRO VIEWMODEL             ===
+    // ===                  METODA PRO VIEWMODEL                     ===
     // =================================================================
     private async Task<PhotoApp.ViewModels.PhotosIndexViewModel> GetFilteredViewModel(
         string search, List<string> supplier, List<string> material, List<string> type,
         List<string> color, List<string> name, List<string> position, List<string> filler,
-        List<string> mfi, List<string> monthlyQuantity, List<string> form)
+        List<string> mfi, List<string> monthlyQuantity, List<string> form,
+        double? minMfi = null, double? maxMfi = null)
     {
         // 1. Základní dotaz (včetně vyhledávání)
         IQueryable<PhotoRecord> baseQuery = _context.Photos.AsNoTracking().AsQueryable();
@@ -601,9 +647,20 @@ public class PhotosController : Controller
         }
 
         // 4. Asynchronní spuštění VŠECH dotazů
-        var itemsTask = itemsQuery
-            .OrderByDescending(p => p.UpdatedAt)
-            .ToListAsync();
+        var itemsList = await itemsQuery.OrderByDescending(p => p.UpdatedAt).ToListAsync();
+
+        // 4b. *** Aplikace MFI číselného filtru v paměti ***
+        if (minMfi.HasValue || maxMfi.HasValue)
+        {
+            itemsList = itemsList.Where(p => {
+                var val = ParseMfi(p.Mfi);
+                if (!val.HasValue) return false;
+                bool condition = true;
+                if (minMfi.HasValue) condition &= (val.Value >= minMfi.Value);
+                if (maxMfi.HasValue) condition &= (val.Value <= maxMfi.Value);
+                return condition;
+            }).ToList();
+        }
 
         // Pomocná lokální funkce
         static Task<List<string>> GetFilterOptions(IQueryable<PhotoRecord> query, Expression<Func<PhotoRecord, string>> selector)
@@ -630,14 +687,14 @@ public class PhotosController : Controller
 
 
         await Task.WhenAll(
-            itemsTask, suppliersTask, materialsTask, typesTask, colorsTask,
+            suppliersTask, materialsTask, typesTask, colorsTask,
             namesTask, positionsTask, fillersTask, formsTask, mfisTask, monthlyQuantitiesTask
         );
 
         // 5. Sestavení ViewModelu
         var vm = new PhotoApp.ViewModels.PhotosIndexViewModel
         {
-            Items = itemsTask.Result,
+            Items = itemsList,
             Suppliers = suppliersTask.Result,
             Materials = materialsTask.Result,
             Types = typesTask.Result,
@@ -660,13 +717,15 @@ public class PhotosController : Controller
             Filler = filler,
             Form = form,
             MonthlyQuantity = monthlyQuantity,
-            Mfi = mfi
+            Mfi = mfi,
+            // MinMfi = minMfi, // Pokud přidáte do ViewModelu
+            // MaxMfi = maxMfi  // Pokud přidáte do ViewModelu
         };
 
         return vm;
     }
 
-    // ... Zbytek vašich metod (Create, Edit, Delete, atd.) ...
+    // ... Zbytek metod (Create, Edit, Delete, atd.) ...
 
     public IActionResult Create() => View();
 
@@ -678,21 +737,20 @@ public class PhotosController : Controller
             return View(photoModel);
 
         string? savedPath = null;
-        // Cesta k výchozímu obrázku (musí existovat ve wwwroot/images/)
-        string defaultPlaceholder = "/images/default.JPEG";
+        string defaultPlaceholder = "/photos/default.JPEG";
 
         // Zpracování hlavní fotky
         if (PhotoFile != null && PhotoFile.Length > 0)
         {
             if (PhotoFile.Length > MaxFileSize)
             {
-                ModelState.AddModelError("PhotoFile", "Soubor je příliš velký.");
+                ModelState.AddModelError("PhotoFile", "File is too large.");
                 return View(photoModel);
             }
 
             if (!PermittedTypes.Contains(PhotoFile.ContentType))
             {
-                ModelState.AddModelError("PhotoFile", "Nepodporovaný typ souboru.");
+                ModelState.AddModelError("PhotoFile", "Unsupported file type.");
                 return View(photoModel);
             }
 
@@ -712,7 +770,6 @@ public class PhotosController : Controller
         }
         else
         {
-            // === ZMĚNA: Pokud není nahrána fotka, použije se výchozí placeholder ===
             savedPath = defaultPlaceholder;
         }
 
@@ -730,13 +787,13 @@ public class PhotosController : Controller
                 {
                     if (file.Length > MaxFileSize)
                     {
-                        ModelState.AddModelError("AdditionalPhotoFiles", $"Soubor {file.FileName} je příliš velký.");
+                        ModelState.AddModelError("AdditionalPhotoFiles", $"File {file.FileName} is too large.");
                         continue;
                     }
 
                     if (!PermittedTypes.Contains(file.ContentType))
                     {
-                        ModelState.AddModelError("AdditionalPhotoFiles", $"Soubor {file.FileName} má nepodporovaný formát.");
+                        ModelState.AddModelError("AdditionalPhotoFiles", $"File {file.FileName} format not supported.");
                         continue;
                     }
 
@@ -770,11 +827,8 @@ public class PhotosController : Controller
             Supplier = photoModel.Supplier ?? "",
             Description = photoModel.Description ?? "",
             Notes = photoModel.Notes ?? "",
-
-            // Zde se uloží buď cesta k nahrané fotce, nebo cesta k placeholderu
             PhotoPath = savedPath,
             ImagePath = savedPath,
-
             AdditionalPhotos = string.Join(";", additionalPaths), // Uložit dodatečné fotky
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
@@ -784,7 +838,6 @@ public class PhotosController : Controller
         await _context.SaveChangesAsync();
         return RedirectToAction(nameof(Index));
     }
-
     public async Task<IActionResult> Edit(int? id)
     {
         if (id == null)
@@ -818,13 +871,13 @@ public class PhotosController : Controller
             {
                 if (PhotoFile.Length > MaxFileSize)
                 {
-                    ModelState.AddModelError("PhotoFile", "Soubor je příliš velký.");
+                    ModelState.AddModelError("PhotoFile", "File is too large.");
                     return View(photoModel);
                 }
 
                 if (!PermittedTypes.Contains(PhotoFile.ContentType))
                 {
-                    ModelState.AddModelError("PhotoFile", "Nepodporovaný typ souboru.");
+                    ModelState.AddModelError("PhotoFile", "Unsupported file type.");
                     return View(photoModel);
                 }
 
@@ -880,13 +933,13 @@ public class PhotosController : Controller
                     {
                         if (file.Length > MaxFileSize)
                         {
-                            ModelState.AddModelError("AdditionalPhotoFiles", $"Soubor {file.FileName} je příliš velký.");
+                            ModelState.AddModelError("AdditionalPhotoFiles", $"File {file.FileName} is too large.");
                             continue;
                         }
 
                         if (!PermittedTypes.Contains(file.ContentType))
                         {
-                            ModelState.AddModelError("AdditionalPhotoFiles", $"Soubor {file.FileName} má nepodporovaný formát.");
+                            ModelState.AddModelError("AdditionalPhotoFiles", $"File {file.FileName} format not supported.");
                             continue;
                         }
 
@@ -1030,7 +1083,7 @@ public class PhotosController : Controller
             sb.AppendLine($"{p.Id};{p.Name};{p.Code};{p.Type};{p.Supplier};{p.Notes};{p.PhotoPath};{p.UpdatedAt:yyyy-MM-dd HH:mm}");
         }
 
-        return File(Encoding.UTF8.GetBytes(sb.ToString()), "text/csv", "vzorky.csv");
+        return File(Encoding.UTF8.GetBytes(sb.ToString()), "text/csv", "samples.csv");
     }
 
     [HttpGet]
@@ -1038,7 +1091,7 @@ public class PhotosController : Controller
     {
         var data = await _context.Photos.OrderByDescending(x => x.UpdatedAt).ToListAsync();
         var json = JsonSerializer.Serialize(data, new JsonSerializerOptions { WriteIndented = true });
-        return File(Encoding.UTF8.GetBytes(json), "application/json", "vzorky.json");
+        return File(Encoding.UTF8.GetBytes(json), "application/json", "samples.json");
     }
 
     [HttpGet]
@@ -1047,7 +1100,7 @@ public class PhotosController : Controller
         var photos = await _context.Photos.OrderBy(p => p.Id).ToListAsync();
 
         using var package = new ExcelPackage();
-        var ws = package.Workbook.Worksheets.Add("Vzorky");
+        var ws = package.Workbook.Worksheets.Add("Samples");
 
         var headers = new[]
         {
@@ -1102,7 +1155,7 @@ public class PhotosController : Controller
         var bytes = package.GetAsByteArray();
         return File(bytes,
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            "vzorky_s_obrazky.xlsx");
+            "samples_with_images.xlsx");
     }
 
     // *** NOVÁ AKCE PRO SMAZÁNÍ JEDNÉ DODATEČNÉ FOTKY ***
@@ -1149,7 +1202,7 @@ public class PhotosController : Controller
 
         if (AdditionalPhotoFiles == null || !AdditionalPhotoFiles.Any(f => f.Length > 0))
         {
-            TempData["Error"] = "Nevybrali jste žádné fotky.";
+            TempData["Error"] = "No photos selected.";
             return RedirectToAction(nameof(Details), new { id });
         }
 
@@ -1175,13 +1228,13 @@ public class PhotosController : Controller
             {
                 if (file.Length > MaxFileSize)
                 {
-                    TempData["Error"] = $"Soubor {file.FileName} je příliš velký (max 5 MB).";
+                    TempData["Error"] = $"File {file.FileName} is too large (max 5 MB).";
                     continue;
                 }
 
                 if (!PermittedTypes.Contains(file.ContentType))
                 {
-                    TempData["Error"] = $"Soubor {file.FileName} má nepodporovaný formát.";
+                    TempData["Error"] = $"File {file.FileName} format not supported.";
                     continue;
                 }
 
@@ -1202,8 +1255,7 @@ public class PhotosController : Controller
 
         await _context.SaveChangesAsync();
 
-        TempData["Success"] = "Fotky byly úspěšně nahrány!";
+        TempData["Success"] = "Photos uploaded successfully!";
         return RedirectToAction(nameof(Details), new { id });
     }
-
 }

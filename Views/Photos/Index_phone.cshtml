@@ -7,7 +7,7 @@
         !string.IsNullOrWhiteSpace(item.ImagePath) ? Url.Content(item.ImagePath) :
         !string.IsNullOrWhiteSpace(item.PhotoPath) ? Url.Content(item.PhotoPath) : null;
 
-    // Structure for easy filter generation in a loop
+    // MFI removed from auto-generated list (has custom UI)
     var filtersToRender = new[]
     {
         new { Name = "supplier",        Placeholder = "Supplier",         AllValues = Model.Suppliers,         SelectedValues = Model.Supplier },
@@ -16,8 +16,7 @@
         new { Name = "position",        Placeholder = "Position",         AllValues = Model.Positions,         SelectedValues = Model.Position },
         new { Name = "form",            Placeholder = "Form",             AllValues = Model.Forms,             SelectedValues = Model.Form },
         new { Name = "filler",          Placeholder = "Filler",           AllValues = Model.Fillers,           SelectedValues = Model.Filler },
-        new { Name = "monthlyQuantity", Placeholder = "Monthly Quantity", AllValues = Model.MonthlyQuantities, SelectedValues = Model.MonthlyQuantity },
-        new { Name = "mfi",             Placeholder = "MFI",              AllValues = Model.Mfis,              SelectedValues = Model.Mfi }
+        new { Name = "monthlyQuantity", Placeholder = "Monthly Quantity", AllValues = Model.MonthlyQuantities, SelectedValues = Model.MonthlyQuantity }
     };
 }
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -29,8 +28,10 @@
 <link rel="apple-touch-icon" href="/icons/icon-192.png">
 <head>
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/nouislider@14.6.3/distribute/nouislider.min.css" rel="stylesheet">
+    
     <style>
-        /* Style for Select2 to match the design */
+        /* Style for Select2 */
         .select2-container .select2-selection--multiple {
             border-radius: 8px !important;
             border: 1px solid var(--border) !important;
@@ -52,7 +53,32 @@
         .select2-dropdown {
             border-radius: 8px !important;
             border: 1px solid var(--border) !important;
-            z-index: 9999 !important;
+            z-index: 9999 !important; 
+            margin-top: 0px !important; 
+            box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+        }
+
+        /* === NO UI SLIDER CUSTOMIZATION === */
+        .noUi-connect {
+            background: var(--brand);
+        }
+        .noUi-handle {
+            border-radius: 50%;
+            box-shadow: none;
+            border: 2px solid var(--brand);
+            background: #fff;
+            cursor: pointer;
+        }
+        .noUi-handle:before, .noUi-handle:after {
+            display: none; /* Remove default lines */
+        }
+        .slider-values {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+            font-size: 13px;
+            color: var(--brand-dark);
+            font-weight: 600;
         }
     </style>
 </head>
@@ -136,17 +162,6 @@
             text-align: center;
         }
 
-    .visually-hidden {
-        position: absolute;
-        width: 1px;
-        height: 1px;
-        margin: -1px;
-        overflow: hidden;
-        clip: rect(0, 0, 0, 0);
-        white-space: nowrap;
-        border-width: 0;
-    }
-
     /* === BUTTONS AND FORMS === */
     .action-btn {
         display: inline-flex;
@@ -183,14 +198,14 @@
         font-weight: 500;
         border-radius: 12px;
         background: transparent;
-        border: none;
+        border: none; 
         cursor: pointer;
         font-family: inherit;
         line-height: 1;
     }
 
         .user-action-link:hover {
-            background: #eef7ee;
+            background: #eef7ee; 
         }
 
     .inline-form {
@@ -231,7 +246,7 @@
         opacity: 0;
         transition: transform 0.2s ease-out, opacity 0.2s ease-out;
     }
-
+    
     .filter-overlay.open .filter-modal-content {
         transform: scale(1);
         opacity: 1;
@@ -250,13 +265,9 @@
             font-size: 1.25rem;
             color: var(--brand-dark);
         }
-
+        
         .filter-panel-header .close-icon {
-            color: #aaa;
-            font-size: 28px;
-            font-weight: bold;
-            cursor: pointer;
-            line-height: 1;
+             color: #aaa; font-size: 28px; font-weight: bold; cursor: pointer; line-height: 1;
         }
 
     .filter-panel-body {
@@ -264,6 +275,7 @@
         overflow-y: auto;
     }
 
+    /* Checkbox for hiding columns */
     .filter-toggle {
         -webkit-appearance: none;
         appearance: none;
@@ -293,9 +305,9 @@
             }
 
     #mobileFilterForm .filter-row {
-        margin-bottom: 12px;
+        margin-bottom: 18px; /* Increased margin for slider */
         display: flex;
-        align-items: center;
+        align-items: flex-start; /* Changed alignment for slider */
         gap: 10px;
     }
 
@@ -465,126 +477,40 @@
 
     /* === RESPONSIVE === */
     @@media (min-width: 1200px) {
-        .card-list
-
-    {
-        grid-template-columns: repeat(2, 1fr);
-    }
-
+        .card-list { grid-template-columns: repeat(2, 1fr); }
     }
 
     @@media (min-width: 768px) {
-        .fab-group
-
-    {
-        display: none !important;
-    }
-
+        .fab-group { display: none !important; }
     }
 
     @@media (max-width: 767px) {
-        .fab-group
-
-    {
-        display: flex;
-    }
-
+        .fab-group { display: flex; }
     }
 
     @@media (max-width: 599px) {
-        .brand img
-
-    {
-        height: 90px;
-    }
-
-    .brand h1 {
-        font-size: 20px;
-    }
-
-    .header-inner {
-        padding: 16px 0;
-    }
-
-    .container {
-        padding: 12px 10px;
-    }
-
-    .item-card {
-        padding: 14px;
-        gap: 10px;
-        border-radius: 16px;
-    }
-
-    .thumb {
-        max-width: 280px;
-    }
-
-    .card-info {
-        max-width: 100%;
-    }
-
-    .info-item strong, .info-item span {
-        font-size: 14px;
-    }
-
-    .card-footer {
-        gap: 6px;
-    }
-
-        .card-footer .action-btn {
-            padding: 9px 10px;
-            font-size: 13px;
-            max-width: none;
-        }
-
-    .footer {
-        padding-bottom: 20px;
-        font-size: 14px;
-    }
-
+        .brand img { height: 90px; }
+        .brand h1 { font-size: 20px; }
+        .header-inner { padding: 16px 0; }
+        .container { padding: 12px 10px; }
+        .item-card { padding: 14px; gap: 10px; border-radius: 16px; }
+        .thumb { max-width: 280px; }
+        .card-info { max-width: 100%; }
+        .info-item strong, .info-item span { font-size: 14px; }
+        .card-footer { gap: 6px; }
+        .card-footer .action-btn { padding: 9px 10px; font-size: 13px; max-width: none; }
+        .footer { padding-bottom: 20px; font-size: 14px; }
     }
 
     @@media (max-width: 420px) {
-        .brand img
-
-    {
-        height: 80px;
-    }
-
-    .brand h1 {
-        font-size: 18px;
-    }
-
-    .container {
-        padding: 10px 8px;
-    }
-
-    .thumb {
-        max-width: 240px;
-    }
-
-    .card-footer .action-btn {
-        padding: 8px;
-        font-size: 12px;
-    }
-
-    .info-item {
-        grid-template-columns: 1fr;
-        gap: 2px;
-        padding: 6px 8px;
-    }
-
-        .info-item strong {
-            text-align: left;
-            font-size: 11px;
-            color: #777;
-        }
-
-        .info-item span {
-            font-size: 13px;
-        }
-
+        .brand img { height: 80px; }
+        .brand h1 { font-size: 18px; }
+        .container { padding: 10px 8px; }
+        .thumb { max-width: 240px; }
+        .card-footer .action-btn { padding: 8px; font-size: 12px; }
+        .info-item { grid-template-columns: 1fr; gap: 2px; padding: 6px 8px; }
+        .info-item strong { text-align: left; font-size: 11px; color: #777; }
+        .info-item span { font-size: 13px; }
     }
 </style>
 
@@ -609,6 +535,23 @@
                 <input type="search" id="search" name="search" placeholder="Name, code, notes..." value="@(Model?.Search ?? "")" />
             </div>
 
+            <div class="filter-row" style="align-items: flex-start;">
+                 <input type="checkbox" class="filter-toggle col-toggle" data-col="mfi" title="Show/hide column" checked style="margin-top: 4px;" />
+                 
+                 <div style="flex-grow: 1; padding-left: 5px;">
+                     <label style="font-size:12px; margin-bottom:12px; display:block; color:#555;">MFI Range</label>
+                     
+                     <div id="mfi-slider" style="margin: 0 10px 10px 10px;"></div>
+                     
+                     <div class="slider-values">
+                         <span id="mfi-min-val">0</span>
+                         <span id="mfi-max-val">100</span>
+                     </div>
+
+                     <input type="hidden" name="minMfi" id="minMfiInput" value="@Context.Request.Query["minMfi"]" />
+                     <input type="hidden" name="maxMfi" id="maxMfiInput" value="@Context.Request.Query["maxMfi"]" />
+                 </div>
+            </div>
             @foreach (var filter in filtersToRender)
             {
                 <div class="filter-row">
@@ -731,6 +674,7 @@
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/nouislider@14.6.3/distribute/nouislider.min.js"></script>
 
 <script>
     document.addEventListener('DOMContentLoaded', function () {
@@ -753,7 +697,6 @@
             openFilterFab.setAttribute('aria-expanded', 'false');
         }
 
-        // ===== FILTER TOGGLE =====
         if (openFilterFab) {
             openFilterFab.addEventListener('click', function() {
                 if (!filterOverlay) return;
@@ -769,6 +712,56 @@
             closeFilterBtn.addEventListener('click', closeFilterPanel);
         }
 
+        // --- NO UI SLIDER INITIALIZATION ---
+        // Hledáme nejvyšší hodnotu v datech pro nastavení maxima slideru
+        // Pokud data chybí, nastavíme výchozí 100
+        const maxMfiFromData = @(Model.Mfis != null && Model.Mfis.Any() 
+            ? Model.Mfis.Max(m => {
+                  var part = m.Split('/')[0].Trim();
+                  return double.TryParse(part, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out double r) ? r : 0;
+              }) 
+            : 100);
+            
+        const sliderMax = Math.ceil(Math.max(maxMfiFromData, 100)); // Minimum 100, nebo více podle dat
+        const sliderElement = document.getElementById('mfi-slider');
+        
+        // Načtení existujících hodnot z URL nebo výchozí rozsah
+        let urlMin = parseFloat("@Context.Request.Query["minMfi"]");
+        let urlMax = parseFloat("@Context.Request.Query["maxMfi"]");
+        
+        if (isNaN(urlMin)) urlMin = 0;
+        if (isNaN(urlMax)) urlMax = sliderMax;
+
+        noUiSlider.create(sliderElement, {
+            start: [urlMin, urlMax],
+            connect: true, // Vybarvení mezi body
+            range: {
+                'min': 0,
+                'max': sliderMax
+            },
+            step: 1, // Krok posunu
+            tooltips: false // Zde vypnuto, hodnoty ukazujeme dole
+        });
+
+        const minValDisplay = document.getElementById('mfi-min-val');
+        const maxValDisplay = document.getElementById('mfi-max-val');
+        const minInput = document.getElementById('minMfiInput');
+        const maxInput = document.getElementById('maxMfiInput');
+
+        // Update hodnot při posunu
+        sliderElement.noUiSlider.on('update', function (values, handle) {
+            const value = Math.round(values[handle]);
+            if (handle === 0) {
+                minValDisplay.innerHTML = value;
+                minInput.value = value;
+            } else {
+                maxValDisplay.innerHTML = value;
+                maxInput.value = value;
+            }
+        });
+        // --- END SLIDER ---
+
+
         // --- SELECT2 INITIALIZATION ---
         $(document).ready(function() {
             $('.multi-select').each(function() {
@@ -776,8 +769,7 @@
                 $(this).select2({
                     placeholder: `Select ${placeholderText.toLowerCase()}...`,
                     allowClear: true,
-                    width: '100%',
-                    dropdownParent: $('#filterOverlay .filter-modal-content')
+                    width: '100%'
                 });
             });
         });
@@ -787,11 +779,22 @@
             resetFiltersBtn.addEventListener('click', function () {
                 const searchInput = mobileFilterForm.querySelector('input[type="search"]');
                 if (searchInput) searchInput.value = '';
+                
                 $('.multi-select').val(null).trigger('change');
+                
                 document.querySelectorAll('.col-toggle').forEach(cb => {
                     cb.checked = true;
                 });
-                mobileFilterForm.submit();
+
+                // Reset Slider
+                sliderElement.noUiSlider.set([0, sliderMax]);
+
+                // Skryté inputy se resetují automaticky přes event slideru, ale pro jistotu:
+                minInput.value = '';
+                maxInput.value = '';
+
+                // Submit (po malé prodlevě, aby se propsaly hodnoty)
+                setTimeout(() => mobileFilterForm.submit(), 50);
             });
         }
 
@@ -821,9 +824,9 @@
         });
 
 
-        // --- PDF EXPORT LOGIC (TRANSLATED) ---
+        // --- PDF EXPORT LOGIC ---
         const modal = document.getElementById('pdf-export-modal');
-        const fabPdfBtn = document.getElementById('fab-pdf-btn');
+        const fabPdfBtn = document.getElementById('fab-pdf-btn'); 
         const closeBtn = document.getElementById('pdf-modal-close');
         const cancelBtn = document.getElementById('pdf-export-cancel');
         const downloadBtn = document.getElementById('pdf-export-download');
@@ -893,7 +896,6 @@
                 closePdfModal();
             });
         }
-
 
         // --- SERVICE WORKER ---
         if ('serviceWorker' in navigator) {

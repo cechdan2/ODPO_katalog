@@ -307,45 +307,39 @@
 
     /* Desktop */
     @@media (min-width: 768px) {
-        .fab-group
+        .fab-group {
+            display: none;
+        }
 
-    {
-        display: none;
-    }
+        .styled-form {
+            grid-template-columns: 1fr 1fr;
+        }
 
-    .styled-form {
-        grid-template-columns: 1fr 1fr;
-    }
-
-    .desktop-actions {
-        display: flex;
-    }
-
+        .desktop-actions {
+            display: flex;
+        }
     }
 
     /* Mobile */
     @@media (max-width: 767px) {
-        .desktop-actions
+        .desktop-actions {
+            display: none;
+        }
 
-    {
-        display: none;
-    }
+        .center-form-container {
+            padding: 1.2rem 1rem;
+            margin: 20px 0 0 0;
+            border: none;
+            box-shadow: none;
+        }
 
-    .center-form-container {
-        padding: 1.2rem 1rem;
-        margin: 20px 0 0 0;
-        border: none;
-        box-shadow: none;
-    }
+        .container {
+            padding: 12px 10px;
+        }
 
-    .container {
-        padding: 12px 10px;
-    }
-
-    .custom-file-name {
-        max-width: 150px;
-    }
-
+        .custom-file-name {
+            max-width: 150px;
+        }
     }
 </style>
 
@@ -507,10 +501,7 @@
             <div class="form-group">
                 <label for="PhotoFile">Main photo</label>
                 <div class="custom-file-wrapper">
-                    <input type="file" name="PhotoFile" id="PhotoFile" class="input-file-hidden" accept="image/*" />
-
-                    <input type="file" id="CameraInput" class="input-file-hidden" accept="image/*" capture="environment" />
-
+                    <input type="file" name="PhotoFile" id="PhotoFile" class="input-file-hidden" accept="image/*" capture="environment" />
                     <label for="PhotoFile" class="custom-file-label">Select file...</label>
                     <span id="PhotoFile-name" class="custom-file-name">No file selected</span>
                 </div>
@@ -555,7 +546,7 @@
             class="fab upload"
             title="Take photo"
             aria-label="Take photo"
-            onclick="document.getElementById('CameraInput').click();">
+            onclick="document.getElementById('PhotoFile').click();">
 
         <svg xmlns="http://www.w3.org/2000/svg"
              width="26"
@@ -582,75 +573,49 @@
 @section Scripts {
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-
             const mainInput = document.getElementById('PhotoFile');
-            const cameraInput = document.getElementById('CameraInput');
+            const preview = document.getElementById('PhotoPreview');
+            const photoSpan = document.getElementById('PhotoFile-name');
+            const photoError = document.getElementById('photoError');
 
-            // 1. Camera Logic (Syncing files)
-            if (cameraInput && mainInput) {
-                cameraInput.addEventListener('change', function(e) {
-                    // If user took a photo
-                    if (this.files && this.files.length > 0) {
-                        // Use DataTransfer to move file from cameraInput to mainInput
-                        const dataTransfer = new DataTransfer();
-                        dataTransfer.items.add(this.files[0]);
-                        mainInput.files = dataTransfer.files;
-
-                        // Manually trigger 'change' event on mainInput to run preview logic
-                        const event = new Event('change', { bubbles: true });
-                        mainInput.dispatchEvent(event);
-                    }
-                });
+            // Funkce pro reset náhledu
+            function resetPreview() {
+                preview.style.display = 'none';
+                preview.src = '';
+                photoSpan.textContent = 'No file selected';
+                photoSpan.style.fontStyle = 'italic';
+                photoSpan.style.color = '#555';
+                photoError.textContent = '';
             }
 
-            // 2. Main Photo - Preview
-            mainInput?.addEventListener('change', function (e) {
-                const input = e.target;
-                const preview = document.getElementById('PhotoPreview');
-                const err = document.getElementById('photoError');
-                const span = document.getElementById('PhotoFile-name');
-
-                err.textContent = '';
-
-                if (input.files && input.files[0]) {
-                    const file = input.files[0];
-
-                    // Validate Type
+            // Logika pro hlavní fotku (včetně kamery)
+            mainInput.addEventListener('change', function(e) {
+                photoError.textContent = '';
+                if (this.files && this.files.length > 0) {
+                    const file = this.files[0];
                     if (!file.type.startsWith('image/')) {
-                        err.textContent = 'Please select an image.';
-                        preview.style.display = 'none';
-                        preview.src = '';
-
-                        span.textContent = 'No file selected';
-                        span.style.fontStyle = 'italic';
-                        span.style.color = '#555';
+                        photoError.textContent = 'Vyberte obrázek.';
+                        resetPreview();
                         return;
                     }
-
-                    // Update Filename text
-                    span.textContent = file.name;
-                    span.style.fontStyle = 'normal';
-                    span.style.color = '#333';
-
-                    // Load Preview
+                    // Načti náhled
                     const reader = new FileReader();
-                    reader.onload = function (ev) {
+                    reader.onload = function(ev) {
                         preview.src = ev.target.result;
                         preview.style.display = 'inline-block';
                     };
                     reader.readAsDataURL(file);
+                    // Aktualizuj název souboru
+                    photoSpan.textContent = file.name;
+                    photoSpan.style.fontStyle = 'normal';
+                    photoSpan.style.color = '#333';
                 } else {
-                    // Reset
-                    preview.style.display = 'none';
-                    preview.src = '';
-                    span.textContent = 'No file selected';
-                    span.style.fontStyle = 'italic';
-                    span.style.color = '#555';
+                    resetPreview();
                 }
             });
 
-            // 3. Additional Photos - Preview
-            document.getElementById('AdditionalPhotoFiles')?.addEventListener('change', function (e) {
+            // Dodatečné fotky (beze změny)
+            document.getElementById('AdditionalPhotoFiles')?.addEventListener('change', function(e) {
                 const input = e.target;
                 const previewContainer = document.getElementById('AdditionalPreview');
                 const err = document.getElementById('additionalPhotosError');
@@ -660,18 +625,17 @@
                 previewContainer.innerHTML = '';
 
                 if (input.files && input.files.length > 0) {
-                    // Update Filename text
                     span.textContent = input.files.length === 1 ? input.files[0].name : `${input.files.length} files selected`;
                     span.style.fontStyle = 'normal';
                     span.style.color = '#333';
 
                     Array.from(input.files).forEach((file, index) => {
                         if (!file.type.startsWith('image/')) {
-                            err.textContent = `File ${file.name} is not an image.`;
+                            err.textContent = `Soubor ${file.name} není obrázek.`;
                             return;
                         }
                         const reader = new FileReader();
-                        reader.onload = function (ev) {
+                        reader.onload = function(ev) {
                             const img = document.createElement('img');
                             img.src = ev.target.result;
                             img.alt = `Preview ${index + 1}`;
@@ -680,7 +644,6 @@
                         reader.readAsDataURL(file);
                     });
                 } else {
-                    // Reset
                     span.textContent = 'No files selected';
                     span.style.fontStyle = 'italic';
                     span.style.color = '#555';

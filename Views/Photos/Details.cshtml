@@ -43,7 +43,6 @@
         margin: 0;
         font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
         color: var(--text);
-        /* overflow-x: hidden;  <-- TOTO BYLO ODSTRANĚNO (způsobovalo přetékání a oříznutí obsahu na mobilu) */
         padding-bottom: 100px; /* space for FAB */
     }
 
@@ -257,7 +256,6 @@
             color: var(--brand);
         }
 
-        /* Skryjeme starý input */
         .upload-form input[type="file"] {
             display: none;
         }
@@ -267,7 +265,7 @@
             flex-wrap: wrap;
             gap: 8px;
             margin-top: 10px;
-            margin-bottom: 12px; /* Přidána mezera před tlačítko */
+            margin-bottom: 12px;
         }
 
             .upload-form .preview-container img {
@@ -278,7 +276,7 @@
                 border: 1px solid var(--border);
             }
 
-    /* === VLASTNÍ STYL PRO NAHRÁVÁNÍ SOUBORŮ === */
+    /* === FILE INPUT STYLES === */
     .custom-file-wrapper {
         display: flex;
         align-items: center;
@@ -287,7 +285,6 @@
     }
 
     .input-file-hidden {
-        /* Toto je pro .upload-form input[type="file"] */
         width: 0.1px;
         height: 0.1px;
         opacity: 0;
@@ -319,15 +316,13 @@
         font-style: italic;
         color: #555;
         font-size: 0.9rem;
-        /* Zabrání přetečení */
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
         max-width: 200px;
     }
-    /* === KONEC STYLU === */
 
-
+    /* === LIGHTBOX (OVERLAY) === */
     .image-lightbox {
         position: fixed;
         inset: 0;
@@ -344,42 +339,60 @@
             animation: fadeIn 150ms ease;
         }
 
+        /* === ZMĚNA: Omezení velikosti obrázku v overlay === */
         .image-lightbox img {
-            max-width: 100%;
-            max-height: 100%;
-            object-fit: contain;
+            max-width: 100%; /* Nesmí být širší než okno */
+            max-height: 90vh; /* Nesmí být vyšší než 90% okna */
+            width: auto; /* Automatická šířka podle poměru */
+            height: auto; /* Automatická výška */
+            object-fit: contain; /* Zajistí, že se obrázek vejde celý */
             border-radius: 8px;
             cursor: zoom-out;
+            /* Pokud chcete ještě menší "rozumný rozměr" i na velkých monitorech: */
+            /* max-width: 800px; */
         }
 
         .image-lightbox .close-btn {
             position: absolute;
-            top: 8px;
-            right: 8px;
-            background: rgba(255,255,255,0.9);
-            border-radius: 6px;
-            border: none;
-            padding: 8px 12px;
+            top: 15px;
+            right: 15px;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border-radius: 50%;
+            border: 2px solid white;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             font-weight: 700;
             cursor: pointer;
             font-size: 1.2rem;
+            transition: background 0.2s;
         }
+
+            .image-lightbox .close-btn:hover {
+                background: rgba(255,255,255,0.4);
+            }
 
     @@keyframes fadeIn {
-        from {
-            opacity: 0;
-        }
+        from
 
-        to {
-            opacity: 1;
-        }
+    {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+
     }
 
     /* FAB */
     .fab-group {
         position: fixed;
-        right: 20px; /* Změněno z 12px na 20px */
-        bottom: 20px; /* Změněno z 12px na 20px */
+        right: 20px;
+        bottom: 20px;
         display: flex;
         flex-direction: column-reverse;
         gap: 10px;
@@ -421,51 +434,54 @@
         }
 
     @@media (min-width: 768px) {
-        body {
-            padding-bottom: 0;
-        }
+        body
 
-        .layout {
-            grid-template-columns: 320px 1fr;
-        }
+    {
+        padding-bottom: 0;
+    }
 
-        .fields {
-            grid-template-columns: repeat(2, 1fr);
-            gap: 12px 20px;
-        }
+    .layout {
+        grid-template-columns: 320px 1fr;
+    }
 
-        .full {
-            grid-column: 1 / -1;
-        }
+    .fields {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px 20px;
+    }
 
-        .actions {
-            flex-direction: row;
-            justify-content: flex-end;
-        }
+    .full {
+        grid-column: 1 / -1;
+    }
 
-        .btn {
-            width: auto;
-        }
+    .actions {
+        flex-direction: row;
+        justify-content: flex-end;
+    }
 
-        .photo-gallery {
-            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-            gap: 12px;
-        }
+    .btn {
+        width: auto;
+    }
 
-        .fab-group {
-            display: none;
-        }
+    .photo-gallery {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 12px;
+    }
 
-        .custom-file-name {
-            max-width: 300px;
-        }
+    .fab-group {
+        display: none;
+    }
+
+    .custom-file-name {
+        max-width: 300px;
+    }
+
     }
 
     /* === STYLY PRO PDF MODÁL === */
     .pdf-modal {
         position: fixed;
         inset: 0;
-        display: none; /* Skryto defaultně */
+        display: none;
         align-items: center;
         justify-content: center;
         background: rgba(0,0,0,0.6);
@@ -487,13 +503,14 @@
 
     .pdf-modal-close {
         position: absolute;
-        top: 10px;
-        right: 10px;
+        top: 15px;
+        right: 15px;
         background: transparent;
         border: none;
         font-size: 1.5rem;
         cursor: pointer;
         color: #888;
+        line-height: 1;
     }
 
         .pdf-modal-close:hover {
@@ -514,19 +531,23 @@
             align-items: center;
             gap: 8px;
             cursor: pointer;
+            font-size: 0.95rem;
         }
 
         #pdf-column-list input[type="checkbox"] {
             width: 18px;
             height: 18px;
+            accent-color: var(--brand);
         }
 
     @@media (max-width: 500px) {
-        #pdf-column-list {
-            grid-template-columns: 1fr; /* Jeden sloupec na malých obrazovkách */
-        }
+        #pdf-column-list
+
+    {
+        grid-template-columns: 1fr;
     }
-    /* === KONEC STYLŮ PRO PDF MODÁL === */
+
+    }
 </style>
 
 <main class="detail-page">
@@ -689,20 +710,20 @@
 
 <div id="imageLightbox" class="image-lightbox" role="dialog" aria-modal="true" aria-hidden="true">
     <div class="inner" role="document">
-        <button class="close-btn" id="lightboxClose" aria-label="Close (Esc)">✕</button>
+        <button class="close-btn" id="lightboxClose" aria-label="Close">✕</button>
         <img id="lightboxImg" src="" alt="Enlarged photo" />
     </div>
 </div>
 
 <div id="pdfModal" class="pdf-modal" role="dialog" aria-modal="true" aria-labelledby="pdfModalTitle" style="display: none;">
     <div class="pdf-modal-content">
-        <button id="pdfModalClose" class="pdf-modal-close" aria-label="Zavřít">✕</button>
-        <h2 id="pdfModalTitle">Exportovat do PDF</h2>
-        <p>Vyberte položky, které chcete zahrnout do exportu:</p>
+        <button id="pdfModalClose" class="pdf-modal-close" aria-label="Close">✕</button>
+        <h2 id="pdfModalTitle">Export to PDF</h2>
+        <p>Select columns to include in export:</p>
 
         <div id="pdf-column-list">
-            <label><input type="checkbox" value="Photo" checked> <span>Hlavní fotka</span></label>
-            <label><input type="checkbox" value="QrCode" checked> <span>Veřejný odkaz (QR)</span></label>
+            <label><input type="checkbox" value="Photo" checked> <span>Main Photo</span></label>
+            <label><input type="checkbox" value="QrCode" checked> <span>Public Link (QR)</span></label>
             <label><input type="checkbox" value="Id" checked> <span>ID</span></label>
             <label><input type="checkbox" value="Position" checked> <span>Position</span></label>
             <label><input type="checkbox" value="Supplier" checked> <span>Supplier</span></label>
@@ -718,7 +739,7 @@
             <label><input type="checkbox" value="UpdatedAt" checked> <span>Updated</span></label>
         </div>
 
-        <button id="generatePdfBtn" class="btn-primary" style="width: 100%; margin-top: 20px;">Vygenerovat PDF</button>
+        <button id="generatePdfBtn" class="btn-primary" style="width: 100%; margin-top: 20px;">Generate PDF</button>
     </div>
 </div>
 
@@ -730,13 +751,13 @@
         const closeBtn = document.getElementById('lightboxClose');
         const zoomableImages = document.querySelectorAll('.photo-zoom');
 
-        // --- NOVÉ PRO PDF MODAL ---
+        // --- PDF MODAL ELEMENTS ---
         const pdfModal = document.getElementById('pdfModal');
         const openPdfBtn = document.getElementById('openPdfModalBtn');
         const openPdfBtnMobile = document.getElementById('openPdfModalBtnMobile');
         const closePdfBtn = document.getElementById('pdfModalClose');
         const generatePdfBtn = document.getElementById('generatePdfBtn');
-        // --- KONEC ---
+        // --- END ---
 
         function openLightbox(src, alt) {
             if (!src) return;
@@ -766,7 +787,7 @@
             if (e.key === 'Escape' && lightbox.classList.contains('show')) closeLightbox();
         });
 
-        // --- NOVÁ LOGIKA PRO PDF MODAL ---
+        // --- PDF MODAL LOGIC ---
         function openPdfModal() {
             if (pdfModal) pdfModal.style.display = 'flex';
         }
@@ -792,31 +813,27 @@
                     params.append('columnsToInclude', cb.value);
                 });
 
-                // Pomocí Razor získáme ID aktuálního modelu
                 const baseUrl = '@Url.Action("ExportSinglePdf", "Photos", new { id = Model.Id })';
                 const fullUrl = `${baseUrl}?${params.toString()}`;
 
-                // Otevřeme PDF v novém okně
                 window.open(fullUrl, '_blank');
-
-                // Zavřeme modál
                 closePdfModal();
             });
         }
-        // --- KONEC NOVÉ LOGIKY ---
+        // --- END PDF LOGIC ---
 
 
         const quickInput = document.getElementById('quickUploadInput');
         const quickPreview = document.getElementById('quickUploadPreview');
         const uploadBtn = document.getElementById('uploadBtn');
-        const quickFileName = document.getElementById('quickUploadFileName'); // <-- NOVÉ
+        const quickFileName = document.getElementById('quickUploadFileName');
 
         if (quickInput) {
             quickInput.addEventListener('change', function(e) {
                 quickPreview.innerHTML = '';
                 uploadBtn.disabled = true;
 
-                if (quickFileName) { // <-- NOVÉ
+                if (quickFileName) {
                     quickFileName.textContent = '';
                     quickFileName.style.fontStyle = 'italic';
                 }
@@ -824,8 +841,8 @@
                 if (e.target.files.length > 0) {
                     uploadBtn.disabled = false;
 
-                    if (quickFileName) { // <-- NOVÉ
-                        quickFileName.textContent = e.target.files.length === 1 ? e.target.files[0].name : `${e.target.files.length} souborů vybráno`;
+                    if (quickFileName) {
+                        quickFileName.textContent = e.target.files.length === 1 ? e.target.files[0].name : `${e.target.files.length} files selected`;
                         quickFileName.style.fontStyle = 'normal';
                     }
 
