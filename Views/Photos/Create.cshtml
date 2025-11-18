@@ -1,7 +1,7 @@
 @model PhotoApp.Models.PhotoRecord
 
 @{
-    ViewData["Title"] = "Add new record";
+    ViewData["Title"] = "Add New Record";
 }
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -31,14 +31,12 @@
 
     html {
         width: 100%;
-        /* overflow-x: hidden; <-- ODSTRANĚNO */
     }
 
     body {
         margin: 0;
         padding: 0 0 100px 0;
         width: 100%;
-        /* overflow-x: hidden; <-- ODSTRANĚNO */
         font-family: system-ui,-apple-system,Segoe UI,Roboto,Ubuntu;
         color: var(--text);
         background: var(--bg);
@@ -104,7 +102,7 @@
     .styled-form {
         width: 100%;
         display: grid;
-        grid-template-columns: 1fr; /* Jeden sloupec pro mobily */
+        grid-template-columns: 1fr;
         gap: 12px 18px;
         align-items: start;
         box-sizing: border-box;
@@ -142,12 +140,11 @@
             border-color: #0078d7;
         }
 
-    /* Skryjeme starý input */
     .form-control-file {
         display: none;
     }
 
-    /* === VLASTNÍ STYL PRO NAHRÁVÁNÍ SOUBORŮ === */
+    /* === CUSTOM FILE INPUT STYLES === */
     .custom-file-wrapper {
         display: flex;
         align-items: center;
@@ -156,12 +153,12 @@
     }
 
     .input-file-hidden {
+        position: absolute;
+        left: -9999px;
+        opacity: 0;
         width: 0.1px;
         height: 0.1px;
-        opacity: 0;
         overflow: hidden;
-        position: absolute;
-        z-index: -1;
     }
 
     .custom-file-label {
@@ -192,7 +189,7 @@
         text-overflow: ellipsis;
         max-width: 200px;
     }
-    /* === KONEC STYLU SOUBORŮ === */
+    /* === END FILE INPUT STYLES === */
 
 
     .btn-primary {
@@ -266,13 +263,13 @@
             border: 1px solid var(--border);
         }
 
-    /* === PLOVOUCÍ TLAČÍTKA (FAB) === */
+    /* === FAB === */
     .fab-group {
         position: fixed;
         right: 20px;
         bottom: 20px;
-        display: flex; /* Změněno z 'none' na 'flex' - viditelné na mobilu */
-        flex-direction: column-reverse; /* Hlavní tlačítko (Uložit) bude dole */
+        display: flex;
+        flex-direction: column-reverse;
         gap: 10px;
         z-index: 1700;
     }
@@ -298,51 +295,57 @@
             color: var(--brand-dark);
             border: 1px solid var(--border);
         }
-        
+
         .fab.upload {
-             background: #0ea5e9; /* Modrá pro upload */
-             color: white;
+            background: #0ea5e9;
+            color: white;
         }
 
         .fab:hover {
             transform: translateY(-2px);
         }
 
-    /* Desktopové zobrazení */
+    /* Desktop */
     @@media (min-width: 768px) {
-        .fab-group {
-            display: none; /* Skryjeme FAB na desktopu */
-        }
-        
-        .styled-form {
-            grid-template-columns: 1fr 1fr; /* Dvousloupcové na desktopu */
-        }
-        
-        .desktop-actions {
-             display: flex; /* Zobrazíme desktopová tlačítka */
-        }
+        .fab-group
+
+    {
+        display: none;
     }
 
-    /* Mobilní zobrazení */
+    .styled-form {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .desktop-actions {
+        display: flex;
+    }
+
+    }
+
+    /* Mobile */
     @@media (max-width: 767px) {
-         .desktop-actions {
-            display: none; /* Skryjeme desktopová tlačítka na mobilu */
-         }
+        .desktop-actions
 
-        .center-form-container {
-            padding: 1.2rem 1rem;
-            margin: 20px 0 0 0;
-            border: none;
-            box-shadow: none;
-        }
+    {
+        display: none;
+    }
 
-        .container {
-             padding: 12px 10px;
-        }
+    .center-form-container {
+        padding: 1.2rem 1rem;
+        margin: 20px 0 0 0;
+        border: none;
+        box-shadow: none;
+    }
 
-        .custom-file-name {
-            max-width: 150px;
-        }
+    .container {
+        padding: 12px 10px;
+    }
+
+    .custom-file-name {
+        max-width: 150px;
+    }
+
     }
 </style>
 
@@ -354,7 +357,7 @@
             </a>
             <div>
                 <h1 style="margin:0;font-size:18px;color:var(--brand);">Add New Record</h1>
-                <div class="muted" style="font-size:13px;">ODPO s.r.o. – Katalog vzorků plastů</div>
+                <div class="muted" style="font-size:13px;">ODPO s.r.o. – Plastic Sample Catalog</div>
             </div>
         </div>
     </div>
@@ -505,6 +508,9 @@
                 <label for="PhotoFile">Main photo</label>
                 <div class="custom-file-wrapper">
                     <input type="file" name="PhotoFile" id="PhotoFile" class="input-file-hidden" accept="image/*" />
+
+                    <input type="file" id="CameraInput" class="input-file-hidden" accept="image/*" capture="environment" />
+
                     <label for="PhotoFile" class="custom-file-label">Select file...</label>
                     <span id="PhotoFile-name" class="custom-file-name">No file selected</span>
                 </div>
@@ -512,9 +518,9 @@
             </div>
 
             <div class="form-group">
-                <label for="PhotoPreview">View of main photo</label>
+                <label for="PhotoPreview">Main photo preview</label>
                 <div>
-                    <img id="PhotoPreview" src="" class="preview-img" alt="Náhled fotky" style="display:none;" />
+                    <img id="PhotoPreview" src="" class="preview-img" alt="Main photo preview" style="display:none;" />
                 </div>
             </div>
 
@@ -530,7 +536,7 @@
             </div>
 
             <div class="form-group full desktop-actions" style="gap:12px; justify-content:flex-end; margin-top: 18px;">
-                <a href="@Url.Action("Index", "Photos")" class="btn">Abort</a>
+                <a href="@Url.Action("Index", "Photos")" class="btn">Cancel</a>
                 <button type="submit" class="btn-primary">Save record</button>
             </div>
         </form>
@@ -547,24 +553,10 @@
 
     <button type="button"
             class="fab upload"
-            title="Vyfotit"
-            aria-label="Vyfotit"
-            onclick="document.getElementById('cameraInput').click();"
-            style="
-            width:60px;
-            height:60px;
-            border-radius:50%;
-            background:#007bff;
-            color:white;
-            display:flex;
-            align-items:center;
-            justify-content:center;
-            border:none;
-            box-shadow:0 4px 10px rgba(0,0,0,0.3);
-            cursor:pointer;
-        ">
+            title="Take photo"
+            aria-label="Take photo"
+            onclick="document.getElementById('CameraInput').click();">
 
-        <!-- Ikona malého fotoaparátu -->
         <svg xmlns="http://www.w3.org/2000/svg"
              width="26"
              height="26"
@@ -580,14 +572,6 @@
 
     </button>
 
-    <!-- Skrytý vstup → otevře fotoaparát -->
-    <input id="cameraInput"
-           type="file"
-           accept="image/*"
-           capture="environment"
-           style="display:none;">
-
-    
     <button type="submit" form="createForm" class="fab" title="Save record" aria-label="Save record">
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="20 6 9 17 4 12"></polyline>
@@ -598,21 +582,57 @@
 @section Scripts {
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-        
-            // Hlavní fotka - náhled
-            document.getElementById('PhotoFile')?.addEventListener('change', function (e) {
+
+            const mainInput = document.getElementById('PhotoFile');
+            const cameraInput = document.getElementById('CameraInput');
+
+            // 1. Camera Logic (Syncing files)
+            if (cameraInput && mainInput) {
+                cameraInput.addEventListener('change', function(e) {
+                    // If user took a photo
+                    if (this.files && this.files.length > 0) {
+                        // Use DataTransfer to move file from cameraInput to mainInput
+                        const dataTransfer = new DataTransfer();
+                        dataTransfer.items.add(this.files[0]);
+                        mainInput.files = dataTransfer.files;
+
+                        // Manually trigger 'change' event on mainInput to run preview logic
+                        const event = new Event('change', { bubbles: true });
+                        mainInput.dispatchEvent(event);
+                    }
+                });
+            }
+
+            // 2. Main Photo - Preview
+            mainInput?.addEventListener('change', function (e) {
                 const input = e.target;
                 const preview = document.getElementById('PhotoPreview');
                 const err = document.getElementById('photoError');
+                const span = document.getElementById('PhotoFile-name');
+
                 err.textContent = '';
+
                 if (input.files && input.files[0]) {
                     const file = input.files[0];
+
+                    // Validate Type
                     if (!file.type.startsWith('image/')) {
-                        err.textContent = 'Prosím vyberte obrázek.';
+                        err.textContent = 'Please select an image.';
                         preview.style.display = 'none';
                         preview.src = '';
+
+                        span.textContent = 'No file selected';
+                        span.style.fontStyle = 'italic';
+                        span.style.color = '#555';
                         return;
                     }
+
+                    // Update Filename text
+                    span.textContent = file.name;
+                    span.style.fontStyle = 'normal';
+                    span.style.color = '#333';
+
+                    // Load Preview
                     const reader = new FileReader();
                     reader.onload = function (ev) {
                         preview.src = ev.target.result;
@@ -620,60 +640,52 @@
                     };
                     reader.readAsDataURL(file);
                 } else {
+                    // Reset
                     preview.style.display = 'none';
                     preview.src = '';
+                    span.textContent = 'No file selected';
+                    span.style.fontStyle = 'italic';
+                    span.style.color = '#555';
                 }
             });
 
-            // Dodatečné fotky - náhled
+            // 3. Additional Photos - Preview
             document.getElementById('AdditionalPhotoFiles')?.addEventListener('change', function (e) {
                 const input = e.target;
                 const previewContainer = document.getElementById('AdditionalPreview');
                 const err = document.getElementById('additionalPhotosError');
+                const span = document.getElementById('AdditionalPhotoFiles-name');
+
                 err.textContent = '';
                 previewContainer.innerHTML = '';
 
                 if (input.files && input.files.length > 0) {
+                    // Update Filename text
+                    span.textContent = input.files.length === 1 ? input.files[0].name : `${input.files.length} files selected`;
+                    span.style.fontStyle = 'normal';
+                    span.style.color = '#333';
+
                     Array.from(input.files).forEach((file, index) => {
                         if (!file.type.startsWith('image/')) {
-                            err.textContent = `Soubor ${file.name} není obrázek.`;
+                            err.textContent = `File ${file.name} is not an image.`;
                             return;
                         }
-
                         const reader = new FileReader();
                         reader.onload = function (ev) {
                             const img = document.createElement('img');
                             img.src = ev.target.result;
-                            img.alt = `Náhled dodatečné fotky ${index + 1}`;
+                            img.alt = `Preview ${index + 1}`;
                             previewContainer.appendChild(img);
                         };
                         reader.readAsDataURL(file);
                     });
+                } else {
+                    // Reset
+                    span.textContent = 'No files selected';
+                    span.style.fontStyle = 'italic';
+                    span.style.color = '#555';
                 }
             });
-
-            // NOVÝ SKRIPT: Zobrazení názvů souborů
-            function setupFileInput(inputId, spanId) {
-                const input = document.getElementById(inputId);
-                const span = document.getElementById(spanId);
-                if (!input || !span) return;
-
-                input.addEventListener('change', () => {
-                    if (input.files && input.files.length > 0) {
-                        span.textContent = input.files.length === 1 ? input.files[0].name : `${input.files.length} souborů vybráno`;
-                        span.style.fontStyle = 'normal';
-                        span.style.color = '#333';
-                    } else {
-                        span.textContent = input.multiple ? 'No files selected' : 'No file selected';
-                        span.style.fontStyle = 'italic';
-                        span.style.color = '#555';
-                    }
-                });
-            }
-
-            setupFileInput('PhotoFile', 'PhotoFile-name');
-            setupFileInput('AdditionalPhotoFiles', 'AdditionalPhotoFiles-name');
-
         });
     </script>
 

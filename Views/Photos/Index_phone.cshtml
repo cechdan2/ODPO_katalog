@@ -28,7 +28,6 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="apple-touch-icon" href="/icons/icon-192.png">
 <head>
-
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <style>
         /* Style for Select2 to match the design */
@@ -49,9 +48,11 @@
             color: white !important;
         }
 
+        /* Fix z-index for select2 inside modal */
         .select2-dropdown {
             border-radius: 8px !important;
             border: 1px solid var(--border) !important;
+            z-index: 9999 !important;
         }
     </style>
 </head>
@@ -173,7 +174,6 @@
             border-color: #b91c1c;
         }
 
-    /* New style for login/logout */
     .user-action-link {
         display: inline-block;
         padding: 10px 14px;
@@ -183,14 +183,14 @@
         font-weight: 500;
         border-radius: 12px;
         background: transparent;
-        border: none; /* Remove border */
+        border: none;
         cursor: pointer;
-        font-family: inherit; /* For <button> */
-        line-height: 1; /* For <button> */
+        font-family: inherit;
+        line-height: 1;
     }
 
         .user-action-link:hover {
-            background: #eef7ee; /* Light green background on hover */
+            background: #eef7ee;
         }
 
     .inline-form {
@@ -198,53 +198,72 @@
         display: inline-block;
     }
 
-    /* === FILTER PANEL === */
-    .filter-panel {
+    /* === FILTER MODAL (OVERLAY STYLE) === */
+    .filter-overlay {
+        display: none;
         position: fixed;
-        left: 12px;
-        bottom: 215px;
-        width: 360px;
-        max-width: calc(100% - 24px);
-        background: #fff;
-        border-radius: 16px;
-        border: 1px solid var(--border);
-        box-shadow: 0 8px 24px rgba(0,0,0,0.15);
-        z-index: 1600;
-        transform: translateY(20px) scale(0.95);
-        opacity: 0;
-        visibility: hidden;
-        transition: transform 0.2s ease-out, opacity 0.2s ease-out, visibility 0.2s;
-        display: flex;
-        flex-direction: column;
-        max-height: 50vh;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(5px);
+        z-index: 2000;
+        align-items: center;
+        justify-content: center;
     }
 
-        .filter-panel.open {
-            transform: translateY(0) scale(1);
-            opacity: 1;
-            visibility: visible;
+        .filter-overlay.open {
+            display: flex;
         }
+
+    .filter-modal-content {
+        background: #fff;
+        width: 90%;
+        max-width: 500px;
+        max-height: 85vh;
+        border-radius: 16px;
+        border: 1px solid var(--border);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        display: flex;
+        flex-direction: column;
+        transform: scale(0.95);
+        opacity: 0;
+        transition: transform 0.2s ease-out, opacity 0.2s ease-out;
+    }
+
+    .filter-overlay.open .filter-modal-content {
+        transform: scale(1);
+        opacity: 1;
+    }
 
     .filter-panel-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 12px 16px;
+        padding: 15px 20px;
         border-bottom: 1px solid var(--border);
     }
 
         .filter-panel-header h3 {
             margin: 0;
-            font-size: 18px;
+            font-size: 1.25rem;
             color: var(--brand-dark);
         }
 
+        .filter-panel-header .close-icon {
+            color: #aaa;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            line-height: 1;
+        }
+
     .filter-panel-body {
-        padding: 16px;
+        padding: 20px;
         overflow-y: auto;
     }
 
-    /* Checkbox for hiding columns */
     .filter-toggle {
         -webkit-appearance: none;
         appearance: none;
@@ -273,7 +292,6 @@
                 color: white;
             }
 
-    /* Filter Row */
     #mobileFilterForm .filter-row {
         margin-bottom: 12px;
         display: flex;
@@ -304,17 +322,16 @@
 
     .filter-panel-footer {
         display: flex;
-        gap: 8px;
+        gap: 10px;
         justify-content: flex-end;
-        padding: 12px 16px;
+        padding: 15px 20px;
         border-top: 1px solid var(--border);
         background: #f9f9f9;
         border-bottom-left-radius: 16px;
         border-bottom-right-radius: 16px;
     }
 
-    /* === ITEM CARDS (HYBRID LAYOUT) === */
-
+    /* === ITEM CARDS === */
     .card-list {
         display: grid;
         grid-template-columns: 1fr;
@@ -330,12 +347,11 @@
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: 12px; /* Gap for heading */
+        gap: 12px;
         font-size: 15px;
         box-shadow: 0 2px 8px rgba(0,0,0,.05);
     }
 
-        /* Style for card heading */
         .item-card .name {
             font-size: 20px;
             font-weight: 700;
@@ -358,21 +374,18 @@
         cursor: pointer;
     }
 
-    /* .card-info is a 2-column grid */
     .card-info {
         display: grid;
-        grid-template-columns: 1fr 1fr; /* 2 columns */
-        gap: 8px; /* Gap between cells */
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
         width: 100%;
     }
 
-    /* Each .info-item is a separate "cell" */
     .info-item {
         display: grid;
         grid-template-columns: auto 1fr;
         gap: 8px;
         align-items: baseline;
-        /* Cell style */
         background: #fcfcfc;
         border: 1px solid var(--border);
         padding: 8px 10px;
@@ -382,14 +395,13 @@
         .info-item strong {
             font-weight: 600;
             color: #555;
-            text-align: right; /* Right-align */
+            text-align: right;
         }
 
         .info-item span {
             font-weight: 500;
             color: #111;
         }
-
 
     .card-footer {
         display: flex;
@@ -404,13 +416,13 @@
             flex-grow: 1;
         }
 
-    /* === FLOATING ACTION BUTTONS (FAB) === */
+    /* === FAB === */
     .fab-group {
         position: fixed;
         right: 20px;
         bottom: 20px;
         display: none;
-        flex-direction: column;
+        flex-direction: column-reverse;
         gap: 10px;
         z-index: 1700;
     }
@@ -444,7 +456,6 @@
             transform: translateY(-2px);
         }
 
-    /* === FOOTER === */
     .footer {
         text-align: center;
         font-size: 16px;
@@ -452,120 +463,128 @@
         color: #3b6b3b;
     }
 
-    /* === RESPONSIVE STYLES === */
+    /* === RESPONSIVE === */
     @@media (min-width: 1200px) {
-        .card-list {
-            grid-template-columns: repeat(2, 1fr);
-        }
+        .card-list
+
+    {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
     }
 
     @@media (min-width: 768px) {
-        .fab-group, .filter-panel {
-            display: none !important;
-        }
+        .fab-group
+
+    {
+        display: none !important;
+    }
+
     }
 
     @@media (max-width: 767px) {
-        .fab-group {
-            display: flex;
-        }
+        .fab-group
+
+    {
+        display: flex;
+    }
+
     }
 
     @@media (max-width: 599px) {
-        .brand img {
-            height: 90px;
-        }
+        .brand img
 
-        .brand h1 {
-            font-size: 20px;
-        }
+    {
+        height: 90px;
+    }
 
-        .header-inner {
-            padding: 16px 0;
-        }
+    .brand h1 {
+        font-size: 20px;
+    }
 
-        .container {
-            padding: 12px 10px;
-        }
+    .header-inner {
+        padding: 16px 0;
+    }
 
-        .item-card {
-            padding: 14px;
-            gap: 10px;
-            border-radius: 16px;
-        }
+    .container {
+        padding: 12px 10px;
+    }
 
-        .thumb {
-            max-width: 280px;
-        }
+    .item-card {
+        padding: 14px;
+        gap: 10px;
+        border-radius: 16px;
+    }
 
-        .card-info {
-            max-width: 100%;
-        }
+    .thumb {
+        max-width: 280px;
+    }
 
-        .info-item strong, .info-item span {
-            font-size: 14px;
-        }
+    .card-info {
+        max-width: 100%;
+    }
 
-        .card-footer {
-            gap: 6px;
-        }
+    .info-item strong, .info-item span {
+        font-size: 14px;
+    }
 
-            .card-footer .action-btn {
-                padding: 9px 10px;
-                font-size: 13px;
-                max-width: none;
-            }
+    .card-footer {
+        gap: 6px;
+    }
 
-        .footer {
-            padding-bottom: 20px;
-            font-size: 14px;
-        }
-
-        .filter-panel {
-            right: 8px;
-            left: 8px;
-            width: auto;
+        .card-footer .action-btn {
+            padding: 9px 10px;
+            font-size: 13px;
             max-width: none;
         }
+
+    .footer {
+        padding-bottom: 20px;
+        font-size: 14px;
+    }
+
     }
 
     @@media (max-width: 420px) {
-        .brand img {
-            height: 80px;
+        .brand img
+
+    {
+        height: 80px;
+    }
+
+    .brand h1 {
+        font-size: 18px;
+    }
+
+    .container {
+        padding: 10px 8px;
+    }
+
+    .thumb {
+        max-width: 240px;
+    }
+
+    .card-footer .action-btn {
+        padding: 8px;
+        font-size: 12px;
+    }
+
+    .info-item {
+        grid-template-columns: 1fr;
+        gap: 2px;
+        padding: 6px 8px;
+    }
+
+        .info-item strong {
+            text-align: left;
+            font-size: 11px;
+            color: #777;
         }
 
-        .brand h1 {
-            font-size: 18px;
+        .info-item span {
+            font-size: 13px;
         }
 
-        .container {
-            padding: 10px 8px;
-        }
-
-        .thumb {
-            max-width: 240px;
-        }
-
-        .card-footer .action-btn {
-            padding: 8px;
-            font-size: 12px;
-        }
-        /* Stack label and value on extra-small screens */
-        .info-item {
-            grid-template-columns: 1fr;
-            gap: 2px;
-            padding: 6px 8px;
-        }
-
-            .info-item strong {
-                text-align: left; /* Revert to left-align when stacked */
-                font-size: 11px;
-                color: #777;
-            }
-
-            .info-item span {
-                font-size: 13px;
-            }
     }
 </style>
 
@@ -578,38 +597,40 @@
     </div>
 </header>
 
-<aside id="filterPanel" class="filter-panel" role="dialog" aria-modal="true" aria-labelledby="filterPanelTitle" aria-hidden="true">
-    <div class="filter-panel-header">
-        <h3 id="filterPanelTitle">Filters</h3>
-        <button type="button" class="action-btn" id="closeFilterBtn" aria-label="Close filters">&times;</button>
-    </div>
-    <form method="get" id="mobileFilterForm" class="filter-panel-body">
-        <div class="filter-row">
-            <label for="search">Search All</label>
-            <input type="search" id="search" name="search" placeholder="Name, code, notes..." value="@(Model?.Search ?? "")" />
+<div id="filterOverlay" class="filter-overlay" role="dialog" aria-modal="true" aria-labelledby="filterPanelTitle" aria-hidden="true">
+    <div class="filter-modal-content">
+        <div class="filter-panel-header">
+            <h3 id="filterPanelTitle">Filters</h3>
+            <span id="closeFilterBtn" class="close-icon" title="Close">&times;</span>
         </div>
-
-        @foreach (var filter in filtersToRender)
-        {
+        <form method="get" id="mobileFilterForm" class="filter-panel-body">
             <div class="filter-row">
-                <input type="checkbox" class="filter-toggle col-toggle"
-                       data-col="@filter.Name.ToLower()" title="Show/hide column" checked />
-
-                <select id="@($"filter-{filter.Name}")" name="@filter.Name" class="multi-select" multiple="multiple"
-                        data-placeholder="@filter.Placeholder">
-                    @foreach (var val in filter.AllValues)
-                    {
-                        <option value="@val" selected="@(filter.SelectedValues.Contains(val))">@val</option>
-                    }
-                </select>
+                <label for="search">Search All</label>
+                <input type="search" id="search" name="search" placeholder="Name, code, notes..." value="@(Model?.Search ?? "")" />
             </div>
-        }
-    </form>
-    <div class="filter-panel-footer">
-        <button type="button" class="action-btn" id="resetFiltersBtn">Reset All</button>
-        <button type="submit" form="mobileFilterForm" class="action-btn primary">Apply Filters</button>
+
+            @foreach (var filter in filtersToRender)
+            {
+                <div class="filter-row">
+                    <input type="checkbox" class="filter-toggle col-toggle"
+                           data-col="@filter.Name.ToLower()" title="Show/hide column" checked />
+
+                    <select id="@($"filter-{filter.Name}")" name="@filter.Name" class="multi-select" multiple="multiple"
+                            data-placeholder="@filter.Placeholder">
+                        @foreach (var val in filter.AllValues)
+                        {
+                            <option value="@val" selected="@(filter.SelectedValues.Contains(val))">@val</option>
+                        }
+                    </select>
+                </div>
+            }
+        </form>
+        <div class="filter-panel-footer">
+            <button type="button" class="action-btn" id="resetFiltersBtn">Reset All</button>
+            <button type="submit" form="mobileFilterForm" class="action-btn primary">Apply Filters</button>
+        </div>
     </div>
-</aside>
+</div>
 
 <main class="container" role="main">
     <div class="user-actions" style="display:flex; justify-content:flex-end; margin-bottom:8px; gap: 8px;">
@@ -662,17 +683,48 @@
     <div class="footer">Data is saved in the database. For backup, export the data from the server.</div>
 </main>
 
+<div id="pdf-export-modal" style="display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.5); backdrop-filter: blur(5px); align-items: center; justify-content: center;">
+    <div id="pdf-modal-content" style="background-color: #fefefe; margin: auto; padding: 20px; border: 1px solid #888; width: 90%; max-width: 500px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.3);">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 15px;">
+            <h2 style="margin: 0; font-size: 1.25rem; color:var(--brand-dark);">Export to PDF</h2>
+            <span id="pdf-modal-close" style="color: #aaa; font-size: 28px; font-weight: bold; cursor: pointer;">&times;</span>
+        </div>
+
+        <p style="margin-top: 0; margin-bottom: 15px; font-size: 14px; color: #555;">Select columns to include in export:</p>
+
+        <div id="pdf-column-list" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;">
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+            <button id="pdf-export-cancel" class="action-btn">Cancel</button>
+            <button id="pdf-export-download" class="action-btn primary">Download PDF</button>
+        </div>
+    </div>
+</div>
+
 <div class="fab-group" aria-hidden="false">
     <a asp-controller="Photos" asp-action="Create" class="fab" title="Add new sample" aria-label="Add new sample">+</a>
+
+    <button type="button" class="fab secondary" id="fab-pdf-btn" title="Export to PDF" aria-label="Export to PDF">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="16" y1="13" x2="8" y2="13"></line>
+            <line x1="16" y1="17" x2="8" y2="17"></line>
+            <polyline points="10 9 9 9 8 9"></polyline>
+        </svg>
+    </button>
+
     <a asp-controller="Admin" asp-action="Database" class="fab secondary" title="Settings" aria-label="Settings" role="button">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="12" r="3"></circle>
-            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l0 0a2 2 0 1 1-2.83 2.83l0 0a1.65 1.65 0 0 0-1.82.33 1.65 1.65 0 0 0-.5 1.54 2 2 0 0 1-1.5 2.1 2 2 0 0 1-2.1-1.5 1.65 1.65 0 0 0-1.54-.5 1.65 1.65 0 0 0-.33 1.82 2 2 0 1 1-2.83 2.83 1.65 1.65 0 0 0-1.82.33 1.65 1.65 0 0 0-.5 1.54 2 2 0 0 1-1.5 2.1" />
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
         </svg>
     </a>
-    <button type="button" class="fab secondary" id="openFilterFab" title="Filters" aria-label="Open filters" aria-haspopup="dialog" aria-expanded="false" aria-controls="filterPanel">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-            <path d="M3 5h18M6 12h12M10 19h4" stroke="#166534" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+
+    <button type="button" class="fab secondary" id="openFilterFab" title="Filters" aria-label="Open filters" aria-haspopup="dialog" aria-expanded="false" aria-controls="filterOverlay">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 5h18M6 12h12M10 19h4" />
         </svg>
     </button>
 </div>
@@ -682,37 +734,36 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-        // --- FILTER PANEL LOGIC ---
-        const filterPanel = document.getElementById('filterPanel');
+        // --- FILTER MODAL LOGIC ---
+        const filterOverlay = document.getElementById('filterOverlay');
         const openFilterFab = document.getElementById('openFilterFab');
         const closeFilterBtn = document.getElementById('closeFilterBtn');
         const resetFiltersBtn = document.getElementById('resetFiltersBtn');
         const mobileFilterForm = document.getElementById('mobileFilterForm');
 
         function openFilterPanel() {
-            if (!filterPanel) return;
-            filterPanel.classList.add('open');
+            if (!filterOverlay) return;
+            filterOverlay.classList.add('open');
             openFilterFab.setAttribute('aria-expanded', 'true');
         }
 
         function closeFilterPanel() {
-            if (!filterPanel) return;
-            filterPanel.classList.remove('open');
+            if (!filterOverlay) return;
+            filterOverlay.classList.remove('open');
             openFilterFab.setAttribute('aria-expanded', 'false');
         }
 
         // ===== FILTER TOGGLE =====
         if (openFilterFab) {
             openFilterFab.addEventListener('click', function() {
-                if (!filterPanel) return;
-                if (filterPanel.classList.contains('open')) {
+                if (!filterOverlay) return;
+                if (filterOverlay.classList.contains('open')) {
                     closeFilterPanel();
                 } else {
                     openFilterPanel();
                 }
             });
         }
-        // =========================================================
 
         if (closeFilterBtn) {
             closeFilterBtn.addEventListener('click', closeFilterPanel);
@@ -721,13 +772,12 @@
         // --- SELECT2 INITIALIZATION ---
         $(document).ready(function() {
             $('.multi-select').each(function() {
-                // Get placeholder from data-attribute
                 const placeholderText = $(this).data('placeholder') || 'Select...';
                 $(this).select2({
                     placeholder: `Select ${placeholderText.toLowerCase()}...`,
                     allowClear: true,
                     width: '100%',
-                    dropdownParent: $('#filterPanel') // Important for rendering in the panel
+                    dropdownParent: $('#filterOverlay .filter-modal-content')
                 });
             });
         });
@@ -735,19 +785,12 @@
         // --- RESET FILTERS ---
         if (resetFiltersBtn) {
             resetFiltersBtn.addEventListener('click', function () {
-                // Reset text search
                 const searchInput = mobileFilterForm.querySelector('input[type="search"]');
                 if (searchInput) searchInput.value = '';
-
-                // Reset all Select2 filters
                 $('.multi-select').val(null).trigger('change');
-
-                // Also reset checkboxes to "checked"
                 document.querySelectorAll('.col-toggle').forEach(cb => {
                     cb.checked = true;
                 });
-
-                // Immediately submit the form to clear filters
                 mobileFilterForm.submit();
             });
         }
@@ -756,40 +799,103 @@
         const checkboxes = document.querySelectorAll(".col-toggle");
 
         function toggleField(colName, isVisible) {
-            // Find all .info-item elements with the matching data-col
             document.querySelectorAll(`.item-card .info-item[data-col='${colName}']`).forEach(field => {
-                // Use 'grid' (default display) or 'none'
                 field.style.display = isVisible ? "grid" : "none";
             });
         }
 
         checkboxes.forEach(cb => {
             const colName = cb.dataset.col;
-            // 1. Set initial state on page load
             toggleField(colName, cb.checked);
-
-            // 2. Add listener for changes
             cb.addEventListener("change", function() {
                 toggleField(colName, this.checked);
-                // Note: This state isn't saved; checkboxes will revert to 'checked' on refresh
             });
         });
-        // === END OF LOGIC ===
-
 
         // --- CLOSE PANEL ON CLICK OUTSIDE ---
         document.addEventListener('click', function(event) {
-            if (!filterPanel || !filterPanel.classList.contains('open')) return;
-            const isClickInsidePanel = filterPanel.contains(event.target);
-            const isClickOnFab = openFilterFab.contains(event.target);
-            // Close only if click is not on the panel, its Select2 dropdown, or the FAB
-            if (!isClickInsidePanel && !isClickOnFab && !$(event.target).closest('.select2-container').length) {
+            if (!filterOverlay || !filterOverlay.classList.contains('open')) return;
+            if (event.target === filterOverlay) {
                 closeFilterPanel();
             }
         });
 
 
-        // --- SERVICE WORKER (Unchanged) ---
+        // --- PDF EXPORT LOGIC (TRANSLATED) ---
+        const modal = document.getElementById('pdf-export-modal');
+        const fabPdfBtn = document.getElementById('fab-pdf-btn');
+        const closeBtn = document.getElementById('pdf-modal-close');
+        const cancelBtn = document.getElementById('pdf-export-cancel');
+        const downloadBtn = document.getElementById('pdf-export-download');
+        const columnListDiv = document.getElementById('pdf-column-list');
+
+        const allColumns = {
+            "Id": "ID",
+            "Supplier": "Supplier",
+            "Material": "Material (Internal Name)",
+            "OriginalName": "Original Name",
+            "Color": "Color",
+            "Position": "Position",
+            "Form": "Form",
+            "Filler": "Filler",
+            "Mfi": "MFI",
+            "Notes": "Notes"
+        };
+
+        function openPdfModal() {
+            columnListDiv.innerHTML = '';
+            for (const [key, label] of Object.entries(allColumns)) {
+                columnListDiv.innerHTML += `
+                    <label style="display: flex; align-items: center; gap: 8px; font-size: 14px;">
+                        <input type="checkbox" class="pdf-column-checkbox" value="${key}" checked>
+                        ${label}
+                    </label>
+                `;
+            }
+            modal.style.display = 'flex';
+        }
+
+        function closePdfModal() {
+            modal.style.display = 'none';
+        }
+
+        if (fabPdfBtn) fabPdfBtn.addEventListener('click', openPdfModal);
+        if (closeBtn) closeBtn.addEventListener('click', closePdfModal);
+        if (cancelBtn) cancelBtn.addEventListener('click', closePdfModal);
+        if (modal) {
+            modal.addEventListener('click', function(event) {
+                if (event.target === modal) closePdfModal();
+            });
+        }
+
+        if (downloadBtn) {
+            downloadBtn.addEventListener('click', function() {
+                const selectedColumns = [];
+                document.querySelectorAll('.pdf-column-checkbox:checked').forEach(cb => {
+                    selectedColumns.push(cb.value);
+                });
+
+                if (selectedColumns.length === 0) {
+                    alert("You must select at least one column for export.");
+                    return;
+                }
+
+                const mainForm = document.getElementById('mobileFilterForm');
+                const formData = new FormData(mainForm);
+                const params = new URLSearchParams(formData);
+
+                selectedColumns.forEach(col => {
+                    params.append('columnsToInclude', col);
+                });
+
+                const exportUrl = `@Url.Action("ExportPdf", "Photos")?${params.toString()}`;
+                window.open(exportUrl, '_blank');
+                closePdfModal();
+            });
+        }
+
+
+        // --- SERVICE WORKER ---
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('/service-worker.js', { scope: '/' })

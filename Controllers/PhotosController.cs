@@ -8,10 +8,11 @@ using PhotoApp.Models;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
+using System.Linq;
 using System.Linq.Expressions; // Přidáno pro Expression
+using System.Net.Http;
 using System.Text;
 using System.Text.Json;
-using System.Net.Http;
 
 namespace PhotoApp.Controllers;
 
@@ -83,7 +84,7 @@ public class PhotosController : Controller
         var query = GetFilteredQuery(search, supplier, material, type, color, name, position, filler, mfi, monthlyQuantity, form);
 
         // 2. Spustíme dotaz
-        var items = await query.OrderBy(p => p.Id).ToListAsync();
+        var items = await query.OrderBy(p => p.Material).ToListAsync();
 
         // 3. Vytvoříme PDF dokument
         QuestPDF.Settings.License = LicenseType.Community;
@@ -677,6 +678,8 @@ public class PhotosController : Controller
             return View(photoModel);
 
         string? savedPath = null;
+        // Cesta k výchozímu obrázku (musí existovat ve wwwroot/images/)
+        string defaultPlaceholder = "/images/default.JPEG";
 
         // Zpracování hlavní fotky
         if (PhotoFile != null && PhotoFile.Length > 0)
@@ -706,6 +709,11 @@ public class PhotosController : Controller
             }
 
             savedPath = "/uploads/" + fileName;
+        }
+        else
+        {
+            // === ZMĚNA: Pokud není nahrána fotka, použije se výchozí placeholder ===
+            savedPath = defaultPlaceholder;
         }
 
         // Zpracování dodatečných fotek
@@ -762,8 +770,11 @@ public class PhotosController : Controller
             Supplier = photoModel.Supplier ?? "",
             Description = photoModel.Description ?? "",
             Notes = photoModel.Notes ?? "",
-            PhotoPath = savedPath ?? photoModel.PhotoPath,
-            ImagePath = savedPath ?? photoModel.ImagePath,
+
+            // Zde se uloží buď cesta k nahrané fotce, nebo cesta k placeholderu
+            PhotoPath = savedPath,
+            ImagePath = savedPath,
+
             AdditionalPhotos = string.Join(";", additionalPaths), // Uložit dodatečné fotky
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
@@ -773,6 +784,7 @@ public class PhotosController : Controller
         await _context.SaveChangesAsync();
         return RedirectToAction(nameof(Index));
     }
+
     public async Task<IActionResult> Edit(int? id)
     {
         if (id == null)
