@@ -715,12 +715,18 @@
         // --- NO UI SLIDER INITIALIZATION ---
         // Hledáme nejvyšší hodnotu v datech pro nastavení maxima slideru
         // Pokud data chybí, nastavíme výchozí 100
-        const maxMfiFromData = @(Model.Mfis != null && Model.Mfis.Any() 
-            ? Model.Mfis.Max(m => {
-                  var part = m.Split('/')[0].Trim();
-                  return double.TryParse(part, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out double r) ? r : 0;
-              }) 
-            : 100);
+const maxMfiFromData = @(Model.Mfis != null && Model.Mfis.Any() 
+    ? Model.Mfis.Max(m => {
+          if (string.IsNullOrWhiteSpace(m)) return 0;
+          
+          // Zde přidáme rozdělení i podle čárky (',') a tečky ('.')
+          // Vezmeme vždy jen první část = celé číslo
+          var part = m.Split(new[] { '/', ',', '.' }, StringSplitOptions.RemoveEmptyEntries)[0].Trim();
+          
+          // Parsujeme jako int (celé číslo), tím se zbavíme problému s desetinami
+          return int.TryParse(part, out int r) ? r : 0;
+      }) 
+    : 100);
             
         const sliderMax = Math.ceil(Math.max(maxMfiFromData, 100)); // Minimum 100, nebo více podle dat
         const sliderElement = document.getElementById('mfi-slider');
@@ -871,7 +877,7 @@
             });
         }
 
-        if (downloadBtn) {
+if (downloadBtn) {
             downloadBtn.addEventListener('click', function() {
                 const selectedColumns = [];
                 document.querySelectorAll('.pdf-column-checkbox:checked').forEach(cb => {
@@ -887,6 +893,21 @@
                 const formData = new FormData(mainForm);
                 const params = new URLSearchParams(formData);
 
+                // === OPRAVA PRO MFI NULL HODNOTY ===
+                // Získáme aktuální hodnoty ze skrytých inputů
+                const currentMin = parseFloat(document.getElementById('minMfiInput').value);
+                const currentMax = parseFloat(document.getElementById('maxMfiInput').value);
+
+                // Získáme maximální hodnotu slideru (proměnná sliderMax je definována výše ve vašem skriptu)
+                // Logika: Pokud je min 0 (nebo méně/prázdné) A ZÁROVEŇ je max rovno nebo větší než limit,
+                // znamená to, že uživatel nefiltroval MFI (nebo dal reset).
+                // V tom případě parametry odstraníme, aby server zahrnul i NULL hodnoty.
+                if ((isNaN(currentMin) || currentMin <= 0) && (isNaN(currentMax) || currentMax >= sliderMax)) {
+                    params.delete('minMfi');
+                    params.delete('maxMfi');
+                }
+                // ===================================
+
                 selectedColumns.forEach(col => {
                     params.append('columnsToInclude', col);
                 });
@@ -896,7 +917,6 @@
                 closePdfModal();
             });
         }
-
         // --- SERVICE WORKER ---
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
