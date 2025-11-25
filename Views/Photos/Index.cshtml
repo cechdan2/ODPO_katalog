@@ -840,7 +840,7 @@
                             <div class="info-item" data-col="form"><strong>Form</strong><span>@Safe(item.Form)</span></div>
                             <div class="info-item" data-col="filler"><strong>Filler</strong><span>@Safe(item.Filler)</span></div>
                             <div class="info-item" data-col="monthlyquantity"><strong>Quantity (month)</strong><span>@Safe(item.MonthlyQuantity)</span></div>
-                            <div class="info-item" data-col="mfi"><strong>MFI</strong><span>@Safe(item.Mfi)</span></div>
+                            <div class="info-item" data-col="mfi"><strong>MFI/°C/kg</strong><span>@Safe(item.Mfi)</span></div>
                         </div>
                     </div>
 
@@ -1037,9 +1037,41 @@
         const closePdfBtn = document.getElementById('pdfModalClose');
         const generatePdfBtn = document.getElementById('generatePdfBtn');
 
-        function openPdfModal() {
-            if (pdfModal) pdfModal.style.display = 'flex';
+    function openPdfModal() {
+            if (pdfModal) {
+                // 1. Zobrazit okno
+                pdfModal.style.display = 'flex';
+
+                // 2. Seznam hodnot, které mají být VŽDY zaškrtnuté při otevření
+                // (Důležité: Text musí přesně odpovídat tomu, co je v HTML v atributu value="...")
+                const defaults = [
+                    "Id",
+                    "Material",
+                    "Color",
+                    "Form",
+                    "Mfi",
+                    "Filler",
+                    "MonthlyQuantity",
+                    "Notes",
+
+                ];
+
+                // 3. Najít všechny checkboxy v seznamu
+                const checkboxes = document.querySelectorAll('#pdf-column-list input[type="checkbox"]');
+
+                // 4. Projít je a nastavit stav
+                checkboxes.forEach(cb => {
+                    // Pokud je hodnota checkboxu v seznamu 'defaults', zaškrtneme ho (true)
+                    // Pokud tam není, odškrtneme ho (false)
+                    if (defaults.includes(cb.value)) {
+                        cb.checked = true;
+                    } else {
+                        cb.checked = false;
+                    }
+                });
+            }
         }
+
         function closePdfModal() {
             if (pdfModal) pdfModal.style.display = 'none';
         }

@@ -156,93 +156,121 @@ public class PhotosController : Controller
                 page.Margin(25, Unit.Millimetre);
                 page.Size(PageSizes.A4.Landscape());
 
-                // --- Hlavička ---
+                // ==========================================
+                // --- KARTA HLAVIČKY (HEADER CARD) ---
+                // ==========================================
                 page.Header()
-                    .PaddingBottom(10)
+                    .PaddingBottom(10) // Mezera mezi kartou hlavičky a kartou tabulky
+                                       // Styl karty:
+                    .Border(1)
+                    .BorderColor(Colors.Green.Lighten2)
+                    .Background(Color.FromHex("#f4fbf4")) // Velmi jemné šedé pozadí pro hlavičku
+                    .Padding(10) // Vnitřní odsazení v kartě
                     .Column(col =>
                     {
                         col.Item().Row(row =>
                         {
-                            // Levá část
-                            row.RelativeItem(2).Column(c =>
+                            // Levá část    
+                            row.RelativeItem(1).Column(c =>
                             {
-                                c.Item().Text("odpo s.r.o.").SemiBold().FontSize(14);
-                                c.Item().Text("Riegrova 59, CZ - 388 01 Blatná").FontSize(10);
-                                c.Item().Text("Laboratoř/Laboratory: Radomyšl 248, 387 31 Radomyšl").FontSize(10);
-
                                 string logoPath = Path.Combine(_env.WebRootPath, "logo.png");
                                 if (System.IO.File.Exists(logoPath))
                                 {
-                                    c.Item().PaddingTop(5).MaxHeight(50).Image(logoPath).FitArea();
+                                    c.Item().AlignMiddle().MaxHeight(75).Image(logoPath).FitArea();
                                 }
+
                             });
+
+
 
                             // Pravá část
                             row.RelativeItem(1).Column(c =>
                             {
-                                c.Item().AlignRight().Text("List of materials").SemiBold().FontSize(16);
-                                c.Item().AlignRight().Text($"Date: {DateTime.Now:d. M. yyyy}").FontSize(9);
-                                c.Item().AlignRight().Text($"Count: {itemsList.Count}").FontSize(9);
+                                c.Item().AlignRight().Text("Technical Data Sheet").SemiBold().FontColor(Color.FromHex("#182c25")).FontSize(16);
+                                c.Item().AlignRight().Text("").FontColor(Color.FromHex("#182c25")).FontSize(5);
+                                c.Item().AlignRight().Text($"Date: {DateTime.Now:d. M. yyyy}").FontColor(Color.FromHex("#182c25")).FontSize(9);
+                                c.Item().AlignRight().Text($"Count: {itemsList.Count}") .FontColor(Color.FromHex("#182c25")).FontSize(9);
+                                c.Item().AlignRight().Text("").FontSize(9);
+                                c.Item().AlignRight().Text("Riegrova 59, CZ - 388 01 Blatná").FontColor(Color.FromHex("#182c25")).FontSize(10);
+                                c.Item().AlignRight().Text("Laboratoř/Laboratory: Radomyšl 248, 387 31 Radomyšl").FontColor(Color.FromHex("#182c25")).FontSize(10);
                             });
                         });
-                        col.Item().PaddingTop(5).BorderBottom(1).BorderColor(Colors.Grey.Medium);
+                        // Poznámka: Oddělovací čáru jsem smazal, protože samotná karta má rámeček.
                     });
 
 
-                // --- Tabulka ---
-                page.Content().Table(table =>
-                {
-                    table.ColumnsDefinition(columns =>
+                // ==========================================
+                // --- KARTA OBSAHU (CONTENT CARD) ---
+                // ==========================================
+                page.Content()
+                    // Styl karty:
+                    .Border(1)
+                    .BorderColor(Colors.Green.Lighten2)
+                    .Background(Color.FromHex("#f4fbf4"))
+                    .Padding(0) // Tabulka vypadá lépe, když jde až ke krajům, nebo dejte Padding(10)
+                    .Table(table =>
                     {
-                        if (columnsToInclude.Contains("Id")) columns.ConstantColumn(40);
-                        if (columnsToInclude.Contains("Supplier")) columns.RelativeColumn();
-                        if (columnsToInclude.Contains("Material")) columns.RelativeColumn();
-                        if (columnsToInclude.Contains("OriginalName")) columns.RelativeColumn();
-                        if (columnsToInclude.Contains("Color")) columns.RelativeColumn();
-                        if (columnsToInclude.Contains("Position")) columns.RelativeColumn();
-                        if (columnsToInclude.Contains("Form")) columns.RelativeColumn();
-                        if (columnsToInclude.Contains("Filler")) columns.RelativeColumn();
-                        if (columnsToInclude.Contains("MonthlyQuantity")) columns.ConstantColumn(60);
-                        if (columnsToInclude.Contains("Mfi")) columns.ConstantColumn(50);
-                        if (columnsToInclude.Contains("Notes")) columns.RelativeColumn(2);
+                        table.ColumnsDefinition(columns =>
+                        {
+                            if (columnsToInclude.Contains("Id")) columns.ConstantColumn(40);
+                            if (columnsToInclude.Contains("Supplier")) columns.RelativeColumn();
+                            if (columnsToInclude.Contains("Material")) columns.RelativeColumn();
+                            if (columnsToInclude.Contains("OriginalName")) columns.RelativeColumn();
+                            if (columnsToInclude.Contains("Color")) columns.RelativeColumn();
+                            if (columnsToInclude.Contains("Position")) columns.RelativeColumn();
+                            if (columnsToInclude.Contains("Form")) columns.RelativeColumn();
+                            if (columnsToInclude.Contains("Filler")) columns.RelativeColumn();
+                            if (columnsToInclude.Contains("MonthlyQuantity")) columns.ConstantColumn(60);
+                            if (columnsToInclude.Contains("Mfi")) columns.ConstantColumn(50);
+                            if (columnsToInclude.Contains("Notes")) columns.RelativeColumn(2);
+                        });
+
+                        // Hlavička tabulky (uvnitř karty obsahu)
+                        table.Header(header =>
+                        {
+                            // Přidal jsem jemné pozadí pro řádek s názvy sloupců
+                            static IContainer HeaderCellStyle(IContainer c) => c
+                                .Background(Colors.Green.Lighten4)
+                                .BorderBottom(1)
+                                .BorderRight(1)
+                                .BorderColor(Colors.Green.Lighten2)
+                                .Padding(5);
+
+                            if (columnsToInclude.Contains("Id")) header.Cell().Element(HeaderCellStyle).Text("ID").SemiBold();
+                            if (columnsToInclude.Contains("Supplier")) header.Cell().Element(HeaderCellStyle).Text("Supplier").SemiBold();
+                            if (columnsToInclude.Contains("Material")) header.Cell().Element(HeaderCellStyle).Text("Material").SemiBold();
+                            if (columnsToInclude.Contains("OriginalName")) header.Cell().Element(HeaderCellStyle).Text("Original Name").SemiBold();
+                            if (columnsToInclude.Contains("Color")) header.Cell().Element(HeaderCellStyle).Text("Color").SemiBold();
+                            if (columnsToInclude.Contains("Position")) header.Cell().Element(HeaderCellStyle).Text("Position").SemiBold();
+                            if (columnsToInclude.Contains("Form")) header.Cell().Element(HeaderCellStyle).Text("Form").SemiBold();
+                            if (columnsToInclude.Contains("Filler")) header.Cell().Element(HeaderCellStyle).Text("Filler").SemiBold();
+                            if (columnsToInclude.Contains("MonthlyQuantity")) header.Cell().Element(HeaderCellStyle).Text("Qty").SemiBold();
+                            if (columnsToInclude.Contains("Mfi")) header.Cell().Element(HeaderCellStyle).Text("MFI/°C/kg").SemiBold();
+                            if (columnsToInclude.Contains("Notes")) header.Cell().Element(HeaderCellStyle).Text("Notes").SemiBold();
+                        });
+
+                        static IContainer DataCellStyle(IContainer c) => c.BorderBottom(1).BorderRight(1).BorderColor(Colors.Green.Lighten3).Padding(5);
+                        
+
+                        foreach (var item in itemsList)
+                        {
+                            if (columnsToInclude.Contains("Id")) table.Cell().Element(DataCellStyle).Text(item.Id);
+                            if (columnsToInclude.Contains("Supplier")) table.Cell().Element(DataCellStyle).Text(item.Supplier);
+                            if (columnsToInclude.Contains("Material")) table.Cell().Element(DataCellStyle).Text(item.Material);
+                            if (columnsToInclude.Contains("OriginalName")) table.Cell().Element(DataCellStyle).Text(item.OriginalName);
+                            if (columnsToInclude.Contains("Color")) table.Cell().Element(DataCellStyle).Text(item.Color);
+                            if (columnsToInclude.Contains("Position")) table.Cell().Element(DataCellStyle).Text(item.Position);
+                            if (columnsToInclude.Contains("Form")) table.Cell().Element(DataCellStyle).Text(item.Form);
+                            if (columnsToInclude.Contains("Filler")) table.Cell().Element(DataCellStyle).Text(item.Filler);
+                            if (columnsToInclude.Contains("MonthlyQuantity")) table.Cell().Element(DataCellStyle).Text(item.MonthlyQuantity);
+                            if (columnsToInclude.Contains("Mfi")) table.Cell().Element(DataCellStyle).Text(item.Mfi);
+                            if (columnsToInclude.Contains("Notes")) table.Cell().Element(DataCellStyle).Text(item.Notes);
+                        }
                     });
 
-                    table.Header(header =>
-                    {
-                        static IContainer HeaderCellStyle(IContainer c) => c.BorderBottom(1).BorderColor(Colors.Grey.Medium).Padding(4);
-
-                        if (columnsToInclude.Contains("Id")) header.Cell().Element(HeaderCellStyle).Text("ID").SemiBold();
-                        if (columnsToInclude.Contains("Supplier")) header.Cell().Element(HeaderCellStyle).Text("Supplier").SemiBold();
-                        if (columnsToInclude.Contains("Material")) header.Cell().Element(HeaderCellStyle).Text("Material").SemiBold();
-                        if (columnsToInclude.Contains("OriginalName")) header.Cell().Element(HeaderCellStyle).Text("Original Name").SemiBold();
-                        if (columnsToInclude.Contains("Color")) header.Cell().Element(HeaderCellStyle).Text("Color").SemiBold();
-                        if (columnsToInclude.Contains("Position")) header.Cell().Element(HeaderCellStyle).Text("Position").SemiBold();
-                        if (columnsToInclude.Contains("Form")) header.Cell().Element(HeaderCellStyle).Text("Form").SemiBold();
-                        if (columnsToInclude.Contains("Filler")) header.Cell().Element(HeaderCellStyle).Text("Filler").SemiBold();
-                        if (columnsToInclude.Contains("MonthlyQuantity")) header.Cell().Element(HeaderCellStyle).Text("Qty").SemiBold();
-                        if (columnsToInclude.Contains("Mfi")) header.Cell().Element(HeaderCellStyle).Text("MFI").SemiBold();
-                        if (columnsToInclude.Contains("Notes")) header.Cell().Element(HeaderCellStyle).Text("Notes").SemiBold();
-                    });
-
-                    static IContainer DataCellStyle(IContainer c) => c.BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten2).Padding(4);
-
-                    foreach (var item in itemsList)
-                    {
-                        if (columnsToInclude.Contains("Id")) table.Cell().Element(DataCellStyle).Text(item.Id);
-                        if (columnsToInclude.Contains("Supplier")) table.Cell().Element(DataCellStyle).Text(item.Supplier);
-                        if (columnsToInclude.Contains("Material")) table.Cell().Element(DataCellStyle).Text(item.Material);
-                        if (columnsToInclude.Contains("OriginalName")) table.Cell().Element(DataCellStyle).Text(item.OriginalName);
-                        if (columnsToInclude.Contains("Color")) table.Cell().Element(DataCellStyle).Text(item.Color);
-                        if (columnsToInclude.Contains("Position")) table.Cell().Element(DataCellStyle).Text(item.Position);
-                        if (columnsToInclude.Contains("Form")) table.Cell().Element(DataCellStyle).Text(item.Form);
-                        if (columnsToInclude.Contains("Filler")) table.Cell().Element(DataCellStyle).Text(item.Filler);
-                        if (columnsToInclude.Contains("MonthlyQuantity")) table.Cell().Element(DataCellStyle).Text(item.MonthlyQuantity);
-                        if (columnsToInclude.Contains("Mfi")) table.Cell().Element(DataCellStyle).Text(item.Mfi);
-                        if (columnsToInclude.Contains("Notes")) table.Cell().Element(DataCellStyle).Text(item.Notes);
-                    }
-                });
-
+                // --- Patička ---
                 page.Footer()
+                    .PaddingTop(5)
                     .AlignRight()
                     .Text(x =>
                     {
@@ -316,15 +344,17 @@ public class PhotosController : Controller
                         {
                             row.RelativeItem(2).Column(c =>
                             {
-                                c.Item().Text("odpo s.r.o.").SemiBold().FontSize(14);
-                                c.Item().Text("Riegrova 59, CZ - 388 01 Blatná").FontSize(10);
-                                c.Item().Text("Production/Laboratory: Radomyšl 248, 387 31 Radomyšl").FontSize(10);
-
                                 string logoPath = Path.Combine(_env.WebRootPath, "logo.png");
                                 if (System.IO.File.Exists(logoPath))
                                 {
                                     c.Item().PaddingTop(5).MaxHeight(50).Image(logoPath).FitArea();
                                 }
+
+                                c.Item().Text("odpo s.r.o.").SemiBold().FontSize(14);
+                                c.Item().Text("Riegrova 59, CZ - 388 01 Blatná").FontSize(10);
+                                c.Item().Text("Production/Laboratory: Radomyšl 248, 387 31 Radomyšl").FontSize(10);
+
+                                
                             });
 
                             row.RelativeItem(1).Column(c =>
@@ -334,7 +364,7 @@ public class PhotosController : Controller
                                 c.Item().AlignRight().Text($"Date: {DateTime.Now:d. M. yyyy}").FontSize(9);
                             });
                         });
-                        col.Item().PaddingTop(5).BorderBottom(1).BorderColor(Colors.Grey.Medium);
+                        col.Item().PaddingTop(5).BorderBottom(1).BorderColor(Colors.Green.Medium);
                     });
 
                 page.Content().PaddingVertical(10).Column(col =>
@@ -372,30 +402,10 @@ public class PhotosController : Controller
                     if (columnsToInclude.Contains("Filler")) AddField(col, "Filler", item.Filler);
                     if (columnsToInclude.Contains("Color")) AddField(col, "Color", item.Color);
                     if (columnsToInclude.Contains("MonthlyQuantity")) AddField(col, "Quantity (month)", item.MonthlyQuantity?.ToString());
-                    if (columnsToInclude.Contains("Mfi")) AddField(col, "MFI", item.Mfi);
+                    if (columnsToInclude.Contains("Mfi")) AddField(col, "MFI/°C/kg", item.Mfi);
                     if (columnsToInclude.Contains("Notes")) AddField(col, "Notes", item.Notes);
                     if (columnsToInclude.Contains("CreatedAt")) AddField(col, "Created", (item.CreatedAt == DateTime.MinValue) ? "-" : item.CreatedAt.ToLocalTime().ToString("g"));
                     if (columnsToInclude.Contains("UpdatedAt")) AddField(col, "Updated", (item.UpdatedAt == DateTime.MinValue) ? "-" : item.UpdatedAt.ToLocalTime().ToString("g"));
-
-                    if (columnsToInclude.Contains("QrCode"))
-                    {
-                        var publicUrl = Url.Action("DetailsAnonymous", "Home", new { id = item.Id }, Request.Scheme ?? "https");
-                        var qrApi = $"https://api.qrserver.com/v1/create-qr-code/?size=150x150&data={System.Uri.EscapeDataString(publicUrl)}";
-
-                        try
-                        {
-                            using (var httpClient = new HttpClient())
-                            {
-                                byte[] qrBytes = httpClient.GetByteArrayAsync(qrApi).Result;
-                                col.Item().PaddingTop(10).Text("Public Link (QR):").SemiBold();
-                                col.Item().MaxWidth(150).Image(qrBytes).FitArea();
-                            }
-                        }
-                        catch (Exception)
-                        {
-                            AddField(col, "Public Link (QR)", "Cannot generate QR.");
-                        }
-                    }
                 });
 
                 page.Footer()
