@@ -404,7 +404,7 @@
         height: 56px;
         border-radius: 50%;
         box-shadow: 0 6px 14px rgba(0,0,0,0.18);
-        display: inline-flex;
+        display: flex;
         align-items: center;
         justify-content: center;
         text-decoration: none;
@@ -454,7 +454,7 @@
     }
 
     .actions {
-        flex-direction: row;
+        flex-direction: column;
         justify-content: flex-end;
     }
 
@@ -468,7 +468,7 @@
     }
 
     .fab-group {
-        display: none;
+        display: block;
     }
 
     .custom-file-name {
@@ -575,9 +575,57 @@
                 <div class="detail-img" style="display:flex;align-items:center;justify-content:center;color:#999;" aria-hidden="true">No image</div>
             }
 
+
+
             <div class="meta">
                 <div class="title">@(!string.IsNullOrWhiteSpace(Model.Name) ? Model.Name : "-")</div>
                 <div class="muted">Updated: @SafeDate(Model.UpdatedAt)</div>
+            </div>
+
+            @if (User.Identity?.IsAuthenticated == true)
+            {
+                <div class="upload-form">
+                    <h4>➕ Add more photos</h4>
+                    <form asp-action="UploadAdditionalPhotos" asp-route-id="@Model.Id" method="post" enctype="multipart/form-data" id="uploadForm">
+                        @Html.AntiForgeryToken()
+
+                        <div class="custom-file-wrapper">
+                            <input type="file" name="AdditionalPhotoFiles" id="quickUploadInput" class="input-file-hidden" accept="image/*" multiple />
+                            <label for="quickUploadInput" class="custom-file-label">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:white;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                                Select photos...
+                            </label>
+                            <span id="quickUploadFileName" class="custom-file-name"></span>
+                        </div>
+
+                        <div id="quickUploadPreview" class="preview-container"></div>
+                        <button type="submit" class="btn-primary" id="uploadBtn" disabled>Upload photos</button>
+                    </form>
+                </div>
+            }
+
+            <div class="additional-photos-section">
+                <h3>Additional photos (@additionalPhotos.Count)</h3>
+
+                @if (additionalPhotos.Count > 0)
+                {
+                    <div class="photo-gallery">
+                        @foreach (var photoPath in additionalPhotos)
+                        {
+                            <div class="gallery-item">
+                                <img src="@Url.Content(photoPath)" alt="Additional photo" class="photo-zoom" data-full="@Url.Content(photoPath)" />
+                                @if (User.Identity?.IsAuthenticated == true)
+                                {
+                                    <form asp-action="DeleteAdditionalPhoto" asp-route-id="@Model.Id" asp-route-photoPath="@photoPath" method="post" style="display:inline;">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="delete-btn" onclick="return confirm('Delete this photo?');">Delete</button>
+                                    </form>
+                                }
+                            </div>
+                        }
+                    </div>
+                }
+
             </div>
 
 @*             <div class="qr" aria-label="Public link and QR code">
@@ -612,61 +660,7 @@
                 <div class="field"><div class="label">Created</div><div class="value">@SafeDate(Model.CreatedAt)</div></div>
             </div>
 
-            <div class="additional-photos-section">
-                <h3>Additional photos (@additionalPhotos.Count)</h3>
 
-                @if (additionalPhotos.Count > 0)
-                {
-                    <div class="photo-gallery">
-                        @foreach (var photoPath in additionalPhotos)
-                        {
-                            <div class="gallery-item">
-                                <img src="@Url.Content(photoPath)" alt="Additional photo" class="photo-zoom" data-full="@Url.Content(photoPath)" />
-                                @if (User.Identity?.IsAuthenticated == true)
-                                {
-                                    <form asp-action="DeleteAdditionalPhoto" asp-route-id="@Model.Id" asp-route-photoPath="@photoPath" method="post" style="display:inline;">
-                                        @Html.AntiForgeryToken()
-                                        <button type="submit" class="delete-btn" onclick="return confirm('Delete this photo?');">Delete</button>
-                                    </form>
-                                }
-                            </div>
-                        }
-                    </div>
-                }
-
-                @if (User.Identity?.IsAuthenticated == true)
-                {
-                    <div class="upload-form">
-                        <h4>➕ Add more photos</h4>
-                        <form asp-action="UploadAdditionalPhotos" asp-route-id="@Model.Id" method="post" enctype="multipart/form-data" id="uploadForm">
-                            @Html.AntiForgeryToken()
-
-                            <div class="custom-file-wrapper">
-                                <input type="file" name="AdditionalPhotoFiles" id="quickUploadInput" class="input-file-hidden" accept="image/*" multiple />
-                                <label for="quickUploadInput" class="custom-file-label">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:white;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
-                                    Select photos...
-                                </label>
-                                <span id="quickUploadFileName" class="custom-file-name"></span>
-                            </div>
-
-                            <div id="quickUploadPreview" class="preview-container"></div>
-                            <button type="submit" class="btn-primary" id="uploadBtn" disabled>Upload photos</button>
-                        </form>
-                    </div>
-                }
-            </div>
-
-            <div class="actions">
-                <a href="@Url.Action("Index", "Photos")" class="btn">Back to catalog</a>
-
-                <button type="button" class="btn" id="openPdfModalBtn">Export PDF</button>
-
-                @if (User.Identity?.IsAuthenticated == true)
-                {
-                    <a href="@Url.Action("Edit", "Photos", new { id = Model.Id })" class="btn">Edit Sample</a>
-                }
-            </div>
         </section>
     </div>
 </main>
