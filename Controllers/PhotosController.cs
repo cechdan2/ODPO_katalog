@@ -524,8 +524,7 @@ public class PhotosController : Controller
 
                 page.Footer().PaddingTop(10).Row(row =>
                 {
-                    row.RelativeItem().Text("Generated via IS odpo s.r.o.").FontSize(8).FontColor(Colors.Grey.Medium);
-                    row.RelativeItem().AlignRight().Text(x => { x.Span("Page "); x.CurrentPageNumber(); x.Span(" of "); x.TotalPages(); });
+                                        row.RelativeItem().AlignRight().Text(x => { x.Span("Page "); x.CurrentPageNumber(); x.Span(" of "); x.TotalPages(); });
                 });
             });
         }).GeneratePdf();

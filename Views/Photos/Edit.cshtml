@@ -2,497 +2,534 @@
 
 @{
     ViewData["Title"] = "Edit Sample";
+
+    // Získání cesty k hlavnímu obrázku
+    var imageSrc = !string.IsNullOrWhiteSpace(Model.ImagePath) ? Url.Content(Model.ImagePath) : (string.IsNullOrWhiteSpace(Model.PhotoPath) ? null : Url.Content(Model.PhotoPath));
+    var additionalPhotos = Model.GetAdditionalPhotosList();
 }
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <meta name="theme-color" content="#16a34a">
 <link rel="manifest" href="/manifest.json">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="apple-touch-icon" href="/icons/icon-192.png">
 
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8" />
-    <link rel="stylesheet" href="~/css/Edit.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/css/Mobile.css" asp-append-version="true" />
+<style>
+    /* === PŘEVZATÉ STYLY Z DETAILU === */
+    :root {
+        --brand: #16a34a;
+        --brand-dark: #166534;
+        --border: #dbe7d9;
+        --bg: #f4fbf4;
+        --text: #0b1f0b;
+        --white: #fff;
+        --radius: 12px;
+        --input-bg: #fbfff9;
+    }
 
-    <title>@ViewData["Title"]</title>
+    * {
+        box-sizing: border-box;
+    }
 
-    <style>
-        :root {
-            --brand: #16a34a;
-            --brand-dark: #166534;
-            --border: #dbe7d9;
-            --bg: #f4fbf4;
-            --text: #0b1f0b;
-            --white: #fff;
-            --radius: 12px;
+    body {
+        margin: 0;
+        font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+        color: var(--text);
+        padding-bottom: 100px;
+        background-color: #fff; /* Na rozdíl od detailu zde můžeme nechat bílou, nebo světle šedou */
+    }
+
+    .detail-page {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 16px;
+    }
+
+    .card {
+        background: var(--white);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 20px;
+        box-shadow: 0 2px 10px rgba(0,0,0,.05);
+    }
+
+    /* === GRID LAYOUT === */
+    .layout {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+
+    /* === LEVÝ SLOUPEC (MEDIA) === */
+    @@media {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .detail-img {
+        width: 100%;
+        max-width: 280px;
+        aspect-ratio: 1;
+        object-fit: cover;
+        border-radius: 10px;
+        border: 1.5px solid var(--border);
+        background: #f7fef7;
+        margin-bottom: 10px;
+    }
+
+    /* === PRAVÝ SLOUPEC (FIELDS) === */
+    .fields {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .field {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .full {
+        grid-column: 1;
+    }
+
+    .label {
+        font-weight: 700;
+        color: #333;
+        font-size: 0.9rem;
+        margin-left: 2px;
+    }
+
+    /* === STYLY PRO INPUTY (ABY VYPADALY JAKO V DETAILU) === */
+    .value-input, .value-textarea, .value-select {
+        padding: 10px;
+        background: var(--input-bg);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        min-height: 42px; /* Trochu vyšší pro dotyk */
+        color: #222;
+        font-family: inherit;
+        font-size: 1rem;
+        width: 100%;
+        transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+        .value-input:focus, .value-textarea:focus, .value-select:focus {
+            outline: none;
+            border-color: var(--brand);
+            box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.15);
+            background: #fff;
         }
 
-        /* === VLASTNÍ STYL PRO NAHRÁVÁNÍ SOUBORŮ === */
-        .custom-file-wrapper {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-top: 8px;
-            position: relative;
-        }
+    .value-textarea {
+        resize: vertical;
+        min-height: 80px;
+    }
 
-        /* Hidden input stays accessible: place it over the label but invisible.
-           Using display:none breaks label-for in some browsers, so keep it in flow. */
-        .input-file-hidden {
+    .field-validation-error {
+        color: #dc2626;
+        font-size: 0.8rem;
+        margin-top: 2px;
+    }
+
+    /* === CUSTOM FILE INPUT (BTN STYLE) === */
+    .file-upload-container {
+        width: 100%;
+        max-width: 280px;
+        margin-bottom: 20px;
+        text-align: center;
+    }
+
+    .file-input-wrapper {
+        position: relative;
+        overflow: hidden;
+        display: inline-block;
+        width: 100%;
+    }
+
+        .file-input-wrapper input[type=file] {
             position: absolute;
-            left: 0;
             top: 0;
+            right: 0;
+            min-width: 100%;
+            min-height: 100%;
+            font-size: 100px;
+            text-align: right;
+            filter: alpha(opacity=0);
+            opacity: 0;
+            outline: none;
+            background: white;
+            cursor: pointer;
+            display: block;
+        }
+
+    .btn-upload {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 10px 16px;
+        border: 1px solid var(--border);
+        background: white;
+        color: var(--brand);
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        width: 100%;
+        transition: background 0.2s;
+    }
+
+        .btn-upload:hover {
+            background: #f0fdf4;
+        }
+
+    .file-name-display {
+        font-size: 0.85rem;
+        color: #666;
+        margin-top: 6px;
+        font-style: italic;
+        display: block;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    /* === GALERIE === */
+    .photo-gallery {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+        gap: 8px;
+        width: 100%;
+        max-width: 280px;
+    }
+
+    .gallery-item {
+        position: relative;
+        aspect-ratio: 1;
+        border-radius: 8px;
+        overflow: hidden;
+        border: 1px solid var(--border);
+    }
+
+        .gallery-item img {
             width: 100%;
             height: 100%;
-            opacity: 0;
-            cursor: pointer;
-            z-index: 2;
+            object-fit: cover;
         }
 
-        /* Skryjeme původní ošklivý input třídy pokud by existovala */
-        .form-control-file {
-            display: none;
+    .gallery-delete-btn {
+        position: absolute;
+        top: 4px;
+        right: 4px;
+        background: rgba(220, 38, 38, 0.9);
+        color: white;
+        border: none;
+        border-radius: 4px;
+        width: 24px;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-size: 14px;
+        transition: opacity 0.2s;
+    }
+
+        .gallery-delete-btn:hover {
+            background: rgb(220, 38, 38);
         }
 
-        .custom-file-label {
-            background: var(--brand);
-            color: #fff;
-            padding: 0.6rem 1.2rem;
-            border: none;
-            border-radius: 8px;
-            font-size: 0.95rem;
-            font-weight: 500;
-            cursor: pointer;
-            transition: background 0.2s ease;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            position: relative; /* label is the visible button */
-            z-index: 1;
+    /* === FAB === */
+    .fab-group {
+        position: fixed;
+        right: 20px;
+        bottom: 20px;
+        display: flex;
+        flex-direction: column-reverse;
+        gap: 10px;
+        z-index: 1700;
+    }
+
+    .fab {
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        box-shadow: 0 6px 14px rgba(0,0,0,0.18);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none;
+        border: none;
+        cursor: pointer;
+        transition: transform 0.15s ease;
+    }
+
+        .fab.primary {
+            background-color: var(--brand);
+            color: var(--white);
         }
 
-            .custom-file-label:hover {
-                background: var(--brand-dark);
-            }
-
-        .custom-file-name {
-            font-style: italic;
-            color: #555;
-            font-size: 0.9rem;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            max-width: 200px;
-        }
-        /* === KONEC STYLU SOUBORŮ === */
-
-        /* === NOVÉ STYLY PRO MAZÁNÍ FOTEK === */
-        .existing-photo-item {
-            position: relative;
-            width: 60px;
-            height: 60px;
-            border-radius: 4px;
-            border: 1px solid #ddd;
-            overflow: hidden; /* Udrží tlačítko v rohu */
+        .fab.secondary {
+            background: #ffffff;
+            color: var(--brand-dark);
+            border: 1px solid var(--border);
         }
 
-            .existing-photo-item img {
-                width: 100%;
-                height: 100%;
-                object-fit: cover;
-            }
-
-            .existing-photo-item .delete-btn {
-                position: absolute;
-                top: 2px;
-                right: 2px;
-                background: rgba(185, 28, 28, 0.9); /* tmavě červená */
-                color: white;
-                border: none;
-                border-radius: 4px;
-                padding: 2px 4px; /* Menší padding */
-                font-size: 0.7rem; /* Menší font */
-                font-weight: bold;
-                line-height: 1;
-                cursor: pointer;
-                opacity: 0;
-                transition: opacity 0.2s;
-                z-index: 2;
-            }
-
-            .existing-photo-item:hover .delete-btn {
-                opacity: 1;
-            }
-        /* === KONEC STYLŮ PRO MAZÁNÍ === */
-
-        /* === PLOVOUCÍ TLAČÍTKA (FAB) === */
-        .fab-group {
-            position: fixed;
-            right: 20px;
-            bottom: 20px;
-            display: none; /* Skryté na desktopu */
-            flex-direction: column-reverse; /* Hlavní tlačítko je dole */
-            gap: 10px;
-            z-index: 1700;
+        .fab.destructive {
+            background: #ef4444;
+            color: var(--white);
         }
 
-        .fab {
-            width: 56px;
-            height: 56px;
-            border-radius: 50%;
-            box-shadow: 0 6px 14px rgba(0,0,0,0.18);
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            text-decoration: none;
-            border: none;
-            cursor: pointer;
-            transition: transform 0.15s ease;
+        .fab:hover {
+            transform: translateY(-2px);
         }
 
-            .fab:hover {
-                transform: translateY(-2px);
-            }
+    /* === RESPONSIVE (DESKTOP) === */
+    @@media (min-width: 768px) {
+        .layout
 
-            .fab.primary {
-                background-color: var(--brand);
-                color: var(--white);
-            }
+    {
+        grid-template-columns: 320px 1fr;
+    }
 
-            .fab.secondary {
-                background: #ffffff;
-                color: var(--brand-dark);
-                border: 1px solid var(--border);
-            }
+    .fields {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px 20px;
+    }
 
-            .fab.destructive {
-                background: #ef4444;
-                color: var(--white);
-            }
-        /* === KONEC FAB STYLŮ === */
+    .full {
+        grid-column: 1 / -1;
+    }
 
+    .detail-img {
+        margin-bottom: 0;
+    }
 
-        /* === OPRAVA RESPONZIVITY (MOBIL) === */
-        @@media (max-width: 768px) {
-            .container {
-                /* Zmenšíme okraje na mobilu */
-                padding-left: 8px;
-                padding-right: 8px;
-            }
+    }
+</style>
 
-            .center-form-container {
-                padding: 1.5rem 1rem;
-                margin-top: 10px;
-                border: none;
-                box-shadow: none;
-            }
+<main class="detail-page">
 
-                .center-form-container h2 {
-                    font-size: 1.4rem;
-                    margin-bottom: 1.5rem;
-                }
-            /* Klíčová oprava přetékání: */
-            .styled-form {
-                display: block; /* Zrušíme grid na mobilu */
-            }
-
-                .styled-form .form-group {
-                    display: block; /* Zajistíme, aby byly pod sebou */
-                    margin-bottom: 1.25rem;
-                }
-
-                    .styled-form .form-group label {
-                        display: block;
-                        margin-bottom: 6px;
-                        width: 100%;
-                        text-align: left;
-                    }
-
-                .styled-form .form-control,
-                .styled-form input[type="text"],
-                .styled-form input[type="email"],
-                .styled-form input[type="password"],
-                .styled-form input[type="number"],
-                .styled-form input[type="search"],
-                .styled-form select,
-                .styled-form textarea {
-                    width: 100%;
-                    display: block;
-                    box-sizing: border-box;
-                }
-
-            .custom-file-name {
-                max-width: 150px;
-            }
-            /* Skryjeme původní tlačítka na mobilu */
-            .form-actions {
-                display: none;
-            }
-            /* Zobrazíme FAB tlačítka na mobilu */
-            .fab-group {
-                display: flex;
-            }
-        }
-    </style>
-</head>
-<body>
-
-    <header>
-        <div class="container" style="display:flex;align-items:center;gap:12px">
-            <div class="page-header" style="display:flex;align-items:center;gap:12px">
-                <a asp-controller="Photos" asp-action="Index" style="display:inline-block;">
-                    <img src="@Url.Content("~/logo.png")" alt="ODPO logo" style="height:48px;width:auto;display:block;" />
-                </a>
-                <div>
-                    <h1 style="margin:0;font-size:18px;color:var(--brand);">Sample Details</h1>
-                    <div class="muted" style="font-size:13px;">ODPO s.r.o. – Plastic Samples Catalog</div>
-                </div>
+    <header style="margin-bottom: 20px;">
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+            <a href="@Url.Action("Index", "Photos")" style="display:inline-block;">
+                <img src="@Url.Content("~/logo.png")" alt="ODPO logo" style="height:40px;width:auto;display:block;" />
+            </a>
+            <div>
+                <h1 style="margin:0;font-size:16px;color:var(--brand);">Edit Sample</h1>
+                <div class="muted" style="font-size:12px;color:#666;">ODPO s.r.o. – Plastic Samples Catalog</div>
             </div>
         </div>
     </header>
 
-    <main class="container">
-        <div class="center-form-container">
-            <h2>Edit Sample</h2>
+    <form asp-action="Edit" enctype="multipart/form-data" method="post" id="mainForm">
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="Id" />
+        <input type="hidden" asp-for="AdditionalPhotos" />
 
-            <form asp-action="Edit" enctype="multipart/form-data" method="post" class="styled-form" novalidate id="editForm">
-                @Html.AntiForgeryToken()
-                <input type="hidden" asp-for="Id" />
-                <input type="hidden" asp-for="AdditionalPhotos" />
+        <div class="card layout">
 
-                <div class="form-group">
-                    <label asp-for="Position">Position</label>
-                    <input asp-for="Position" class="form-control" />
-                    <span asp-validation-for="Position" class="field-validation"></span>
-                </div>
-
-                <div class="form-group">
-                    <label asp-for="Supplier">Supplier</label>
-                    <input asp-for="Supplier" class="form-control" />
-                    <span asp-validation-for="Supplier" class="field-validation"></span>
-                </div>
-
-                <div class="form-group full">
-                    <label asp-for="OriginalName">Original Name</label>
-                    <input asp-for="OriginalName" class="form-control" />
-                    <span asp-validation-for="OriginalName" class="field-validation"></span>
-                </div>
-
-                <div class="form-group">
-                    <label asp-for="Material">Material</label>
-                    <input asp-for="Material" class="form-control" />
-                    <span asp-validation-for="Material" class="field-validation"></span>
-                </div>
-
-                <div class="form-group">
-                    <label asp-for="Form">Form</label>
-                    <input asp-for="Form" class="form-control" />
-                    <span asp-validation-for="Form" class="field-validation"></span>
-                </div>
-
-                <div class="form-group">
-                    <label asp-for="Filler">Filler</label>
-                    <input asp-for="Filler" class="form-control" />
-                    <span asp-validation-for="Filler" class="field-validation"></span>
-                </div>
-
-                <div class="form-group">
-                    <label asp-for="Color">Color</label>
-                    <input asp-for="Color" class="form-control" />
-                    <span asp-validation-for="Color" class="field-validation"></span>
-                </div>
-
-                <div class="form-group full">
-                    <label asp-for="Description">Description</label>
-                    <textarea asp-for="Description" class="form-control" rows="3"></textarea>
-                    <span asp-validation-for="Description" class="field-validation"></span>
-                </div>
-
-                <div class="form-group">
-                    <label asp-for="MonthlyQuantity">Quantity (month)</label>
-                    <input asp-for="MonthlyQuantity" class="form-control" />
-                    <span asp-validation-for="MonthlyQuantity" class="field-validation"></span>
-                </div>
-
-                <div class="form-group">
-                    <label asp-for="Mfi">MFI/°C/kg</label>
-                    <input asp-for="Mfi" class="form-control" />
-                    <span asp-validation-for="Mfi" class="field-validation"></span>
-                </div>
-
-                <div class="form-group full">
-                    <label asp-for="Notes">Notes</label>
-                    <textarea asp-for="Notes" class="form-control" rows="3"></textarea>
-                    <span asp-validation-for="Notes" class="field-validation"></span>
-                </div>
-
-                <div class="form-group full">
-                    <label for="PhotoFile">Main Photo (new file)</label>
-                    <div class="custom-file-wrapper">
-                        <!-- input is positioned over the label so clicking visible label opens picker reliably -->
-                        <label class="custom-file-label" for="PhotoFile">Select file...
-                            <input type="file" name="PhotoFile" id="PhotoFile" class="input-file-hidden" accept="image/*" />
-                        </label>
-                        <span id="PhotoFile-name" class="custom-file-name">No file selected</span>
+            <aside class="media">
+                @if (!string.IsNullOrEmpty(imageSrc))
+                {
+                    <img id="mainImagePreview" src="@imageSrc" alt="Sample photo" class="detail-img" />
+                }
+                else
+                {
+                    <div id="mainImagePlaceholder" class="detail-img" style="display:flex;align-items:center;justify-content:center;color:#999;font-size:0.9rem;">
+                        No image
                     </div>
-                    <span class="field-validation" id="photoError"></span>
-                </div>
+                }
 
-                <div class="form-group full">
-                    <label>Current Main Photo Preview</label>
-                    @{
-                        var imageSrc = !string.IsNullOrWhiteSpace(Model.ImagePath) ? Url.Content(Model.ImagePath) : (!string.IsNullOrWhiteSpace(Model.PhotoPath) ? Url.Content(Model.PhotoPath) : null);
-                    }
-                    @if (!string.IsNullOrEmpty(imageSrc))
-                    {
-                        <img id="CurrentPhotoPreview" src="@imageSrc" class="preview-img" alt="Current image" />
-                    }
-                    else
-                    {
-                        <div class="no-image-placeholder">No image</div>
-                    }
-                </div>
-
-                <div class="form-group full">
-                    <label for="AdditionalPhotoFiles">Additional Photos (select multiple)</label>
-                    <div class="custom-file-wrapper">
-                        <label class="custom-file-label" for="AdditionalPhotoFiles">Select files...
-                            <input type="file" name="AdditionalPhotoFiles" id="AdditionalPhotoFiles" class="input-file-hidden" accept="image/*" multiple />
-                        </label>
-                        <span id="AdditionalPhotoFiles-name" class="custom-file-name">No files selected</span>
+                <div class="file-upload-container">
+                    <div class="file-input-wrapper">
+                        <div class="btn-upload">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                            Change Main Photo
+                        </div>
+                        <input type="file" name="PhotoFile" id="PhotoFile" accept="image/*" />
                     </div>
-                    <span class="field-validation" id="additionalPhotosError"></span>
+                    <span id="PhotoFileName" class="file-name-display"></span>
+                </div>
 
-                    @if (!string.IsNullOrWhiteSpace(Model.AdditionalPhotos))
+                <div style="width: 100%; border-top: 1px solid var(--border); padding-top: 16px; margin-top: 0px;">
+                    <h3 style="margin: 0 0 12px 0; color: var(--brand); font-size: 1rem; text-align:center;">Additional Photos</h3>
+
+                    @if (additionalPhotos.Count > 0)
                     {
-                        var existingPhotos = Model.GetAdditionalPhotosList();
-                        <div style="margin-top:10px;">
-                            <strong>Currently uploaded: @existingPhotos.Count photo(s)</strong>
-                            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">
-                                @foreach (var photo in existingPhotos)
-                                {
-                                    <div class="existing-photo-item">
-                                        <img src="@Url.Content(photo)" alt="Additional photo" />
-                                        <form asp-action="DeleteAdditionalPhoto" asp-route-id="@Model.Id" asp-route-photoPath="@photo" method="post" style="display:inline;" onsubmit="return confirm('Opravdu smazat tuto fotku?');">
-                                            @Html.AntiForgeryToken()
-                                            <button type="submit" class="delete-btn" title="Smazat fotku">✕</button>
-                                        </form>
-                                    </div>
-                                }
-                            </div>
+                        <div class="photo-gallery" style="margin-bottom: 16px; margin-left: auto; margin-right: auto;">
+                            @foreach (var photoPath in additionalPhotos)
+                            {
+                                <div class="gallery-item">
+                                    <img src="@Url.Content(photoPath)" />
+                                    <button type="submit"
+                                            class="gallery-delete-btn"
+                                            asp-action="DeleteAdditionalPhoto"
+                                            asp-route-id="@Model.Id"
+                                            asp-route-photoPath="@photoPath"
+                                            formnovalidate
+                                            onclick="return confirm('Delete this photo?');"
+                                            title="Delete photo">
+                                        ✕
+                                    </button>
+                                </div>
+                            }
                         </div>
                     }
+
+                    <div class="file-upload-container">
+                        <div class="file-input-wrapper">
+                            <div class="btn-upload" style="background:#f9fef9;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                                Add Photos
+                            </div>
+                            <input type="file" name="AdditionalPhotoFiles" id="AdditionalPhotoFiles" accept="image/*" multiple />
+                        </div>
+                        <span id="AdditionalFileNames" class="file-name-display"></span>
+                    </div>
                 </div>
 
-                <div class="form-actions">
-                    <a href="@Url.Action("Index")" class="btn">Back</a>
-                    <button type="submit" class="btn-primary">Save Changes</button>
+            </aside>
+
+            <section class="fields">
+                <div class="field">
+                    <label asp-for="Position" class="label">Position</label>
+                    <input asp-for="Position" class="value-input" placeholder="e.g. A-12" />
+                    <span asp-validation-for="Position" class="field-validation-error"></span>
                 </div>
-            </form>
+
+                <div class="field">
+                    <label asp-for="Id" class="label">ID</label>
+                    <input class="value-input" value="@Model.Id" disabled style="background:#eee; cursor:not-allowed;" />
+                </div>
+
+                <div class="field full">
+                    <label asp-for="Supplier" class="label">Supplier</label>
+                    <input asp-for="Supplier" class="value-input" />
+                    <span asp-validation-for="Supplier" class="field-validation-error"></span>
+                </div>
+
+                <div class="field full">
+                    <label asp-for="OriginalName" class="label">Name</label>
+                    <input asp-for="OriginalName" class="value-input" />
+                    <span asp-validation-for="OriginalName" class="field-validation-error"></span>
+                </div>
+
+                <div class="field">
+                    <label asp-for="Material" class="label">Material</label>
+                    <input asp-for="Material" class="value-input" />
+                    <span asp-validation-for="Material" class="field-validation-error"></span>
+                </div>
+
+                <div class="field">
+                    <label asp-for="Form" class="label">Form</label>
+                    <input asp-for="Form" class="value-input" />
+                    <span asp-validation-for="Form" class="field-validation-error"></span>
+                </div>
+
+                <div class="field">
+                    <label asp-for="Filler" class="label">Filler</label>
+                    <input asp-for="Filler" class="value-input" />
+                    <span asp-validation-for="Filler" class="field-validation-error"></span>
+                </div>
+
+                <div class="field">
+                    <label asp-for="Color" class="label">Color</label>
+                    <input asp-for="Color" class="value-input" />
+                    <span asp-validation-for="Color" class="field-validation-error"></span>
+                </div>
+
+                <div class="field">
+                    <label asp-for="MonthlyQuantity" class="label">Quantity (month)</label>
+                    <input asp-for="MonthlyQuantity" class="value-input" />
+                    <span asp-validation-for="MonthlyQuantity" class="field-validation-error"></span>
+                </div>
+
+                <div class="field">
+                    <label asp-for="Mfi" class="label">MFI/°C/kg</label>
+                    <input asp-for="Mfi" class="value-input" />
+                    <span asp-validation-for="Mfi" class="field-validation-error"></span>
+                </div>
+
+                <div class="field full">
+                    <label asp-for="Notes" class="label">Notes</label>
+                    <textarea asp-for="Notes" class="value-textarea" rows="3"></textarea>
+                    <span asp-validation-for="Notes" class="field-validation-error"></span>
+                </div>
+            </section>
         </div>
-    </main>
+    </form>
+</main>
 
-    <div class="fab-group">
-        <a asp-controller="Photos" asp-action="Index" class="fab secondary" title="Back to catalog">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M19 12H5"></path>
-                <polyline points="12 19 5 12 12 5"></polyline>
-            </svg>
-        </a>
+<div class="fab-group">
+    <a asp-action="Index" class="fab secondary" title="Cancel">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+    </a>
 
-        <a asp-controller="Photos" asp-action="Delete" asp-route-id="@Model.Id" class="fab destructive" title="Delete Sample" onclick="return confirm('Are you sure you want to delete this sample?');">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="3 6 5 6 21 6"></polyline>
-                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                <line x1="10" y1="11" x2="10" y2="17"></line>
-                <line x1="14" y1="11" x2="14" y2="17"></line>
-            </svg>
-        </a>
+    <a asp-action="Delete" asp-route-id="@Model.Id" class="fab destructive" title="Delete Sample" onclick="return confirm('Delete this entire sample?');">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+    </a>
 
-        <button type="submit" form="editForm" class="fab primary" title="Save Changes">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="20 6 9 17 4 12"></polyline>
-            </svg>
-        </button>
-    </div>
+    <button type="submit" form="mainForm" class="fab primary" title="Save Changes">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+    </button>
+</div>
 
-    <!-- Script moved inline (not inside @@section) so it always runs even if layout doesn't render the section) -->
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
 
-            // Původní skript pro náhled hlavního obrázku
-            document.getElementById('PhotoFile')?.addEventListener('change', function (e) {
-                const input = e.target;
-                const err = document.getElementById('photoError');
-                err.textContent = '';
-                const current = document.getElementById('CurrentPhotoPreview');
-                if (input.files && input.files[0]) {
-                    const file = input.files[0];
-                    if (!file.type.startsWith('image/')) {
-                        err.textContent = 'Please select an image.';
-                        return;
-                    }
-                    const reader = new FileReader();
-                    reader.onload = function (ev) {
-                        if (current) {
-                            current.src = ev.target.result;
-                        } else {
-                            const img = document.createElement('img');
-                            img.id = 'CurrentPhotoPreview';
-                            img.className = 'preview-img';
-                            img.src = ev.target.result;
-                            const placeholder = input.closest('.form-group').querySelector('.no-image-placeholder');
-                            if (placeholder) {
-                                placeholder.replaceWith(img);
-                            } else {
-                                // Fallback, just in case
-                                input.closest('.custom-file-wrapper').parentNode.appendChild(img);
+        // --- Preview hlavní fotky ---
+        const mainInput = document.getElementById('PhotoFile');
+        const mainPreview = document.getElementById('mainImagePreview');
+        const mainPlaceholder = document.getElementById('mainImagePlaceholder');
+        const mainNameSpan = document.getElementById('PhotoFileName');
+
+        if (mainInput) {
+            mainInput.addEventListener('change', function(e) {
+                if (mainInput.files && mainInput.files[0]) {
+                    const file = mainInput.files[0];
+
+                    // Zobrazit název
+                    mainNameSpan.textContent = file.name;
+
+                    // Zobrazit náhled
+                    if (file.type.startsWith('image/')) {
+                        const reader = new FileReader();
+                        reader.onload = function(ev) {
+                            if (mainPreview) {
+                                mainPreview.src = ev.target.result;
+                            } else if (mainPlaceholder) {
+                                // Pokud tam byl placeholder, nahradíme ho obrázkem
+                                const img = document.createElement('img');
+                                img.id = 'mainImagePreview';
+                                img.className = 'detail-img';
+                                img.src = ev.target.result;
+                                mainPlaceholder.replaceWith(img);
                             }
-                        }
-                    };
-                    reader.readAsDataURL(file);
-
-                    // Update the filename span
-                    const span = document.getElementById('PhotoFile-name');
-                    if (span) {
-                        span.textContent = input.files[0].name;
-                        span.style.fontStyle = 'normal';
-                        span.style.color = '#333';
+                        };
+                        reader.readAsDataURL(file);
                     }
+                } else {
+                    mainNameSpan.textContent = '';
                 }
             });
+        }
 
-            // Nový skript pro zobrazení názvů vybraných souborů
-            function setupFileInput(inputId, spanId) {
-                const input = document.getElementById(inputId);
-                const span = document.getElementById(spanId);
-                if (!input || !span) return;
+        // --- Zobrazení názvů pro Additional Files ---
+        const addInput = document.getElementById('AdditionalPhotoFiles');
+        const addSpan = document.getElementById('AdditionalFileNames');
 
-                input.addEventListener('change', () => {
-                    if (input.files && input.files.length > 0) {
-                        span.textContent = input.files.length === 1 ? input.files[0].name : `${input.files.length} files selected`;
-                        span.style.fontStyle = 'normal';
-                        span.style.color = '#333';
-                    } else {
-                        span.textContent = input.multiple ? 'No files selected' : 'No file selected';
-                        span.style.fontStyle = 'italic';
-                        span.style.color = '#555';
-                    }
-                });
-            }
-
-            setupFileInput('PhotoFile', 'PhotoFile-name');
-            setupFileInput('AdditionalPhotoFiles', 'AdditionalPhotoFiles-name');
-
-        });
-    </script>
-
-
-
-</body>
-</html>
+        if (addInput) {
+            addInput.addEventListener('change', function() {
+                if (addInput.files && addInput.files.length > 0) {
+                    addSpan.textContent = addInput.files.length === 1
+                        ? addInput.files[0].name
+                        : `${addInput.files.length} photos selected`;
+                } else {
+                    addSpan.textContent = '';
+                }
+            });
+        }
+    });
+</script>

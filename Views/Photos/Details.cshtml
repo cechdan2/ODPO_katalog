@@ -702,7 +702,8 @@
         const pdfModal = document.getElementById('pdfModal');
         const openPdfBtn = document.getElementById('openPdfModalBtn'); // Button ID for desktop/tablet logic if exists
         // Note: In FAB above, the ID is openPdfModalBtnMobile, let's target that specific one or general class
-        const openPdfBtnFab = document.querySelector('#openPdfModalBtnMobile');
+            // OPRAVENÝ ŘÁDEK (musí odpovídat ID v HTML):
+    const openPdfBtnFab = document.getElementById('openPdfModalBtn');
 
         const closePdfBtn = document.getElementById('pdfModalClose');
         const generatePdfBtn = document.getElementById('generatePdfBtn');
