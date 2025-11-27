@@ -7,15 +7,13 @@
         !string.IsNullOrWhiteSpace(item.ImagePath) ? Url.Content(item.ImagePath) :
         !string.IsNullOrWhiteSpace(item.PhotoPath) ? Url.Content(item.PhotoPath) : null;
 
-    // Struktura pro generování filtrů
-    var filtersToRender = new[]
-    {
-        new { Name = "supplier",        Placeholder = "Supplier",         AllValues = Model.Suppliers,         SelectedValues = Model.Supplier },
-        new { Name = "material",        Placeholder = "Material",         AllValues = Model.Materials,         SelectedValues = Model.Material },
-        new { Name = "color",           Placeholder = "Color",            AllValues = Model.Colors,            SelectedValues = Model.Color },
-        new { Name = "position",        Placeholder = "Position",         AllValues = Model.Positions,         SelectedValues = Model.Position },
-        new { Name = "form",            Placeholder = "Form",             AllValues = Model.Forms,             SelectedValues = Model.Form },
-        new { Name = "filler",          Placeholder = "Filler",           AllValues = Model.Fillers,           SelectedValues = Model.Filler },
+    var filtersToRender = new[] {
+        new { Name = "supplier", Placeholder = "Supplier", AllValues = Model.Suppliers, SelectedValues = Model.Supplier },
+        new { Name = "material", Placeholder = "Material", AllValues = Model.Materials, SelectedValues = Model.Material },
+        new { Name = "color", Placeholder = "Color", AllValues = Model.Colors, SelectedValues = Model.Color },
+        new { Name = "position", Placeholder = "Position", AllValues = Model.Positions, SelectedValues = Model.Position },
+        new { Name = "form", Placeholder = "Form", AllValues = Model.Forms, SelectedValues = Model.Form },
+        new { Name = "filler", Placeholder = "Filler", AllValues = Model.Fillers, SelectedValues = Model.Filler },
         new { Name = "monthlyQuantity", Placeholder = "Monthly Quantity", AllValues = Model.MonthlyQuantities, SelectedValues = Model.MonthlyQuantity }
     };
 }
@@ -39,7 +37,7 @@
         --gap: 16px;
         --radius: 16px;
         --sidebar-width: 320px;
-        --header-height: 70px; /* Mírně zvětšeno pro jistotu */
+        --header-height: 70px;
     }
 
     * {
@@ -55,27 +53,27 @@
         transition: padding-left 0.3s ease-in-out;
     }
 
-    /* === HEADER (FIXNÍ POZICE) === */
+    /* === HEADER === */
     header {
         position: fixed;
         top: 0;
         z-index: 100;
         background: #fff;
         border-bottom: 1px solid var(--border);
-        box-shadow: 0 4px 15px rgba(0,0,0,0.03); /* Jemnější stín */
+        box-shadow: 0 4px 15px rgba(0,0,0,0.03);
         left: 0;
         width: 100%;
-        height: var(--header-height); /* Fixní výška */
+        height: var(--header-height);
         transition: left 0.3s ease-in-out, width 0.3s ease-in-out;
         display: flex;
-        align-items: center; /* Vertikální centrace */
+        align-items: center;
     }
 
     .header-container {
         width: 100%;
         max-width: 1600px;
         margin: 0 auto;
-        padding: 0 20px; /* Padding jen do stran, výška je dána headerem */
+        padding: 0 20px;
         display: flex;
         align-items: center;
         justify-content: space-between;
@@ -117,6 +115,7 @@
         white-space: nowrap;
     }
 
+    /* === BUTTONS === */
     .action-btn {
         display: inline-flex;
         align-items: center;
@@ -151,8 +150,7 @@
         display: flex;
     }
 
-
-    /* === TLAČÍTKO PRO FILTR (ŠIPKA) === */
+    /* === SIDEBAR === */
     #sidebar-toggle-btn {
         position: absolute;
         top: 50%;
@@ -184,13 +182,10 @@
             transform: rotate(0deg);
         }
 
-
-    /* === LAYOUT (OPRAVENO PŘEKRÝVÁNÍ) === */
     .page-layout {
         max-width: 1600px;
         margin: 0 auto;
         padding: 20px;
-        /* ZDE JE OPRAVA: Dostatečná mezera nahoře, aby karty nebyly pod hlavičkou */
         padding-top: 100px;
     }
 
@@ -208,7 +203,7 @@
         z-index: 90;
         background: var(--bg);
         padding: var(--pad);
-        padding-top: calc(var(--header-height) + var(--pad)); /* Posun obsahu sidebaru */
+        padding-top: calc(var(--header-height) + var(--pad));
         transform: translateX(-100%);
         transition: transform 0.3s ease-in-out;
     }
@@ -219,7 +214,6 @@
         padding-right: 5px;
     }
 
-    /* === STAV ZOBRAZENÉHO FILTRU === */
     body.filters-visible {
         padding-left: var(--sidebar-width);
     }
@@ -238,8 +232,7 @@
             transform: rotate(180deg);
         }
 
-
-    /* === FILTER CONTENT STYLES === */
+    /* === FILTERS === */
     .filter-section {
         background: #fff;
         border: 1px solid var(--border);
@@ -322,7 +315,6 @@
             flex-grow: 1;
         }
 
-    /* === MFI INPUTS STYLE === */
     .filter-range-inputs {
         display: flex;
         gap: 8px;
@@ -365,14 +357,13 @@
                 color: white;
             }
 
-    /* === TILES === */
+    /* === CARDS === */
     .card-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
         gap: var(--gap);
     }
 
-    /* === SAMPLE CARD === */
     .sample-card {
         background: var(--white);
         border-radius: var(--radius);
@@ -382,9 +373,27 @@
         flex-direction: column;
         padding: 0;
         overflow: hidden;
+        position: relative;
     }
 
-    /* 1. TOP BAR */
+    /* Small Checkbox */
+    .card-select-checkbox {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        width: 18px;
+        height: 18px;
+        z-index: 10;
+        cursor: pointer;
+        accent-color: var(--brand);
+    }
+
+    .sample-card.selected {
+        border: 2px solid var(--brand);
+        background-color: #f0fdf4;
+    }
+
+    /* Card Content */
     .sample-card-top {
         display: flex;
         justify-content: space-between;
@@ -401,6 +410,7 @@
         background: #eee;
         padding: 2px 8px;
         border-radius: 6px;
+        margin-left: 24px;
     }
 
     .card-title {
@@ -429,7 +439,6 @@
             color: #ef4444;
         }
 
-    /* 2. MIDDLE CONTENT */
     .sample-card-body {
         display: flex;
         gap: var(--pad);
@@ -445,14 +454,15 @@
         width: 160px;
     }
 
-    .sample-card .thumb {
-        width: 160px;
-        height: 160px;
-        flex-shrink: 0;
-        object-fit: cover;
-        border-radius: 10px;
-        border: 1px solid var(--border);
-    }
+        /* HLAVNÍ fotka */
+        .image-column > .thumb {
+            width: 160px;
+            height: 160px;
+            flex-shrink: 0;
+            object-fit: cover;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+        }
 
     .info-grid {
         flex-grow: 1;
@@ -481,7 +491,6 @@
             font-weight: 500;
         }
 
-    /* 3. BOTTOM SECTION */
     .sample-card-bottom {
         padding: 0 var(--pad) var(--pad) var(--pad);
         display: flex;
@@ -518,7 +527,7 @@
         padding: 20px 0;
     }
 
-    /* === ADDITIONAL PHOTOS === */
+    /* Gallery */
     .additional-photos-gallery {
         display: flex;
         flex-wrap: wrap;
@@ -526,11 +535,8 @@
         justify-content: center;
     }
 
-        .additional-photos-gallery a {
-            display: block;
-        }
-
-        .additional-photos-gallery img {
+        /* VEDLEJŠÍ fotky (malé) */
+        .additional-photos-gallery .thumb {
             width: 76px;
             height: 76px;
             object-fit: cover;
@@ -540,24 +546,26 @@
             cursor: pointer;
         }
 
-            .additional-photos-gallery img:hover {
+            .additional-photos-gallery .thumb:hover {
                 transform: scale(1.1);
                 box-shadow: 0 4px 8px rgba(0,0,0,0.1);
             }
 
-    /* === FULLSCREEN PREVIEW === */
+    /* === IMAGE OVERLAY (ZOOM) === */
     #image-overlay {
         position: fixed;
         top: 0;
         left: 0;
         width: 100%;
         height: 100%;
-        background: rgba(0, 0, 0, 0.85);
+        background: rgba(0, 0, 0, 0.9);
         display: none;
         align-items: center;
         justify-content: center;
         z-index: 2000;
-        backdrop-filter: blur(8px);
+        backdrop-filter: blur(5px);
+        /* pointer-events: none na overlay zajistí, že myš "vidí" skrz něj na původní fotku. */
+        pointer-events: none;
     }
 
         #image-overlay.active {
@@ -568,11 +576,71 @@
             max-width: 90vw;
             max-height: 90vh;
             object-fit: contain;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            border-radius: 4px;
+        }
+    /* Křížek je nyní jen vizuální */
+    .close-overlay-btn {
+        position: absolute;
+        top: 20px;
+        right: 30px;
+        color: white;
+        font-size: 40px;
+        font-weight: bold;
+        z-index: 2001;
+        opacity: 0.5;
+    }
+
+    /* === BULK BAR === */
+    .bulk-actions-bar {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        background: white;
+        border-top: 1px solid var(--border);
+        padding: 15px 20px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 15px;
+        box-shadow: 0 -4px 20px rgba(0,0,0,0.1);
+        z-index: 1000;
+        transform: translateY(100%);
+        transition: transform 0.3s ease-in-out;
+        flex-wrap: wrap;
+    }
+
+        .bulk-actions-bar.visible {
+            transform: translateY(0);
         }
 
-    /* === SELECT2 === */
+    .bulk-info {
+        font-weight: 600;
+        color: var(--brand-dark);
+        margin-right: 10px;
+    }
+    @@media (max-width: 768px) {
+        .bulk-actions-bar
+
+    {
+        flex-direction: column;
+        gap: 10px;
+        padding-bottom: 20px;
+    }
+
+    .fab-group {
+        bottom: 100px;
+        transition: bottom 0.3s;
+    }
+
+    body.bulk-active .fab-group {
+        bottom: 140px;
+    }
+
+    }
+
+    /* === PLUGINS & FAB === */
     .select2-container .select2-selection--multiple {
         border: 1px solid var(--border) !important;
         border-radius: 7px !important;
@@ -594,7 +662,6 @@
         margin-top: 5px;
     }
 
-    /* === FAB === */
     .fab-group {
         position: fixed;
         right: 20px;
@@ -603,11 +670,6 @@
         flex-direction: column-reverse;
         gap: 10px;
         z-index: 1700;
-    }
-
-    /* Skrytí FAB na desktopu (pokud si to přejete) */
-    @@media (min-width: 1200px) {
-        /* .fab-group { display: none; } */
     }
 
     .fab {
@@ -691,11 +753,13 @@
             cursor: pointer;
             font-size: 0.95rem;
         }
-
     @@media (max-width: 500px) {
-        #pdf-column-list {
-            grid-template-columns: 1fr;
-        }
+        #pdf-column-list
+
+    {
+        grid-template-columns: 1fr;
+    }
+
     }
 </style>
 
@@ -736,7 +800,6 @@
             <form method="get" class="filter-form" id="desktopFilterForm">
                 <div class="filter-row">
                     <div class="filter-toggle-placeholder"></div>
-
                     <div class="search-input-wrapper">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="search-icon">
                             <path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z" clip-rule="evenodd" />
@@ -744,13 +807,10 @@
                         <input type="search" name="search" placeholder="Search anything…" value="@(Model?.Search ?? "")" />
                     </div>
                 </div>
-
                 @foreach (var filter in filtersToRender)
                 {
                     <div class="filter-row">
-                        <input type="checkbox" class="filter-toggle col-toggle"
-                               data-col="@filter.Name.ToLower()" title="Show column" checked />
-
+                        <input type="checkbox" class="filter-toggle col-toggle" data-col="@filter.Name.ToLower()" title="Show column" checked />
                         <select name="@filter.Name" class="multi-select" multiple="multiple" data-placeholder="@filter.Placeholder">
                             <option></option>
                             @foreach (var val in filter.AllValues)
@@ -760,7 +820,6 @@
                         </select>
                     </div>
                 }
-
                 <div class="filter-row" style="align-items: flex-start;">
                     <input type="checkbox" class="filter-toggle col-toggle" data-col="mfi" title="Show column" checked style="margin-top: 6px;" />
                     <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 4px;">
@@ -775,14 +834,11 @@
                     <input type="checkbox" class="filter-toggle col-toggle" data-col="notes" title="Show column" checked />
                     <div style="flex-grow: 1; padding: 8px; border: 1px solid transparent; color: #999;">Notes</div>
                 </div>
-
                 <div class="filter-controls">
                     <button type="submit" class="action-btn primary">Filter</button>
                     <button type="button" id="resetFiltersBtn" class="action-btn">Clear</button>
-
-                    <button type="button" id="open-pdf-export-btn" class="action-btn" style="grid-column: 1 / -1; background: #f0fdf4; border-color: var(--brand);">
-                        Exportovat do PDF...
-                    </button>
+                    <button type="button" id="selectAllBtn" class="action-btn" style="grid-column: 1 / -1; background: #e0f2fe; border-color: #7dd3fc; color: #0369a1;">Select All Visible</button>
+                    <button type="button" id="open-pdf-export-btn" class="action-btn" style="grid-column: 1 / -1; background: #f0fdf4; border-color: var(--brand);">Exportovat do PDF...</button>
                 </div>
             </form>
         </div>
@@ -794,39 +850,39 @@
         <div class="card-grid">
             @foreach (var item in Model.Items)
             {
-                <div class="sample-card">
+                <div class="sample-card" style="cursor: pointer;"
+                     onclick="if(!event.target.classList.contains('card-select-checkbox')) location.href='@Url.Action("Details", new { id = item.Id })'">
+
+                    <input type="checkbox" class="card-select-checkbox" value="@item.Id" onclick="event.stopPropagation()" />
+
                     <div class="sample-card-top">
                         <span class="id-badge">#@item.Id</span>
                         <h3 class="card-title">@Safe(item.Material)</h3>
-                        <a href="@Url.Action("Delete", new { id = item.Id })"
-                           class="delete-icon"
-                           title="Delete sample"
-                           onclick="return confirm('Are you sure you want to delete this sample?');">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <line x1="18" y1="6" x2="6" y2="18"></line>
-                                <line x1="6" y1="6" x2="18" y2="18"></line>
-                            </svg>
+                        <a href="@Url.Action("Delete", new { id = item.Id })" class="delete-icon" title="Delete sample" onclick="event.stopPropagation(); return confirm('Are you sure you want to delete this sample?');">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                         </a>
                     </div>
 
                     <div class="sample-card-body">
                         <div class="image-column">
-                            <a href="@Url.Action("Details", new { id = item.Id })">
-                                <img class="thumb" src="@(ImageSrc(item) ?? "https://via.placeholder.com/180")" alt="Sample photo" />
-                            </a>
+                            <img class="thumb"
+                                 src="@(ImageSrc(item) ?? "https://via.placeholder.com/180")"
+                                 alt="Sample photo"
+                                 style="cursor: zoom-in;" />
+
                             @{
-                                var additionalPhotoPaths = string.IsNullOrEmpty(item.AdditionalPhotos)
-                                ? Enumerable.Empty<string>()
-                                : item.AdditionalPhotos.Split(';', StringSplitOptions.RemoveEmptyEntries);
+                                var additionalPhotoPaths = string.IsNullOrEmpty(item.AdditionalPhotos) ? Enumerable.Empty<string>() : item.AdditionalPhotos.Split(';', StringSplitOptions.RemoveEmptyEntries);
                             }
                             @if (additionalPhotoPaths.Any())
                             {
                                 <div class="additional-photos-gallery">
                                     @foreach (var photoPath in additionalPhotoPaths.Take(2))
                                     {
-                                        <a href="@Url.Content(photoPath)" class="gallery-thumb-link">
-                                            <img src="@Url.Content(photoPath)" alt="Additional photo" />
-                                        </a>
+                                        <img src="@Url.Content(photoPath)"
+                                             class="thumb"
+                                             alt="Additional photo"
+                                             onclick="event.stopPropagation(); showDirectOverlay(this.src);"
+                                             style="cursor: zoom-in;" />
                                     }
                                 </div>
                             }
@@ -846,11 +902,10 @@
 
                     <div class="sample-card-bottom">
                         <div class="info-item notes-content" data-col="notes">
-                            <span class="notes-label">Notes</span>
-                            <span>@Safe(item.Notes)</span>
+                            <span class="notes-label">Notes</span><span>@Safe(item.Notes)</span>
                         </div>
                         <div class="edit-btn-wrapper">
-                            <a href="@Url.Action("Edit", new { id = item.Id })" class="action-btn primary" style="padding: 6px 16px; font-size: 14px;">Edit</a>
+                            <a href="@Url.Action("Edit", new { id = item.Id })" class="action-btn primary" style="padding: 6px 16px; font-size: 14px;" onclick="event.stopPropagation()">Edit</a>
                         </div>
                     </div>
                 </div>
@@ -860,43 +915,36 @@
     </main>
 </div>
 
+<div id="bulkActionsBar" class="bulk-actions-bar">
+    @Html.AntiForgeryToken()
+    <div class="bulk-info">Selected: <span id="selectedCount">0</span></div>
+    <div class="bulk-buttons">
+        <button type="button" id="bulkPdfBtn" class="action-btn" style="background: #f0fdf4; border-color: var(--brand); color: var(--brand-dark);">Export PDF (Summary)</button>
+        <button type="button" id="bulkDownloadAllBtn" class="action-btn" style="background: #e0f2fe; border-color: #0ea5e9; color: #0284c7;">Download All (Bundle)</button>
+        <button type="button" id="bulkDeleteBtn" class="action-btn destructive">Delete Selected</button>
+        <button type="button" id="cancelSelectionBtn" class="action-btn">Cancel</button>
+    </div>
+</div>
+
 <div class="fab-group" aria-hidden="false">
-    <a asp-controller="Photos" asp-action="Create" class="fab" title="Add new sample" aria-label="Add new sample">+</a>
-
+    <a asp-controller="Photos" asp-action="Create" class="fab" title="Add new sample">+</a>
     <button type="button" id="openPdfModalBtnMobile" class="fab secondary" title="Export PDF">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-            <polyline points="14 2 14 8 20 8"></polyline>
-            <line x1="16" y1="13" x2="8" y2="13"></line>
-            <line x1="16" y1="17" x2="8" y2="17"></line>
-            <polyline points="10 9 9 9 8 9"></polyline>
-        </svg>
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
     </button>
-
-    <a asp-controller="Admin" asp-action="Database" class="fab secondary" title="Settings" aria-label="Settings" role="button">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="3"></circle>
-            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-        </svg>
-    </a>
-
-    <button type="button" class="fab secondary" id="openFilterFab" title="Filters" aria-label="Open filters" aria-haspopup="dialog" aria-expanded="false" aria-controls="filterPanel">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M3 5h18M6 12h12M10 19h4" />
-        </svg>
-    </button>
+    <a asp-controller="Admin" asp-action="Database" class="fab secondary" title="Settings"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></a>
+    <button type="button" class="fab secondary" id="openFilterFab" title="Filters"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18M6 12h12M10 19h4" /></svg></button>
 </div>
 
 <div id="image-overlay">
+    <span class="close-overlay-btn" title="Close">&times;</span>
     <img id="overlay-image" src="" alt="Fullscreen preview" />
 </div>
 
-<div id="pdfModal" class="pdf-modal" role="dialog" aria-modal="true" aria-labelledby="pdfModalTitle" style="display: none;">
+<div id="pdfModal" class="pdf-modal">
     <div class="pdf-modal-content">
-        <button id="pdfModalClose" class="pdf-modal-close" aria-label="Close">✕</button>
+        <button id="pdfModalClose" class="pdf-modal-close">✕</button>
         <h2 id="pdfModalTitle">Export to PDF</h2>
-        <p>Select columns to include in export:</p>
-
+        <p>Select columns:</p>
         <div id="pdf-column-list">
             <label><input type="checkbox" value="Photo" checked> <span>Main Photo</span></label>
             <label><input type="checkbox" value="QrCode" checked> <span>Public Link (QR)</span></label>
@@ -908,94 +956,201 @@
             <label><input type="checkbox" value="Form" checked> <span>Form</span></label>
             <label><input type="checkbox" value="Filler" checked> <span>Filler</span></label>
             <label><input type="checkbox" value="Color" checked> <span>Color</span></label>
-            <label><input type="checkbox" value="MonthlyQuantity" checked> <span>Quantity (month)</span></label>
+            <label><input type="checkbox" value="MonthlyQuantity" checked> <span>Qty</span></label>
             <label><input type="checkbox" value="Mfi" checked> <span>MFI</span></label>
             <label><input type="checkbox" value="Notes" checked> <span>Notes</span></label>
             <label><input type="checkbox" value="CreatedAt" checked> <span>Created</span></label>
             <label><input type="checkbox" value="UpdatedAt" checked> <span>Updated</span></label>
         </div>
-
-        <button id="generatePdfBtn" class="btn-primary" style="width: 100%; margin-top: 20px;">Generate PDF</button>
+        <button id="generatePdfBtn" class="btn-primary" style="width: 100%; margin-top: 20px; padding: 10px; background: #16a34a; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">Generate PDF</button>
     </div>
 </div>
-
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
-    document.addEventListener("DOMContentLoaded", function() {
-        // Initialize Select2
-        setTimeout(() => {
-            $('.multi-select').select2({ allowClear: true, closeOnSelect: false });
-        }, 100);
+    // GLOBÁLNÍ FUNKCE PRO PŘÍMÉ OTEVŘENÍ OVERLAYE (Pro vedlejší fotky - kliknutím)
+    window.showDirectOverlay = function(src) {
+        document.getElementById('overlay-image').src = src;
+        document.getElementById('image-overlay').classList.add('active');
+    };
 
-        // --- UPRAVENÁ LOGIKA PRO SKLÁPĚNÍ FILTRU ---
+    document.addEventListener("DOMContentLoaded", function() {
+        setTimeout(() => $('.multi-select').select2({ allowClear: true, closeOnSelect: false }), 100);
+
         const toggleBtn = document.getElementById('sidebar-toggle-btn');
         const body = document.body;
+        if (localStorage.getItem('filtersVisible') === 'true') body.classList.add('filters-visible');
+        if (toggleBtn) toggleBtn.addEventListener('click', () => {
+            const isNowVisible = body.classList.toggle('filters-visible');
+            localStorage.setItem('filtersVisible', isNowVisible ? 'true' : 'false');
+        });
 
-        if (localStorage.getItem('filtersVisible') === 'true') {
-            body.classList.add('filters-visible');
-        }
-
-        if (toggleBtn) {
-            toggleBtn.addEventListener('click', () => {
-                const isNowVisible = body.classList.toggle('filters-visible');
-                localStorage.setItem('filtersVisible', isNowVisible ? 'true' : 'false');
-            });
-        }
-
-        // --- RESET LOGIKA (VČETNĚ MFI) ---
         const resetBtn = document.getElementById('resetFiltersBtn');
         const filterForm = document.getElementById('desktopFilterForm');
-
         if (resetBtn && filterForm) {
             resetBtn.addEventListener('click', (e) => {
                 e.preventDefault();
-
-                // Text
-                const searchInput = filterForm.querySelector('input[name="search"]');
-                if (searchInput) searchInput.value = '';
-
-                // Selects
+                filterForm.querySelector('input[name="search"]').value = '';
                 $(filterForm).find('.multi-select').val(null).trigger('change');
-
-                // MFI
-                const minMfi = filterForm.querySelector('input[name="minMfi"]');
-                if(minMfi) minMfi.value = '';
-                const maxMfi = filterForm.querySelector('input[name="maxMfi"]');
-                if(maxMfi) maxMfi.value = '';
-
-                // Checkboxes
+                filterForm.querySelector('input[name="minMfi"]').value = '';
+                filterForm.querySelector('input[name="maxMfi"]').value = '';
                 filterForm.querySelectorAll('.col-toggle').forEach(cb => cb.checked = true);
-
                 filterForm.submit();
             });
         }
 
-        // --- FAB FILTER BUTTON Logic (Mobile) ---
         const openFilterFab = document.getElementById('openFilterFab');
-        if (openFilterFab && toggleBtn) {
-            openFilterFab.addEventListener('click', () => {
-                 toggleBtn.click();
-            });
-        }
+        if (openFilterFab && toggleBtn) openFilterFab.addEventListener('click', () => toggleBtn.click());
 
-        // Toggle field visibility
-        const checkboxes = document.querySelectorAll(".col-toggle");
+        const checkboxesCol = document.querySelectorAll(".col-toggle");
         function toggleField(colName, isVisible) {
-            document.querySelectorAll(`.sample-card [data-col='${colName}']`).forEach(field => {
-                field.style.display = isVisible ? "flex" : "none";
-            });
+            document.querySelectorAll(`.sample-card [data-col='${colName}']`).forEach(field => field.style.display = isVisible ? "flex" : "none");
         }
-        checkboxes.forEach(cb => {
+        checkboxesCol.forEach(cb => {
             const colName = cb.dataset.col;
             toggleField(colName, cb.checked);
             cb.addEventListener("change", function() { toggleField(colName, this.checked); });
         });
 
-        // --- IMAGE PREVIEW ---
+        // --- SELECT ALL BUTTON LOGIC ---
+        const selectAllBtn = document.getElementById('selectAllBtn');
+        if (selectAllBtn) {
+            selectAllBtn.addEventListener('click', () => {
+                const visibleCheckboxes = document.querySelectorAll('.sample-card:not([style*="display: none"]) .card-select-checkbox');
+                const allChecked = Array.from(visibleCheckboxes).every(cb => cb.checked);
+                visibleCheckboxes.forEach(cb => cb.checked = !allChecked);
+                updateBulkUI();
+            });
+        }
+
+        // --- BULK ACTIONS LOGIC ---
+        const bulkBar = document.getElementById('bulkActionsBar');
+        const selectedCountSpan = document.getElementById('selectedCount');
+        const checkboxes = document.querySelectorAll('.card-select-checkbox');
+        let selectedIds = [];
+
+        function updateBulkUI() {
+            selectedIds = Array.from(checkboxes).filter(cb => cb.checked).map(cb => cb.value);
+            selectedCountSpan.textContent = selectedIds.length;
+            if (selectedIds.length > 0) { bulkBar.classList.add('visible'); document.body.classList.add('bulk-active'); }
+            else { bulkBar.classList.remove('visible'); document.body.classList.remove('bulk-active'); }
+            checkboxes.forEach(cb => {
+                const card = cb.closest('.sample-card');
+                if (cb.checked) card.classList.add('selected'); else card.classList.remove('selected');
+            });
+        }
+        checkboxes.forEach(cb => cb.addEventListener('change', updateBulkUI));
+        document.getElementById('cancelSelectionBtn').addEventListener('click', () => { checkboxes.forEach(cb => cb.checked = false); updateBulkUI(); });
+
+        document.getElementById('bulkDeleteBtn').addEventListener('click', function() {
+            if (confirm(`Delete ${selectedIds.length} samples?`)) {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = '@Url.Action("DeleteMultiple", "Photos")';
+                const tokenInput = document.querySelector('input[name="__RequestVerificationToken"]');
+                if (tokenInput) {
+                    const hiddenToken = document.createElement('input');
+                    hiddenToken.type = 'hidden'; hiddenToken.name = '__RequestVerificationToken'; hiddenToken.value = tokenInput.value;
+                    form.appendChild(hiddenToken);
+                }
+                selectedIds.forEach(id => {
+                    const input = document.createElement('input');
+                    input.type = 'hidden'; input.name = 'ids'; input.value = id;
+                    form.appendChild(input);
+                });
+                document.body.appendChild(form);
+                form.submit();
+            }
+        });
+
+        // --- DOWNLOAD ALL BUNDLE (NO ZIP) ---
+        document.getElementById('bulkDownloadAllBtn').addEventListener('click', function() {
+            if(selectedIds.length === 0) return;
+            if(!confirm(`Start downloading ${selectedIds.length + 1} files? (Please allow pop-ups if prompted)`)) return;
+
+            let params = new URLSearchParams();
+            selectedIds.forEach(id => params.append('ids', id));
+            ["Id", "Supplier", "Material", "OriginalName", "Mfi"].forEach(c => params.append('columnsToInclude', c));
+            const summaryUrl = `@Url.Action("ExportPdf", "Photos")?${params.toString()}`;
+            window.open(summaryUrl, '_blank');
+
+            selectedIds.forEach((id, index) => {
+                setTimeout(() => {
+                    const singleUrl = `@Url.Action("ExportSinglePdf", "Photos")?id=${id}`;
+                    const link = document.createElement('a');
+                    link.href = singleUrl;
+                    link.download = '';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                }, (index * 800) + 1200);
+            });
+        });
+
+        // --- PDF MODAL ---
+        const pdfModal = document.getElementById('pdfModal');
+        const openBtn = document.getElementById('open-pdf-export-btn');
+        const openBtnMobile = document.getElementById('openPdfModalBtnMobile');
+        const closePdfBtn = document.getElementById('pdfModalClose');
+        const bulkPdfBtn = document.getElementById('bulkPdfBtn');
+
+        // ZMĚNA ZDE: Funkce nyní nastavuje výchozí hodnoty při každém otevření
+        function openPdfModal() {
+            if (pdfModal) {
+                pdfModal.style.display = 'flex';
+
+                // Seznam hodnot, které mají být VŽDY zaškrtnuté při otevření
+                // (Text musí přesně odpovídat tomu, co je v HTML v atributu value="...")
+                const defaults = [
+                    // "Photo",  // Fotku defaultně nechceme
+                    // "QrCode", // QR kód defaultně nechceme
+                    "Id",
+                    "Material",
+                    "Color",
+                    "Form",
+                    "Mfi",
+                    "Filler",
+                    "MonthlyQuantity",
+                    "Notes"
+                    // Ostatní (Position, Supplier, OriginalName...) také defaultně nechceme
+                ];
+
+                const checkboxes = document.querySelectorAll('#pdf-column-list input[type="checkbox"]');
+                checkboxes.forEach(cb => {
+                    // Nastaví checked na true, pokud je hodnota checkboxu v poli 'defaults', jinak false
+                    cb.checked = defaults.includes(cb.value);
+                });
+            }
+        }
+
+        function closePdfModal() { if (pdfModal) pdfModal.style.display = 'none'; }
+
+        if (openBtn) openBtn.addEventListener('click', () => { document.getElementById('pdfModalTitle').innerText = "Export to PDF (Filtered)"; openPdfModal(); });
+        if (openBtnMobile) openBtnMobile.addEventListener('click', openPdfModal);
+        if (closePdfBtn) closePdfBtn.addEventListener('click', closePdfModal);
+        if (bulkPdfBtn) bulkPdfBtn.addEventListener('click', () => { document.getElementById('pdfModalTitle').innerText = `Export ${selectedIds.length} selected to PDF`; openPdfModal(); });
+
+        const generatePdfBtn = document.getElementById('generatePdfBtn');
+        if (generatePdfBtn) {
+            generatePdfBtn.addEventListener('click', function() {
+                const checkedBoxes = document.querySelectorAll('#pdf-column-list input[type="checkbox"]:checked');
+                let params = new URLSearchParams();
+                if (selectedIds.length > 0) selectedIds.forEach(id => params.append('ids', id));
+                else {
+                    const fd = new FormData(document.getElementById('desktopFilterForm'));
+                    params = new URLSearchParams(fd);
+                }
+                checkedBoxes.forEach(cb => params.append('columnsToInclude', cb.value));
+                window.open(`@Url.Action("ExportPdf", "Photos")?${params.toString()}`, '_blank');
+                closePdfModal();
+            });
+        }
+
+        // --- ZOOM LOGIC (Unified) ---
         const overlay = document.getElementById('image-overlay');
-        const overlayImage = document.getElementById('overlay-image');
+        const overlayImg = document.getElementById('overlay-image');
+        const closeBtn = document.querySelector('.close-overlay-btn');
         let hoverTimer = null;
 
         function closeOverlay() {
@@ -1005,9 +1160,9 @@
         document.querySelectorAll('.thumb').forEach(thumb => {
             thumb.addEventListener('mouseenter', () => {
                 hoverTimer = setTimeout(() => {
-                    overlayImage.src = thumb.src;
+                    overlayImg.src = thumb.src;
                     overlay.classList.add('active');
-                }, 800);
+                }, 500);
             });
             thumb.addEventListener('mouseleave', () => {
                 clearTimeout(hoverTimer);
@@ -1015,103 +1170,10 @@
             });
         });
 
-        document.querySelectorAll('.gallery-thumb-link').forEach(link => {
-            link.addEventListener('click', function(event) {
-                event.preventDefault();
-                const imageSrc = this.querySelector('img').src;
-                overlayImage.src = imageSrc;
-                overlay.classList.add('active');
-            });
+        if(closeBtn) closeBtn.addEventListener('click', closeOverlay);
+        overlay.addEventListener('click', (e) => {
+            closeOverlay();
         });
-
-        overlay.addEventListener('click', closeOverlay);
-        document.addEventListener('keydown', (e) => {
-            if (e.key === "Escape") closeOverlay();
-        });
-
-
-        // --- PDF MODAL LOGIC (DESKTOP & MOBILE FAB) ---
-        const pdfModal = document.getElementById('pdfModal');
-        const openBtn = document.getElementById('open-pdf-export-btn');
-        const openBtnMobile = document.getElementById('openPdfModalBtnMobile');
-        const closePdfBtn = document.getElementById('pdfModalClose');
-        const generatePdfBtn = document.getElementById('generatePdfBtn');
-
-    function openPdfModal() {
-            if (pdfModal) {
-                // 1. Zobrazit okno
-                pdfModal.style.display = 'flex';
-
-                // 2. Seznam hodnot, které mají být VŽDY zaškrtnuté při otevření
-                // (Důležité: Text musí přesně odpovídat tomu, co je v HTML v atributu value="...")
-                const defaults = [
-                    "Id",
-                    "Material",
-                    "Color",
-                    "Form",
-                    "Mfi",
-                    "Filler",
-                    "MonthlyQuantity",
-                    "Notes",
-
-                ];
-
-                // 3. Najít všechny checkboxy v seznamu
-                const checkboxes = document.querySelectorAll('#pdf-column-list input[type="checkbox"]');
-
-                // 4. Projít je a nastavit stav
-                checkboxes.forEach(cb => {
-                    // Pokud je hodnota checkboxu v seznamu 'defaults', zaškrtneme ho (true)
-                    // Pokud tam není, odškrtneme ho (false)
-                    if (defaults.includes(cb.value)) {
-                        cb.checked = true;
-                    } else {
-                        cb.checked = false;
-                    }
-                });
-            }
-        }
-
-        function closePdfModal() {
-            if (pdfModal) pdfModal.style.display = 'none';
-        }
-
-        if (openBtn) openBtn.addEventListener('click', openPdfModal);
-        if (openBtnMobile) openBtnMobile.addEventListener('click', openPdfModal);
-        if (closePdfBtn) closePdfBtn.addEventListener('click', closePdfModal);
-        if (pdfModal) {
-            pdfModal.addEventListener('click', (e) => {
-                if (e.target === pdfModal) closePdfModal();
-            });
-        }
-
-        if (generatePdfBtn) {
-            generatePdfBtn.addEventListener('click', function() {
-                const checkedBoxes = document.querySelectorAll('#pdf-column-list input[type="checkbox"]:checked');
-
-                // Create params from FORM data (so filters are included)
-                const mainForm = document.getElementById('desktopFilterForm');
-                const formData = new FormData(mainForm);
-                const params = new URLSearchParams(formData);
-
-                // Add selected columns
-                checkedBoxes.forEach(cb => {
-                    params.append('columnsToInclude', cb.value);
-                });
-
-                const exportUrl = `@Url.Action("ExportPdf", "Photos")?${params.toString()}`;
-                window.open(exportUrl, '_blank');
-                closePdfModal();
-            });
-        }
-
+        document.addEventListener('keydown', (e) => { if (e.key === "Escape") closeOverlay(); });
     });
-
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('/service-worker.js')
-                .then(reg => console.log('Service Worker registered.'))
-                .catch(err => console.log('Service Worker registration failed: ', err));
-        });
-    }
 </script>

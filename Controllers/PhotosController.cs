@@ -32,15 +32,10 @@ public class PhotosController : Controller
     }
 
     // --- POMOCNÁ METODA PRO PARSOVÁNÍ MFI ---
-    // Bere řetězec "32/55" nebo "5,12", vrátí pouze první celé číslo (32 nebo 5).
     private double? ParseMfi(string mfiString)
     {
         if (string.IsNullOrWhiteSpace(mfiString)) return null;
-
-        // Rozdělíme podle lomítka, čárky nebo tečky a vezmeme první část
         var firstPart = mfiString.Split(new[] { '/', ',', '.' }, StringSplitOptions.RemoveEmptyEntries)[0].Trim();
-
-        // Převedeme na číslo
         if (double.TryParse(firstPart, NumberStyles.Any, CultureInfo.InvariantCulture, out double result))
         {
             return result;
@@ -102,51 +97,60 @@ public class PhotosController : Controller
         List<string> color, List<string> name, List<string> position, List<string> filler,
         List<string> mfi, List<string> monthlyQuantity, List<string> form,
         double? minMfi, double? maxMfi,
-        [FromQuery] List<string> columnsToInclude)
+        [FromQuery] List<string> columnsToInclude,
+        [FromQuery] List<int> ids) // <--- PŘIDÁNO: Seznam ID pro hromadný výběr
     {
-        // 1. Získáme vyfiltrovaný dotaz (základní stringové filtry)
-        var query = GetFilteredQuery(search, supplier, material, type, color, name, position, filler, mfi, monthlyQuantity, form);
+        List<PhotoRecord> itemsList;
 
-        // 2. Spustíme dotaz a načteme data do paměti (BEZ ŘAZENÍ V SQL)
-        var itemsList = await query.ToListAsync();
-
-        // 3. Aplikujeme MFI číselný filtr v paměti (pokud je zadán rozsah)
-        if (minMfi.HasValue || maxMfi.HasValue)
+        // 1. ROZHODOVÁNÍ: Mám konkrétní ID z checkboxů?
+        if (ids != null && ids.Any())
         {
-            itemsList = itemsList.Where(p => {
-                var val = ParseMfi(p.Mfi);
-                if (!val.HasValue) return false; // Pokud má filtr, ale hodnota není číslo, skrýt
+            // Pokud ano, ignoruji filtry a beru jen tato ID
+            itemsList = await _context.Photos
+                .AsNoTracking()
+                .Where(p => ids.Contains(p.Id))
+                .ToListAsync();
+        }
+        else
+        {
+            // Pokud ne, jedu podle filtrů (Search, Selecty, MFI...)
+            var query = GetFilteredQuery(search, supplier, material, type, color, name, position, filler, mfi, monthlyQuantity, form);
 
-                bool condition = true;
-                if (minMfi.HasValue) condition &= (val.Value >= minMfi.Value);
-                if (maxMfi.HasValue) condition &= (val.Value <= maxMfi.Value);
+            // Načtení do paměti
+            itemsList = await query.ToListAsync();
 
-                return condition;
-            }).ToList();
+            // Aplikace MFI filtru v paměti
+            if (minMfi.HasValue || maxMfi.HasValue)
+            {
+                itemsList = itemsList.Where(p => {
+                    var val = ParseMfi(p.Mfi);
+                    if (!val.HasValue) return false;
+                    bool condition = true;
+                    if (minMfi.HasValue) condition &= (val.Value >= minMfi.Value);
+                    if (maxMfi.HasValue) condition &= (val.Value <= maxMfi.Value);
+                    return condition;
+                }).ToList();
+            }
         }
 
-        // 4. FINÁLNÍ ŘAZENÍ (A-Z Material -> 0-9 Monthly Quantity)
+        // 2. FINÁLNÍ ŘAZENÍ (A-Z Material -> 0-9 Monthly Quantity)
+        // Toto provedeme vždy, ať už data přišla z filtrů nebo z výběru
         itemsList = itemsList
-            .OrderBy(p => p.Material) // Primární: Abeceda
-            .ThenBy(p => 
+            .OrderBy(p => p.Material)
+            .ThenBy(p =>
             {
-                // Sekundární: Množství (převod stringu na double pro správné řazení)
                 if (string.IsNullOrWhiteSpace(p.MonthlyQuantity)) return 0;
-                
-                // Nahradíme čárku tečkou pro jistotu a zkusíme parsovat
                 var cleanVal = p.MonthlyQuantity.Replace(",", ".").Trim();
-                // Vezmeme jen první část kdyby tam bylo "500 kg" -> "500"
-                var numberPart = cleanVal.Split(' ')[0]; 
-
+                var numberPart = cleanVal.Split(' ')[0];
                 if (double.TryParse(numberPart, NumberStyles.Any, CultureInfo.InvariantCulture, out double result))
                 {
                     return result;
                 }
-                return 0; 
+                return 0;
             })
             .ToList();
 
-        // 5. Vytvoříme PDF dokument
+        // 3. Vytvoříme PDF dokument
         QuestPDF.Settings.License = LicenseType.Community;
 
         var pdfBytes = Document.Create(container =>
@@ -156,21 +160,13 @@ public class PhotosController : Controller
                 page.Margin(25, Unit.Millimetre);
                 page.Size(PageSizes.A4.Landscape());
 
-                // ==========================================
-                // --- KARTA HLAVIČKY (HEADER CARD) ---
-                // ==========================================
+                // HLAVIČKA
                 page.Header()
-                    .PaddingBottom(10) // Mezera mezi kartou hlavičky a kartou tabulky
-                    //                   // Styl karty:
-                    //.Border(1)
-                    //.BorderColor(Colors.Green.Lighten2)
-                    //.Background(Color.FromHex("#f4fbf4")) // Velmi jemné šedé pozadí pro hlavičku
-                    //.Padding(10) // Vnitřní odsazení v kartě
+                    .PaddingBottom(10)
                     .Column(col =>
                     {
                         col.Item().Row(row =>
                         {
-                            // Levá část    
                             row.RelativeItem(1).Column(c =>
                             {
                                 string logoPath = Path.Combine(_env.WebRootPath, "logo.png");
@@ -178,37 +174,28 @@ public class PhotosController : Controller
                                 {
                                     c.Item().AlignMiddle().MaxHeight(75).Image(logoPath).FitArea();
                                 }
-
                             });
 
-
-
-                            // Pravá část
                             row.RelativeItem(1).Column(c =>
                             {
                                 c.Item().AlignRight().Text("Technical Data Sheet").SemiBold().FontColor(Color.FromHex("#182c25")).FontSize(16);
                                 c.Item().AlignRight().Text("").FontColor(Color.FromHex("#182c25")).FontSize(5);
                                 c.Item().AlignRight().Text($"Date: {DateTime.Now:d. M. yyyy}").FontColor(Color.FromHex("#182c25")).FontSize(9);
-                                c.Item().AlignRight().Text($"Count: {itemsList.Count}") .FontColor(Color.FromHex("#182c25")).FontSize(9);
+                                c.Item().AlignRight().Text($"Count: {itemsList.Count}").FontColor(Color.FromHex("#182c25")).FontSize(9);
                                 c.Item().AlignRight().Text("").FontSize(9);
                                 c.Item().AlignRight().Text("Riegrova 59, CZ - 388 01 Blatná").FontColor(Color.FromHex("#182c25")).FontSize(10);
                                 c.Item().AlignRight().Text("Laboratoř/Laboratory: Radomyšl 248, 387 31 Radomyšl").FontColor(Color.FromHex("#182c25")).FontSize(10);
                                 c.Item().AlignRight().Text("tel. +420 723 007 734 / +420 778 020 315").FontColor(Color.FromHex("#182c25")).FontSize(10);
                             });
                         });
-                        // Poznámka: Oddělovací čáru jsem smazal, protože samotná karta má rámeček.
                     });
 
-
-                // ==========================================
-                // --- KARTA OBSAHU (CONTENT CARD) ---
-                // ==========================================
+                // OBSAH
                 page.Content()
-                    // Styl karty:
                     .Border(1)
                     .BorderColor(Colors.Green.Lighten2)
                     .Background(Color.FromHex("#f4fbf4"))
-                    .Padding(0) // Tabulka vypadá lépe, když jde až ke krajům, nebo dejte Padding(10)
+                    .Padding(0)
                     .Table(table =>
                     {
                         table.ColumnsDefinition(columns =>
@@ -226,10 +213,8 @@ public class PhotosController : Controller
                             if (columnsToInclude.Contains("Notes")) columns.RelativeColumn(2);
                         });
 
-                        // Hlavička tabulky (uvnitř karty obsahu)
                         table.Header(header =>
                         {
-                            // Přidal jsem jemné pozadí pro řádek s názvy sloupců
                             static IContainer HeaderCellStyle(IContainer c) => c
                                 .Background(Colors.Green.Lighten4)
                                 .BorderBottom(1)
@@ -251,7 +236,6 @@ public class PhotosController : Controller
                         });
 
                         static IContainer DataCellStyle(IContainer c) => c.BorderBottom(1).BorderRight(1).BorderColor(Colors.Green.Lighten3).Padding(5);
-                        
 
                         foreach (var item in itemsList)
                         {
@@ -269,7 +253,7 @@ public class PhotosController : Controller
                         }
                     });
 
-                // --- Patička ---
+                // PATIČKA
                 page.Footer()
                     .PaddingTop(5)
                     .AlignRight()
@@ -284,6 +268,56 @@ public class PhotosController : Controller
         }).GeneratePdf();
 
         return File(pdfBytes, "application/pdf", $"Samples_Export_{DateTime.Now:yyyy-MM-dd}.pdf");
+    }
+
+    // =========================================================
+    // ===            METODA HROMADNÉHO MAZÁNÍ               ===
+    // =========================================================
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteMultiple(List<int> ids)
+    {
+        if (ids == null || !ids.Any())
+        {
+            return RedirectToAction(nameof(Index));
+        }
+
+        foreach (var id in ids)
+        {
+            var photo = await _context.Photos.FindAsync(id);
+            if (photo != null)
+            {
+                // 1. Smazat hlavní fotku
+                if (!string.IsNullOrEmpty(photo.PhotoPath))
+                {
+                    var filePath = Path.Combine(_env.WebRootPath, photo.PhotoPath.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
+                    if (System.IO.File.Exists(filePath))
+                    {
+                        try { System.IO.File.Delete(filePath); } catch { /* Log error if needed */ }
+                    }
+                }
+
+                // 2. Smazat doplňkové fotky
+                if (!string.IsNullOrEmpty(photo.AdditionalPhotos))
+                {
+                    var additionalPaths = photo.AdditionalPhotos.Split(';', StringSplitOptions.RemoveEmptyEntries);
+                    foreach (var path in additionalPaths)
+                    {
+                        var filePath = Path.Combine(_env.WebRootPath, path.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
+                        if (System.IO.File.Exists(filePath))
+                        {
+                            try { System.IO.File.Delete(filePath); } catch { /* Log error if needed */ }
+                        }
+                    }
+                }
+
+                // 3. Smazat záznam z DB
+                _context.Photos.Remove(photo);
+            }
+        }
+
+        await _context.SaveChangesAsync();
+        return RedirectToAction(nameof(Index));
     }
 
     // --- SDÍLENÁ METODA PRO FILTROVÁNÍ (String část) ---
@@ -351,7 +385,7 @@ public class PhotosController : Controller
                                 string logoPath = Path.Combine(_env.WebRootPath, "logo.png");
                                 if (System.IO.File.Exists(logoPath))
                                 {
-                                    c.Item().AlignLeft().Image(logoPath).FitArea(); // AlignLeft se volá na kontejneru -> OK // AlignLeft se volá na kontejneru -> OK
+                                    c.Item().AlignLeft().Image(logoPath).FitArea();
                                 }
 
                                 c.Item().PaddingTop(5).Text("odpo s.r.o.").SemiBold().FontSize(12).FontColor(Colors.Green.Darken2);
@@ -417,14 +451,14 @@ public class PhotosController : Controller
                             var bgColor = rowIndex % 2 == 0 ? Colors.White : Colors.Grey.Lighten5; // Střídání barev
 
                             table.Cell().Background(bgColor).Padding(5).BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten3)
-                                 .Text(label).SemiBold().FontColor(Colors.Grey.Darken3);
+                                    .Text(label).SemiBold().FontColor(Colors.Grey.Darken3);
 
                             table.Cell().Background(bgColor).Padding(5).BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten3)
-                                 .Text(string.IsNullOrWhiteSpace(value) ? "-" : value).FontColor(Colors.Black);
+                                    .Text(string.IsNullOrWhiteSpace(value) ? "-" : value).FontColor(Colors.Black);
                         }
 
                         // Podmíněné přidávání řádků podle columnsToInclude
-                                                if (columnsToInclude.Contains("Id")) AddRow("Internal ID", item.Id.ToString());
+                        if (columnsToInclude.Contains("Id")) AddRow("Internal ID", item.Id.ToString());
                         if (columnsToInclude.Contains("Supplier")) AddRow("Supplier", item.Supplier);
                         if (columnsToInclude.Contains("Material")) AddRow("Material", item.Material);
                         if (columnsToInclude.Contains("OriginalName")) AddRow("Name", item.OriginalName);
@@ -469,6 +503,166 @@ public class PhotosController : Controller
 
         return File(pdfBytes, "application/pdf", $"Sample_{item.Id}_{item.OriginalName ?? "Detail"}.pdf");
     }
+
+    private byte[] GenerateSummaryPdfBytes(List<PhotoRecord> itemsList, List<string> columnsToInclude)
+    {
+        QuestPDF.Settings.License = LicenseType.Community;
+        return Document.Create(container =>
+        {
+            container.Page(page =>
+            {
+                page.Margin(25, Unit.Millimetre);
+                page.Size(PageSizes.A4.Landscape());
+
+                // Header
+                page.Header().PaddingBottom(10).Column(col =>
+                {
+                    col.Item().Row(row =>
+                    {
+                        row.RelativeItem(1).Column(c => {
+                            string logoPath = Path.Combine(_env.WebRootPath, "logo.png");
+                            if (System.IO.File.Exists(logoPath)) c.Item().AlignMiddle().MaxHeight(75).Image(logoPath).FitArea();
+                        });
+                        row.RelativeItem(1).Column(c => {
+                            c.Item().AlignRight().Text("Technical Data Sheet").SemiBold().FontColor(Color.FromHex("#182c25")).FontSize(16);
+                            c.Item().AlignRight().Text($"Date: {DateTime.Now:d. M. yyyy}").FontSize(9);
+                            c.Item().AlignRight().Text($"Count: {itemsList.Count}").FontSize(9);
+                            c.Item().AlignRight().Text("Riegrova 59, CZ - 388 01 Blatná").FontSize(10);
+                        });
+                    });
+                });
+
+                // Table
+                page.Content().Border(1).BorderColor(Colors.Green.Lighten2).Background(Color.FromHex("#f4fbf4")).Padding(0).Table(table =>
+                {
+                    table.ColumnsDefinition(columns => {
+                        if (columnsToInclude.Contains("Id")) columns.ConstantColumn(40);
+                        if (columnsToInclude.Contains("Supplier")) columns.RelativeColumn();
+                        if (columnsToInclude.Contains("Material")) columns.RelativeColumn();
+                        if (columnsToInclude.Contains("OriginalName")) columns.RelativeColumn();
+                        if (columnsToInclude.Contains("Color")) columns.RelativeColumn();
+                        if (columnsToInclude.Contains("Position")) columns.RelativeColumn();
+                        if (columnsToInclude.Contains("Form")) columns.RelativeColumn();
+                        if (columnsToInclude.Contains("Filler")) columns.RelativeColumn();
+                        if (columnsToInclude.Contains("MonthlyQuantity")) columns.ConstantColumn(60);
+                        if (columnsToInclude.Contains("Mfi")) columns.ConstantColumn(50);
+                        if (columnsToInclude.Contains("Notes")) columns.RelativeColumn(2);
+                    });
+
+                    table.Header(header => {
+                        static IContainer HStyle(IContainer c) => c.Background(Colors.Green.Lighten4).BorderBottom(1).BorderRight(1).BorderColor(Colors.Green.Lighten2).Padding(5);
+                        if (columnsToInclude.Contains("Id")) header.Cell().Element(HStyle).Text("ID").SemiBold();
+                        if (columnsToInclude.Contains("Supplier")) header.Cell().Element(HStyle).Text("Supplier").SemiBold();
+                        if (columnsToInclude.Contains("Material")) header.Cell().Element(HStyle).Text("Material").SemiBold();
+                        if (columnsToInclude.Contains("OriginalName")) header.Cell().Element(HStyle).Text("Orig. Name").SemiBold();
+                        if (columnsToInclude.Contains("Color")) header.Cell().Element(HStyle).Text("Color").SemiBold();
+                        if (columnsToInclude.Contains("Position")) header.Cell().Element(HStyle).Text("Position").SemiBold();
+                        if (columnsToInclude.Contains("Form")) header.Cell().Element(HStyle).Text("Form").SemiBold();
+                        if (columnsToInclude.Contains("Filler")) header.Cell().Element(HStyle).Text("Filler").SemiBold();
+                        if (columnsToInclude.Contains("MonthlyQuantity")) header.Cell().Element(HStyle).Text("Qty").SemiBold();
+                        if (columnsToInclude.Contains("Mfi")) header.Cell().Element(HStyle).Text("MFI").SemiBold();
+                        if (columnsToInclude.Contains("Notes")) header.Cell().Element(HStyle).Text("Notes").SemiBold();
+                    });
+
+                    static IContainer DStyle(IContainer c) => c.BorderBottom(1).BorderRight(1).BorderColor(Colors.Green.Lighten3).Padding(5);
+                    foreach (var item in itemsList)
+                    {
+                        if (columnsToInclude.Contains("Id")) table.Cell().Element(DStyle).Text(item.Id);
+                        if (columnsToInclude.Contains("Supplier")) table.Cell().Element(DStyle).Text(item.Supplier);
+                        if (columnsToInclude.Contains("Material")) table.Cell().Element(DStyle).Text(item.Material);
+                        if (columnsToInclude.Contains("OriginalName")) table.Cell().Element(DStyle).Text(item.OriginalName);
+                        if (columnsToInclude.Contains("Color")) table.Cell().Element(DStyle).Text(item.Color);
+                        if (columnsToInclude.Contains("Position")) table.Cell().Element(DStyle).Text(item.Position);
+                        if (columnsToInclude.Contains("Form")) table.Cell().Element(DStyle).Text(item.Form);
+                        if (columnsToInclude.Contains("Filler")) table.Cell().Element(DStyle).Text(item.Filler);
+                        if (columnsToInclude.Contains("MonthlyQuantity")) table.Cell().Element(DStyle).Text(item.MonthlyQuantity);
+                        if (columnsToInclude.Contains("Mfi")) table.Cell().Element(DStyle).Text(item.Mfi);
+                        if (columnsToInclude.Contains("Notes")) table.Cell().Element(DStyle).Text(item.Notes);
+                    }
+                });
+
+                page.Footer().PaddingTop(5).AlignRight().Text(x => { x.Span("Page "); x.CurrentPageNumber(); x.Span(" of "); x.TotalPages(); });
+            });
+        }).GeneratePdf();
+    }
+
+    private byte[] GenerateSinglePdfBytes(PhotoRecord item, List<string> columnsToInclude)
+    {
+        QuestPDF.Settings.License = LicenseType.Community;
+        return Document.Create(container =>
+        {
+            container.Page(page =>
+            {
+                page.Margin(25, Unit.Millimetre);
+                page.Size(PageSizes.A4.Portrait());
+                page.DefaultTextStyle(x => x.FontSize(10));
+
+                // Header
+                page.Header().PaddingBottom(20).Column(col => {
+                    col.Item().Row(row => {
+                        row.RelativeItem(2).Column(c => {
+                            string logoPath = Path.Combine(_env.WebRootPath, "logo.png");
+                            if (System.IO.File.Exists(logoPath)) c.Item().AlignLeft().Image(logoPath).FitArea();
+                            c.Item().PaddingTop(5).Text("odpo s.r.o.").SemiBold().FontSize(12).FontColor(Colors.Green.Darken2);
+                            c.Item().Text("Riegrova 59, CZ - 388 01 Blatná").FontSize(9);
+                        });
+                        row.RelativeItem(1).AlignRight().Column(c => {
+                            c.Item().Text("SAMPLE DETAIL").ExtraBold().FontSize(16).FontColor(Colors.Grey.Darken3);
+                            c.Item().PaddingTop(5).Text($"ID: {item.Id}").FontSize(10).SemiBold();
+                            c.Item().Text($"Date: {DateTime.Now:d. M. yyyy}").FontSize(10);
+                        });
+                    });
+                    col.Item().PaddingTop(10).BorderBottom(1.5f).BorderColor(Colors.Green.Medium);
+                });
+
+                // Content
+                page.Content().PaddingVertical(10).Column(col => {
+                    if (columnsToInclude.Contains("Photo"))
+                    {
+                        var imageSrc = !string.IsNullOrWhiteSpace(item.ImagePath) ? item.ImagePath : item.PhotoPath;
+                        if (!string.IsNullOrWhiteSpace(imageSrc))
+                        {
+                            var physicalPath = Path.Combine(_env.WebRootPath, imageSrc.TrimStart('~', '/'));
+                            if (System.IO.File.Exists(physicalPath))
+                            {
+                                byte[] photoBytes = System.IO.File.ReadAllBytes(physicalPath);
+                                col.Item().PaddingBottom(20).AlignCenter().Border(1).BorderColor(Colors.Grey.Lighten2).Padding(5).MaxHeight(250).Image(photoBytes).FitArea();
+                            }
+                        }
+                    }
+                    col.Item().Table(table => {
+                        table.ColumnsDefinition(columns => { columns.ConstantColumn(120); columns.RelativeColumn(); });
+                        uint rowIndex = 0;
+                        void AddRow(string label, string? value)
+                        {
+                            rowIndex++;
+                            var bgColor = rowIndex % 2 == 0 ? Colors.White : Colors.Grey.Lighten5;
+                            table.Cell().Background(bgColor).Padding(5).BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten3).Text(label).SemiBold().FontColor(Colors.Grey.Darken3);
+                            table.Cell().Background(bgColor).Padding(5).BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten3).Text(string.IsNullOrWhiteSpace(value) ? "-" : value).FontColor(Colors.Black);
+                        }
+                        if (columnsToInclude.Contains("Id")) AddRow("Internal ID", item.Id.ToString());
+                        if (columnsToInclude.Contains("Supplier")) AddRow("Supplier", item.Supplier);
+                        if (columnsToInclude.Contains("Material")) AddRow("Material", item.Material);
+                        if (columnsToInclude.Contains("OriginalName")) AddRow("Name", item.OriginalName);
+                        if (columnsToInclude.Contains("Form")) AddRow("Form", item.Form);
+                        if (columnsToInclude.Contains("Filler")) AddRow("Filler", item.Filler);
+                        if (columnsToInclude.Contains("Color")) AddRow("Color", item.Color);
+                        if (columnsToInclude.Contains("Position")) AddRow("Position", item.Position?.ToString());
+                        if (columnsToInclude.Contains("MonthlyQuantity")) AddRow("Quantity (month)", item.MonthlyQuantity?.ToString());
+                        if (columnsToInclude.Contains("Mfi")) AddRow("MFI/°C/kg", item.Mfi);
+                        if (columnsToInclude.Contains("Notes")) AddRow("Notes", item.Notes);
+                    });
+                });
+
+                page.Footer().PaddingTop(10).Row(row => {
+                    row.RelativeItem().Text("Generated via IS odpo s.r.o.").FontSize(8).FontColor(Colors.Grey.Medium);
+                    row.RelativeItem().AlignRight().Text(x => { x.Span("Page "); x.CurrentPageNumber(); x.Span(" of "); x.TotalPages(); });
+                });
+            });
+        }).GeneratePdf();
+    }
+
+
     // --- METODA PRO VIEWMODEL ---
     private async Task<PhotoApp.ViewModels.PhotosIndexViewModel> GetFilteredViewModel(
         string search, List<string> supplier, List<string> material, List<string> type,
