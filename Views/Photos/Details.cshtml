@@ -11,11 +11,6 @@
 @{
     ViewData["Title"] = "Sample Details";
 
-    // var publicUrl = ViewBag.PublicUrl as string ?? Url.Action("DetailsAnonymous", "Home", new { id = Model.Id }, Context?.Request?.Scheme ?? "https");
-    // var qrApi = !string.IsNullOrWhiteSpace(publicUrl)
-    //     ? "https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=" + System.Uri.EscapeDataString(publicUrl)
-    //     : null;
-
     var imageSrc = !string.IsNullOrWhiteSpace(Model.ImagePath) ? Url.Content(Model.ImagePath) : (string.IsNullOrWhiteSpace(Model.PhotoPath) ? null : Url.Content(Model.PhotoPath));
 
     IHtmlContent Safe(string s) => string.IsNullOrWhiteSpace(s) ? new HtmlString("-") : new HtmlString(Html.Encode(s));
@@ -94,21 +89,6 @@
             color: var(--brand);
             margin-bottom: 6px;
             word-wrap: break-word;
-        }
-
-    .qr {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 8px;
-    }
-
-        .qr img {
-            width: 160px;
-            height: 160px;
-            border: 1px solid #e3e3e3;
-            background: #fff;
-            padding: 6px;
         }
 
     .fields {
@@ -339,17 +319,14 @@
             animation: fadeIn 150ms ease;
         }
 
-        /* === ZMĚNA: Omezení velikosti obrázku v overlay === */
         .image-lightbox img {
-            max-width: 100%; /* Nesmí být širší než okno */
-            max-height: 90vh; /* Nesmí být vyšší než 90% okna */
-            width: auto; /* Automatická šířka podle poměru */
-            height: auto; /* Automatická výška */
-            object-fit: contain; /* Zajistí, že se obrázek vejde celý */
+            max-width: 100%;
+            max-height: 90vh;
+            width: auto;
+            height: auto;
+            object-fit: contain;
             border-radius: 8px;
             cursor: zoom-out;
-            /* Pokud chcete ještě menší "rozumný rozměr" i na velkých monitorech: */
-            /* max-width: 800px; */
         }
 
         .image-lightbox .close-btn {
@@ -376,19 +353,17 @@
             }
 
     @@keyframes fadeIn {
-        from
+        from {
+            opacity: 0;
+        }
 
-    {
-        opacity: 0;
+        to {
+            opacity: 1;
+        }
     }
 
-    to {
-        opacity: 1;
-    }
-
-    }
-
-    /* FAB */
+    /* === FAB (FLOATING ACTION BUTTONS) === */
+    /* Stejné styly jako v Indexu - fixní pozice vpravo dole */
     .fab-group {
         position: fixed;
         right: 20px;
@@ -433,48 +408,46 @@
             transform: translateY(-2px);
         }
 
+    /* === DESKTOP LAYOUT === */
     @@media (min-width: 768px) {
-        body
+        body {
+            padding-bottom: 0;
+        }
 
-    {
-        padding-bottom: 0;
-    }
+        .layout {
+            grid-template-columns: 320px 1fr;
+        }
 
-    .layout {
-        grid-template-columns: 320px 1fr;
-    }
+        .fields {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px 20px;
+        }
 
-    .fields {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 12px 20px;
-    }
+        .full {
+            grid-column: 1 / -1;
+        }
 
-    .full {
-        grid-column: 1 / -1;
-    }
+        .actions {
+            flex-direction: column;
+            justify-content: flex-end;
+        }
 
-    .actions {
-        flex-direction: column;
-        justify-content: flex-end;
-    }
+        .btn {
+            width: auto;
+        }
 
-    .btn {
-        width: auto;
-    }
+        .photo-gallery {
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 12px;
+        }
 
-    .photo-gallery {
-        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-        gap: 12px;
-    }
-
-    .fab-group {
-        display: block;
-    }
-
-    .custom-file-name {
-        max-width: 300px;
-    }
-
+        .custom-file-name {
+            max-width: 300px;
+        }
+        /* Poznámka: V Indexu se FAB skrývaly na desktopu, ale vy jste chtěl
+               stejné rozložení, takže zde NEJSOU skryté a drží si styl .fab-group
+               definovaný výše (fixed bottom right).
+            */
     }
 
     /* === STYLY PRO PDF MODÁL === */
@@ -541,12 +514,9 @@
         }
 
     @@media (max-width: 500px) {
-        #pdf-column-list
-
-    {
-        grid-template-columns: 1fr;
-    }
-
+        #pdf-column-list {
+            grid-template-columns: 1fr;
+        }
     }
 </style>
 
@@ -574,8 +544,6 @@
             {
                 <div class="detail-img" style="display:flex;align-items:center;justify-content:center;color:#999;" aria-hidden="true">No image</div>
             }
-
-
 
             <div class="meta">
                 <div class="title">@(!string.IsNullOrWhiteSpace(Model.Name) ? Model.Name : "-")</div>
@@ -627,19 +595,6 @@
                 }
 
             </div>
-
-@*             <div class="qr" aria-label="Public link and QR code">
-                <div style="font-weight:700;">Public link (QR)</div>
-                @if (!string.IsNullOrWhiteSpace(qrApi))
-                {
-                    <img src="@qrApi" alt="QR code for public detail" />
-                    <div><a href="@publicUrl" target="_blank" rel="noopener">Open public detail</a></div>
-                }
-                else
-                {
-                    <div class="muted">Public link not available.</div>
-                }
-            </div> *@
         </aside>
 
         <section>
@@ -659,8 +614,6 @@
                 <div class="field full"><div class="label">Notes</div><div class="value">@Safe(Model.Notes)</div></div>
                 <div class="field"><div class="label">Created</div><div class="value">@SafeDate(Model.CreatedAt)</div></div>
             </div>
-
-
         </section>
     </div>
 </main>
@@ -673,7 +626,7 @@
         </svg>
     </a>
 
-    <button type="button" id="openPdfModalBtnMobile" class="fab secondary" title="Export PDF">
+    <button type="button" id="openPdfModalBtn" class="fab secondary" title="Export PDF">
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
             <polyline points="14 2 14 8 20 8"></polyline>
@@ -747,12 +700,14 @@
 
         // --- PDF MODAL ELEMENTS ---
         const pdfModal = document.getElementById('pdfModal');
-        const openPdfBtn = document.getElementById('openPdfModalBtn');
-        const openPdfBtnMobile = document.getElementById('openPdfModalBtnMobile');
+        const openPdfBtn = document.getElementById('openPdfModalBtn'); // Button ID for desktop/tablet logic if exists
+        // Note: In FAB above, the ID is openPdfModalBtnMobile, let's target that specific one or general class
+        const openPdfBtnFab = document.querySelector('#openPdfModalBtnMobile');
+
         const closePdfBtn = document.getElementById('pdfModalClose');
         const generatePdfBtn = document.getElementById('generatePdfBtn');
-        // --- END ---
 
+        // Lightbox Logic
         function openLightbox(src, alt) {
             if (!src) return;
             lightboxImg.src = src;
@@ -783,13 +738,27 @@
 
         // --- PDF MODAL LOGIC ---
         function openPdfModal() {
-            if (pdfModal) pdfModal.style.display = 'flex';
+            if (pdfModal) {
+                pdfModal.style.display = 'flex';
+
+                // ZDE JE POŽADOVANÁ ZMĚNA: Přednastavení checkboxů jako v Indexu
+                const defaults = [
+                    "Id", "Material", "Color", "Form", "Mfi", "Filler",
+                    "MonthlyQuantity", "Notes", "Photo" // Photo is usually desired for single item
+                ];
+
+                const checkboxes = document.querySelectorAll('#pdf-column-list input[type="checkbox"]');
+                checkboxes.forEach(cb => {
+                    cb.checked = defaults.includes(cb.value);
+                });
+            }
         }
+
         function closePdfModal() {
             if (pdfModal) pdfModal.style.display = 'none';
         }
-        if (openPdfBtn) openPdfBtn.addEventListener('click', openPdfModal);
-        if (openPdfBtnMobile) openPdfBtnMobile.addEventListener('click', openPdfModal);
+
+        if (openPdfBtnFab) openPdfBtnFab.addEventListener('click', openPdfModal);
         if (closePdfBtn) closePdfBtn.addEventListener('click', closePdfModal);
 
         if (pdfModal) {
@@ -814,9 +783,8 @@
                 closePdfModal();
             });
         }
-        // --- END PDF LOGIC ---
 
-
+        // Upload Logic
         const quickInput = document.getElementById('quickUploadInput');
         const quickPreview = document.getElementById('quickUploadPreview');
         const uploadBtn = document.getElementById('uploadBtn');

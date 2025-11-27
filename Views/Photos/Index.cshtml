@@ -889,14 +889,38 @@
                         </div>
 
                         <div class="info-grid">
-                            <div class="info-item" data-col="supplier"><strong>Supplier</strong><span>@Safe(item.Supplier)</span></div>
-                            <div class="info-item" data-col="material"><strong>Original Name</strong><span>@Safe(item.OriginalName)</span></div>
-                            <div class="info-item" data-col="color"><strong>Color</strong><span>@Safe(item.Color)</span></div>
-                            <div class="info-item" data-col="position"><strong>Position</strong><span>@Safe(item.Position)</span></div>
-                            <div class="info-item" data-col="form"><strong>Form</strong><span>@Safe(item.Form)</span></div>
-                            <div class="info-item" data-col="filler"><strong>Filler</strong><span>@Safe(item.Filler)</span></div>
-                            <div class="info-item" data-col="monthlyquantity"><strong>Quantity (month)</strong><span>@Safe(item.MonthlyQuantity)</span></div>
-                            <div class="info-item" data-col="mfi"><strong>MFI/°C/kg</strong><span>@Safe(item.Mfi)</span></div>
+                            @if (!string.IsNullOrWhiteSpace(item.Supplier))
+                            {
+                                <div class="info-item" data-col="supplier"><strong>Supplier</strong><span>@item.Supplier</span></div>
+                            }
+                            @if (!string.IsNullOrWhiteSpace(item.OriginalName))
+                            {
+                                <div class="info-item" data-col="material"><strong>Original Name</strong><span>@item.OriginalName</span></div>
+                            }
+                            @if (!string.IsNullOrWhiteSpace(item.Color))
+                            {
+                                <div class="info-item" data-col="color"><strong>Color</strong><span>@item.Color</span></div>
+                            }
+                            @if (!string.IsNullOrWhiteSpace(item.Position))
+                            {
+                                <div class="info-item" data-col="position"><strong>Position</strong><span>@item.Position</span></div>
+                            }
+                            @if (!string.IsNullOrWhiteSpace(item.Form))
+                            {
+                                <div class="info-item" data-col="form"><strong>Form</strong><span>@item.Form</span></div>
+                            }
+                            @if (!string.IsNullOrWhiteSpace(item.Filler))
+                            {
+                                <div class="info-item" data-col="filler"><strong>Filler</strong><span>@item.Filler</span></div>
+                            }
+                            @if (!string.IsNullOrWhiteSpace(item.MonthlyQuantity))
+                            {
+                                <div class="info-item" data-col="monthlyquantity"><strong>Quantity (month)</strong><span>@item.MonthlyQuantity</span></div>
+                            }
+                            @if (!string.IsNullOrWhiteSpace(item.Mfi))
+                            {
+                                <div class="info-item" data-col="mfi"><strong>MFI/°C/kg</strong><span>@item.Mfi</span></div>
+                            }
                         </div>
                     </div>
 

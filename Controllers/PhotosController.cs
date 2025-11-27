@@ -35,11 +35,31 @@ public class PhotosController : Controller
     private double? ParseMfi(string mfiString)
     {
         if (string.IsNullOrWhiteSpace(mfiString)) return null;
-        var firstPart = mfiString.Split(new[] { '/', ',', '.' }, StringSplitOptions.RemoveEmptyEntries)[0].Trim();
-        if (double.TryParse(firstPart, NumberStyles.Any, CultureInfo.InvariantCulture, out double result))
+
+        // 1) Rozdělíme pouze podle '/' - chceme první "pole" jako celek (např. "5,2" z "5,2/10/10")
+        var firstPart = mfiString.Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries)[0].Trim();
+
+        // 2) Normalizujeme desetinný oddělovač na '.' (InvariantCulture používá tečku)
+        firstPart = firstPart.Replace(",", ".").Trim();
+
+        // 3) Odebereme případné koncové znaky, které nejsou součástí čísla (např. "5.2a" -> "5.2")
+        var sb = new StringBuilder();
+        foreach (var ch in firstPart)
+        {
+            if (char.IsDigit(ch) || ch == '.' || ch == '-' || ch == '+')
+                sb.Append(ch);
+            else
+                break; // přestaneme na prvním nečíselném znaku
+        }
+
+        var normalized = sb.ToString();
+        if (string.IsNullOrWhiteSpace(normalized)) return null;
+
+        if (double.TryParse(normalized, NumberStyles.Float | NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture, out double result))
         {
             return result;
         }
+
         return null;
     }
 
@@ -134,7 +154,7 @@ public class PhotosController : Controller
         }
 
         // 2. FINÁLNÍ ŘAZENÍ (A-Z Material -> 0-9 Monthly Quantity)
-        // Toto provedeme vždy, ať už data přišla z filtrů nebo z výběru
+        // Toto provedeme vždy, ať už data přišlo z filtrů nebo z výběru
         itemsList = itemsList
             .OrderBy(p => p.Material)
             .ThenBy(p =>
@@ -356,11 +376,22 @@ public class PhotosController : Controller
 
     [HttpGet]
     public async Task<IActionResult> ExportSinglePdf(
-    int id,
-    [FromQuery] List<string> columnsToInclude)
+       int id,
+       [FromQuery] List<string> columnsToInclude)
     {
         var item = await _context.Photos.FindAsync(id);
         if (item == null) return NotFound();
+
+        // --- OPRAVA ZDE: Pokud nejsou zadány sloupce (což se děje při hromadném stahování), nastavíme výchozí ---
+        if (columnsToInclude == null || !columnsToInclude.Any())
+        {
+            columnsToInclude = new List<string>
+        {
+            "Id", "Supplier", "Material", "OriginalName", "Color",
+            "Form", "Filler", "MonthlyQuantity", "Mfi", "Notes",
+            "Position", "Photo"
+        };
+        }
 
         QuestPDF.Settings.License = LicenseType.Community;
 
@@ -370,7 +401,7 @@ public class PhotosController : Controller
             {
                 page.Margin(25, Unit.Millimetre);
                 page.Size(PageSizes.A4.Portrait());
-                page.DefaultTextStyle(x => x.FontSize(10)); // Globální velikost písma
+                page.DefaultTextStyle(x => x.FontSize(10));
 
                 // --- HLAVIČKA ---
                 page.Header()
@@ -379,21 +410,19 @@ public class PhotosController : Controller
                     {
                         col.Item().Row(row =>
                         {
-                            // Levá část: Logo a Adresa
                             row.RelativeItem(2).Column(c =>
                             {
                                 string logoPath = Path.Combine(_env.WebRootPath, "logo.png");
                                 if (System.IO.File.Exists(logoPath))
                                 {
-                                    c.Item().AlignLeft().Image(logoPath).FitArea();
+                                    // ZMĚNA ZDE: Přidáno MaxHeight(50) a FitArea()
+                                    c.Item().MaxHeight(50).AlignLeft().Image(logoPath).FitArea();
                                 }
-
                                 c.Item().PaddingTop(5).Text("odpo s.r.o.").SemiBold().FontSize(12).FontColor(Colors.Green.Darken2);
                                 c.Item().Text("Riegrova 59, CZ - 388 01 Blatná").FontSize(9).FontColor(Colors.Grey.Darken1);
                                 c.Item().Text("Production/Laboratory: Radomyšl 248, 387 31 Radomyšl").FontSize(9).FontColor(Colors.Grey.Darken1);
                             });
 
-                            // Pravá část: Nadpis a Metadata
                             row.RelativeItem(1).AlignRight().Column(c =>
                             {
                                 c.Item().Text("SAMPLE DETAIL").ExtraBold().FontSize(16).FontColor(Colors.Grey.Darken3);
@@ -401,109 +430,109 @@ public class PhotosController : Controller
                                 c.Item().Text($"Date: {DateTime.Now:d. M. yyyy}").FontSize(10);
                             });
                         });
-
-                        // Oddělovací čára pod hlavičkou
                         col.Item().PaddingTop(10).BorderBottom(1.5f).BorderColor(Colors.Green.Medium);
                     });
 
                 // --- OBSAH ---
                 page.Content().PaddingVertical(10).Column(col =>
                 {
-                    // 1. Sekce: FOTOGRAFIE (pokud je vybrána)
+                    // MENŠÍ FOTKA: omezíme výšku a šířku (menší než dříve)
                     if (columnsToInclude.Contains("Photo"))
                     {
-                        var imageSrc = !string.IsNullOrWhiteSpace(item.ImagePath) ? item.ImagePath : (string.IsNullOrWhiteSpace(item.PhotoPath) ? null : item.PhotoPath);
+                        var imageSrc = !string.IsNullOrWhiteSpace(item.ImagePath) ? item.ImagePath : item.PhotoPath;
                         if (!string.IsNullOrWhiteSpace(imageSrc))
                         {
                             var physicalPath = Path.Combine(_env.WebRootPath, imageSrc.TrimStart('~', '/'));
                             if (System.IO.File.Exists(physicalPath))
                             {
                                 byte[] photoBytes = System.IO.File.ReadAllBytes(physicalPath);
-
                                 col.Item()
-                                   .PaddingBottom(20)
+                                   .PaddingBottom(12)
                                    .AlignCenter()
                                    .Border(1)
                                    .BorderColor(Colors.Grey.Lighten2)
-                                   .Padding(5) // Rámeček kolem fotky
-                                   .MaxHeight(250) // Omezení výšky
+                                   .Padding(10) // rámeček kolem fotky
+                                   .MaxWidth(300) // omezení šířky
+                                   .MaxHeight(300) // menší výška
                                    .Image(photoBytes)
                                    .FitArea();
                             }
                         }
                     }
 
-                    // 2. Sekce: TABULKA S DATY
+                    // TABULKA VE 2 SLOUPCÍCH: label/value | label/value
                     col.Item().Table(table =>
                     {
-                        // Definice sloupců: Popisek (fixní šířka) | Hodnota (zbytek)
+                        // Definujeme 4 sloupce: label1 | value1 | label2 | value2
                         table.ColumnsDefinition(columns =>
                         {
-                            columns.ConstantColumn(120); // Šířka sloupce pro názvy (Labels)
-                            columns.RelativeColumn();    // Šířka pro hodnoty
+                            columns.ConstantColumn(120); // label1
+                            columns.RelativeColumn();    // value1
+                            columns.ConstantColumn(120); // label2
+                            columns.RelativeColumn();    // value2
                         });
 
-                        // Pomocná funkce pro řádky tabulky se "Zebra" efektem
-                        uint rowIndex = 0;
-                        void AddRow(string label, string? value)
+                        // Sestavíme seznam řádků (label/value) podle vybraných sloupců
+                        var rows = new List<(string Label, string? Value)>();
+
+                        string Safe(string? s) => string.IsNullOrWhiteSpace(s) ? "-" : s;
+
+                        if (columnsToInclude.Contains("Id")) rows.Add(("Internal ID", item.Id.ToString()));
+                        if (columnsToInclude.Contains("Supplier")) rows.Add(("Supplier", Safe(item.Supplier)));
+                        if (columnsToInclude.Contains("Material")) rows.Add(("Material", Safe(item.Material)));
+                        if (columnsToInclude.Contains("OriginalName")) rows.Add(("Name", Safe(item.OriginalName)));
+                        if (columnsToInclude.Contains("Form")) rows.Add(("Form", Safe(item.Form)));
+                        if (columnsToInclude.Contains("Filler")) rows.Add(("Filler", Safe(item.Filler)));
+                        if (columnsToInclude.Contains("Color")) rows.Add(("Color", Safe(item.Color)));
+                        if (columnsToInclude.Contains("Position")) rows.Add(("Position", Safe(item.Position?.ToString())));
+                        if (columnsToInclude.Contains("MonthlyQuantity")) rows.Add(("Quantity (month)", Safe(item.MonthlyQuantity)));
+                        if (columnsToInclude.Contains("Mfi")) rows.Add(("MFI/°C/kg", Safe(item.Mfi)));
+                        if (columnsToInclude.Contains("Notes")) rows.Add(("Notes", Safe(item.Notes)));
+
+                        // Vykreslíme řádky po dvojicích
+                        int visualRowIndex = 0;
+                        for (int i = 0; i < rows.Count; i += 2)
                         {
-                            rowIndex++;
-                            var bgColor = rowIndex % 2 == 0 ? Colors.White : Colors.Grey.Lighten5; // Střídání barev
+                            visualRowIndex++;
+                            var bgColor = visualRowIndex % 2 == 0 ? Colors.White : Colors.Grey.Lighten5;
 
+                            // první pár
+                            var first = rows[i];
                             table.Cell().Background(bgColor).Padding(5).BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten3)
-                                    .Text(label).SemiBold().FontColor(Colors.Grey.Darken3);
+                                 .Text(first.Label).SemiBold().FontColor(Colors.Grey.Darken3);
+                            table.Cell().Background(bgColor).Padding(5).BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten3)
+                                 .Text(first.Value).FontColor(Colors.Black);
 
-                            table.Cell().Background(bgColor).Padding(5).BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten3)
-                                    .Text(string.IsNullOrWhiteSpace(value) ? "-" : value).FontColor(Colors.Black);
+                            // druhý pár (pokud existuje), jinak prázdné dvě buňky
+                            if (i + 1 < rows.Count)
+                            {
+                                var second = rows[i + 1];
+                                table.Cell().Background(bgColor).Padding(5).BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten3)
+                                     .Text(second.Label).SemiBold().FontColor(Colors.Grey.Darken3);
+                                table.Cell().Background(bgColor).Padding(5).BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten3)
+                                     .Text(second.Value).FontColor(Colors.Black);
+                            }
+                            else
+                            {
+                                // prázdné buňky pro vyrovnání layoutu
+                                table.Cell().Background(bgColor).Padding(5).BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten3).Text(string.Empty);
+                                table.Cell().Background(bgColor).Padding(5).BorderBottom(0.5f).BorderColor(Colors.Grey.Lighten3).Text(string.Empty);
+                            }
                         }
-
-                        // Podmíněné přidávání řádků podle columnsToInclude
-                        if (columnsToInclude.Contains("Id")) AddRow("Internal ID", item.Id.ToString());
-                        if (columnsToInclude.Contains("Supplier")) AddRow("Supplier", item.Supplier);
-                        if (columnsToInclude.Contains("Material")) AddRow("Material", item.Material);
-                        if (columnsToInclude.Contains("OriginalName")) AddRow("Name", item.OriginalName);
-                        if (columnsToInclude.Contains("Form")) AddRow("Form", item.Form);
-                        if (columnsToInclude.Contains("Filler")) AddRow("Filler", item.Filler);
-                        if (columnsToInclude.Contains("Color")) AddRow("Color", item.Color);
-                        if (columnsToInclude.Contains("Position")) AddRow("Position", item.Position?.ToString());
-                        if (columnsToInclude.Contains("MonthlyQuantity")) AddRow("Quantity (month)", item.MonthlyQuantity?.ToString());
-                        if (columnsToInclude.Contains("Mfi")) AddRow("MFI/°C/kg", item.Mfi);
-                        if (columnsToInclude.Contains("Notes")) AddRow("Notes", item.Notes);
-
-                        if (columnsToInclude.Contains("CreatedAt"))
-                            AddRow("Created", (item.CreatedAt == DateTime.MinValue) ? "-" : item.CreatedAt.ToLocalTime().ToString("g"));
-
-                        if (columnsToInclude.Contains("UpdatedAt"))
-                            AddRow("Updated", (item.UpdatedAt == DateTime.MinValue) ? "-" : item.UpdatedAt.ToLocalTime().ToString("g"));
                     });
                 });
 
-                // --- PATIČKA ---
-                page.Footer()
-                    .PaddingTop(10)
-                    .Row(row =>
-                    {
-                        // Vlevo: Malé info
-                        row.RelativeItem().Text(x =>
-                        {
-                            x.Span("Generated via IS odpo s.r.o.").FontSize(8).FontColor(Colors.Grey.Medium);
-                        });
-
-                        // Vpravo: Číslování
-                        row.RelativeItem().AlignRight().Text(x =>
-                        {
-                            x.Span("Page ").FontSize(9);
-                            x.CurrentPageNumber().FontSize(9);
-                            x.Span(" of ").FontSize(9);
-                            x.TotalPages().FontSize(9);
-                        });
-                    });
+                page.Footer().PaddingTop(10).Row(row =>
+                {
+                    row.RelativeItem().Text("Generated via IS odpo s.r.o.").FontSize(8).FontColor(Colors.Grey.Medium);
+                    row.RelativeItem().AlignRight().Text(x => { x.Span("Page "); x.CurrentPageNumber(); x.Span(" of "); x.TotalPages(); });
+                });
             });
         }).GeneratePdf();
 
-        return File(pdfBytes, "application/pdf", $"Sample_{item.Id}_{item.OriginalName ?? "Detail"}.pdf");
+        var safeName = string.Join("_", (item.Material ?? "Unknown").Split(Path.GetInvalidFileNameChars()));
+        return File(pdfBytes, "application/pdf", $"Sample_{item.Id}_{safeName}.pdf");
     }
-
     private byte[] GenerateSummaryPdfBytes(List<PhotoRecord> itemsList, List<string> columnsToInclude)
     {
         QuestPDF.Settings.License = LicenseType.Community;
