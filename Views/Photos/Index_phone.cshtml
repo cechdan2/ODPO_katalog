@@ -2,12 +2,13 @@
 @model PhotoApp.ViewModels.PhotosIndexViewModel
 @{
     ViewData["Title"] = "ODPO s.r.o. – Plastic Sample Catalog";
-    string Safe(string s) => string.IsNullOrWhiteSpace(s) ? "-" : s;
+
+    // Helper for images
     Func<PhotoApp.Models.PhotoRecord, string> ImageSrc = item =>
         !string.IsNullOrWhiteSpace(item.ImagePath) ? Url.Content(item.ImagePath) :
         !string.IsNullOrWhiteSpace(item.PhotoPath) ? Url.Content(item.PhotoPath) : null;
 
-    // MFI removed from auto-generated list (has custom UI)
+    // Filters definition
     var filtersToRender = new[]
     {
         new { Name = "supplier",        Placeholder = "Supplier",         AllValues = Model.Suppliers,         SelectedValues = Model.Supplier },
@@ -23,55 +24,395 @@
 <meta name="theme-color" content="#16a34a">
 <link rel="manifest" href="/manifest.json">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="apple-touch-icon" href="/icons/icon-192.png">
 <head>
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/nouislider@14.6.3/distribute/nouislider.min.css" rel="stylesheet">
-    
+
     <style>
-        /* Style for Select2 */
+        /* === GLOBAL STYLES === */
+        :root {
+            --brand: #16a34a;
+            --brand-dark: #166534;
+            --border: #dbe7d9;
+            --bg: #f4fbf4;
+            --text: #0b1f0b;
+            --white: #fff;
+            --pad: 16px;
+            --gap: 12px;
+            --radius: 16px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: system-ui,-apple-system,Segoe UI,Roboto,Ubuntu;
+            color: var(--text);
+            background: var(--bg);
+            margin: 0;
+            padding: 0;
+            padding-bottom: 100px; /* Space for FABs */
+            transition: padding-bottom 0.3s ease;
+        }
+
+        /* === HEADER === */
+        header {
+            background: #fff;
+            border-bottom: 2px solid var(--border);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .header-inner {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 15px var(--pad);
+        }
+
+        .brand {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            color: inherit;
+        }
+
+            .brand img {
+                height: 80px;
+            }
+
+            .brand h1 {
+                margin: 0;
+                font-size: 18px;
+                font-weight: 700;
+                color: var(--brand-dark);
+            }
+
+        /* === CONTAINER === */
+        .container {
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: var(--pad);
+        }
+
+        /* === BUTTONS & LINKS === */
+        .action-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px 14px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            background: var(--white);
+            color: inherit;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+            .action-btn.primary {
+                background: var(--brand);
+                color: #fff;
+                border-color: var(--brand-dark);
+            }
+
+            .action-btn.destructive {
+                background: #ef4444;
+                color: #fff;
+                border-color: #b91c1c;
+            }
+
+        .user-action-link {
+            display: inline-flex; /* Změna z inline-block na inline-flex pro vnitřní zarovnání */
+            align-items: center; /* Vertikálně vycentruje ikonku a text */
+            gap: 6px; /* Mezera mezi ikonkou a textem (nahrazuje margin-right u svg) */
+            padding: 8px 12px;
+            color: var(--brand-dark);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 600;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            line-height: 1; /* Důležité pro srovnání výšky řádku */
+        }
+
+            .user-action-link:hover {
+                background-color: #eef7ee;
+                border-radius: 8px;
+            }
+
+        /* Pojistka pro formulář, aby nedělal odsazení navíc */
+        .user-actions form {
+            margin: 0;
+            display: flex;
+        }
+
+        /* === CARDS === */
+        .card-list {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: var(--gap);
+            padding-bottom: 16px;
+        }
+
+        .item-card {
+            background: #fff;
+            border-radius: 20px;
+            padding: 16px;
+            border: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            position: relative;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+            transition: border-color 0.2s, background-color 0.2s;
+        }
+
+            .item-card.selected {
+                border: 2px solid var(--brand);
+                background-color: #f0fdf4;
+            }
+
+        .card-select-checkbox {
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            width: 24px;
+            height: 24px;
+            z-index: 10;
+            cursor: pointer;
+            accent-color: var(--brand);
+        }
+
+        .item-card .name {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--brand-dark);
+            margin: 0;
+            width: 100%;
+            text-align: center;
+            border-bottom: 2px solid var(--brand);
+            padding-bottom: 8px;
+            padding-left: 30px;
+        }
+
+        .thumb {
+            width: 100%;
+            max-width: 250px;
+            aspect-ratio: 1;
+            object-fit: cover;
+            border-radius: 16px;
+            border: 1.5px solid var(--border);
+        }
+
+        .card-info {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 6px;
+            width: 100%;
+        }
+
+        .info-item {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 8px;
+            align-items: baseline;
+            background: #fcfcfc;
+            border: 1px solid var(--border);
+            padding: 8px;
+            border-radius: 8px;
+            font-size: 13px;
+        }
+
+            .info-item strong {
+                font-weight: 600;
+                color: #555;
+            }
+
+        .card-footer {
+            display: flex;
+            gap: 8px;
+            width: 100%;
+            margin-top: auto;
+        }
+
+            .card-footer .action-btn {
+                flex-grow: 1;
+            }
+
+        /* === BULK ACTIONS BAR === */
+        .bulk-actions-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: white;
+            border-top: 1px solid var(--border);
+            padding: 12px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
+            z-index: 1600;
+            transform: translateY(110%);
+            transition: transform 0.3s ease-in-out;
+        }
+
+            .bulk-actions-bar.visible {
+                transform: translateY(0);
+            }
+
+        .bulk-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--brand-dark);
+        }
+
+        .bulk-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        /* === FAB GROUP & ANIMATION === */
+        .fab-group {
+            position: fixed;
+            right: 20px;
+            bottom: 20px; /* Default Position */
+            display: flex;
+            flex-direction: column-reverse;
+            gap: 12px;
+            z-index: 1700;
+            transition: bottom 0.3s cubic-bezier(0.4, 0, 0.2, 1); /* Smooth animation */
+        }
+
+        /* Move FAB up when bulk bar is active */
+        body.bulk-active .fab-group {
+            bottom: 230px; /* Moves up to clear the bulk bar */
+        }
+
+        /* === FILTER MODAL === */
+        .filter-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(5px);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+
+            .filter-overlay.open {
+                display: flex;
+            }
+
+        .filter-modal-content {
+            background: #fff;
+            width: 95%;
+            max-width: 500px;
+            max-height: 90vh;
+            border-radius: 16px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .filter-panel-header {
+            display: flex;
+            justify-content: space-between;
+            padding: 15px;
+            border-bottom: 1px solid var(--border);
+        }
+
+            .filter-panel-header h3 {
+                margin: 0;
+                color: var(--brand-dark);
+            }
+
+        .close-icon {
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        .filter-panel-body {
+            padding: 15px;
+            overflow-y: auto;
+        }
+
+        .filter-row {
+            margin-bottom: 15px;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+            .filter-row label {
+                display: block;
+                font-weight: 600;
+                margin-bottom: 5px;
+                font-size: 14px;
+                color: #333;
+            }
+
         .select2-container .select2-selection--multiple {
             border-radius: 8px !important;
-            border: 1px solid var(--border) !important;
-            padding: 5px !important;
-            min-height: 42px;
+            border-color: var(--border) !important;
+            min-height: 40px;
         }
 
         .select2-container--default .select2-selection--multiple .select2-selection__choice {
             background-color: var(--brand) !important;
-            color: white !important;
-            border: 1px solid var(--brand-dark) !important;
-        }
-
-        .select2-container--default .select2-selection--multiple .select2-selection__choice__remove {
+            border: none !important;
             color: white !important;
         }
 
-        /* Fix z-index for select2 inside modal */
-        .select2-dropdown {
-            border-radius: 8px !important;
-            border: 1px solid var(--border) !important;
-            z-index: 9999 !important; 
-            margin-top: 0px !important; 
-            box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+        #mobileFilterForm .select2-container {
+            flex-grow: 1;
+            width: auto !important;
         }
 
-        /* === NO UI SLIDER CUSTOMIZATION === */
-        .noUi-connect {
-            background: var(--brand);
-        }
-        .noUi-handle {
-            border-radius: 50%;
-            box-shadow: none;
-            border: 2px solid var(--brand);
-            background: #fff;
+        .filter-toggle {
+            -webkit-appearance: none;
+            appearance: none;
+            position: relative;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #ccc;
+            border-radius: 5px;
             cursor: pointer;
+            flex-shrink: 0;
+            transition: background-color 0.2s, border-color 0.2s;
+            margin-top: 4px;
         }
-        .noUi-handle:before, .noUi-handle:after {
-            display: none; /* Remove default lines */
-        }
+
+            .filter-toggle:checked {
+                background-color: var(--brand);
+                border-color: var(--brand-dark);
+            }
+
+                .filter-toggle:checked::after {
+                    content: '✔';
+                    position: absolute;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    font-size: 14px;
+                    color: white;
+                }
+
+        /* Slider Styles */
         .slider-values {
             display: flex;
             justify-content: space-between;
@@ -80,595 +421,241 @@
             color: var(--brand-dark);
             font-weight: 600;
         }
+
+        .noUi-connect {
+            background: var(--brand);
+        }
+
+        .noUi-handle {
+            border-radius: 50%;
+            box-shadow: none;
+            border: 2px solid var(--brand);
+            background: #fff;
+            cursor: pointer;
+        }
+
+            .noUi-handle:before, .noUi-handle:after {
+                display: none;
+            }
+
+        .filter-panel-footer {
+            padding: 15px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            background: #f9f9f9;
+            border-radius: 0 0 16px 16px;
+        }
+
+        .fab {
+            width: 50px;
+            height: 50px;
+            background: var(--brand);
+            color: #fff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            border: none;
+            text-decoration: none;
+        }
+
+            .fab.secondary {
+                background: #fff;
+                color: var(--brand-dark);
+                font-size: 18px;
+            }
+
+        /* === RESPONSIVE === */
+        @@media (min-width: 768px) {
+            .card-list {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
     </style>
 </head>
 
-
-<style>
-    /* === UNIFIED GLOBAL STYLES === */
-    :root {
-        --brand: #16a34a;
-        --brand-dark: #166534;
-        --border: #dbe7d9;
-        --bg: #f4fbf4;
-        --text: #0b1f0b;
-        --white: #fff;
-        --pad: 16px;
-        --gap: 12px;
-        --radius: 16px;
-        --bar-height: 0px;
-    }
-
-    * {
-        box-sizing: border-box;
-    }
-
-    html, body {
-        height: 100%;
-        overflow-x: hidden;
-        width: 100%;
-        margin: 0;
-        padding: 0;
-    }
-
-    body {
-        font-family: system-ui,-apple-system,Segoe UI,Roboto,Ubuntu;
-        color: var(--text);
-        background: var(--bg);
-        padding-bottom: var(--bar-height);
-    }
-
-    .container {
-        width: 100%;
-        max-width: 1100px;
-        margin: 0 auto;
-        padding: var(--pad);
-    }
-
-    /* === HEADER === */
-    header {
-        background: #fff;
-        border-bottom: 2px solid var(--border);
-        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-    }
-
-    .header-inner {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 24px var(--pad);
-        max-width: 1100px;
-        margin: 0 auto;
-    }
-
-    .brand {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 12px;
-        text-decoration: none;
-        color: inherit;
-    }
-
-        .brand img {
-            height: 120px;
-        }
-
-        .brand h1 {
-            margin: 0;
-            font-size: 24px;
-            font-weight: 700;
-            color: var(--brand-dark);
-            text-align: center;
-        }
-
-    /* === BUTTONS AND FORMS === */
-    .action-btn {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        padding: 10px 14px;
-        border-radius: 12px;
-        border: 1px solid var(--border);
-        background: var(--white);
-        color: inherit;
-        text-decoration: none;
-        font-size: 16px;
-        cursor: pointer;
-    }
-
-        .action-btn.primary {
-            background: var(--brand);
-            color: #fff;
-            border-color: var(--brand-dark);
-        }
-
-        .action-btn.destructive {
-            background: #ef4444;
-            color: #fff;
-            border-color: #b91c1c;
-        }
-
-    .user-action-link {
-        display: inline-block;
-        padding: 10px 14px;
-        color: var(--brand-dark);
-        text-decoration: none;
-        font-size: 16px;
-        font-weight: 500;
-        border-radius: 12px;
-        background: transparent;
-        border: none; 
-        cursor: pointer;
-        font-family: inherit;
-        line-height: 1;
-    }
-
-        .user-action-link:hover {
-            background: #eef7ee; 
-        }
-
-    .inline-form {
-        margin: 0;
-        display: inline-block;
-    }
-
-    /* === FILTER MODAL (OVERLAY STYLE) === */
-    .filter-overlay {
-        display: none;
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(0, 0, 0, 0.5);
-        backdrop-filter: blur(5px);
-        z-index: 2000;
-        align-items: center;
-        justify-content: center;
-    }
-
-        .filter-overlay.open {
-            display: flex;
-        }
-
-    .filter-modal-content {
-        background: #fff;
-        width: 90%;
-        max-width: 500px;
-        max-height: 85vh;
-        border-radius: 16px;
-        border: 1px solid var(--border);
-        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-        display: flex;
-        flex-direction: column;
-        transform: scale(0.95);
-        opacity: 0;
-        transition: transform 0.2s ease-out, opacity 0.2s ease-out;
-    }
-    
-    .filter-overlay.open .filter-modal-content {
-        transform: scale(1);
-        opacity: 1;
-    }
-
-    .filter-panel-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 15px 20px;
-        border-bottom: 1px solid var(--border);
-    }
-
-        .filter-panel-header h3 {
-            margin: 0;
-            font-size: 1.25rem;
-            color: var(--brand-dark);
-        }
-        
-        .filter-panel-header .close-icon {
-             color: #aaa; font-size: 28px; font-weight: bold; cursor: pointer; line-height: 1;
-        }
-
-    .filter-panel-body {
-        padding: 20px;
-        overflow-y: auto;
-    }
-
-    /* Checkbox for hiding columns */
-    .filter-toggle {
-        -webkit-appearance: none;
-        appearance: none;
-        position: relative;
-        width: 20px;
-        height: 20px;
-        border: 2px solid #ccc;
-        border-radius: 5px;
-        cursor: pointer;
-        flex-shrink: 0;
-        transition: background-color 0.2s, border-color 0.2s;
-    }
-
-        .filter-toggle:checked {
-            background-color: var(--brand);
-            border-color: var(--brand-dark);
-        }
-
-            .filter-toggle:checked::after {
-                content: '✔';
-                position: absolute;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
-                font-size: 14px;
-                color: white;
-            }
-
-    #mobileFilterForm .filter-row {
-        margin-bottom: 18px; /* Increased margin for slider */
-        display: flex;
-        align-items: flex-start; /* Changed alignment for slider */
-        gap: 10px;
-    }
-
-        #mobileFilterForm .filter-row label {
-            display: block;
-            font-weight: 600;
-            font-size: 14px;
-            margin-bottom: 6px;
-            color: #333;
-        }
-
-        #mobileFilterForm .filter-row .select2-container {
-            flex-grow: 1;
-            width: auto !important;
-        }
-
-    #mobileFilterForm input[type="search"] {
-        width: 100%;
-        padding: 10px;
-        border-radius: 8px;
-        border: 1px solid var(--border);
-        font-size: 15px;
-    }
-
-    .filter-panel-footer {
-        display: flex;
-        gap: 10px;
-        justify-content: flex-end;
-        padding: 15px 20px;
-        border-top: 1px solid var(--border);
-        background: #f9f9f9;
-        border-bottom-left-radius: 16px;
-        border-bottom-right-radius: 16px;
-    }
-
-    /* === ITEM CARDS === */
-    .card-list {
-        display: grid;
-        grid-template-columns: 1fr;
-        gap: var(--gap);
-        padding-bottom: 16px;
-    }
-
-    .item-card {
-        background: #fff;
-        border-radius: 20px;
-        padding: 16px;
-        border: 1px solid var(--border);
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 12px;
-        font-size: 15px;
-        box-shadow: 0 2px 8px rgba(0,0,0,.05);
-    }
-
-        .item-card .name {
-            font-size: 20px;
-            font-weight: 700;
-            color: var(--brand-dark);
-            margin: 0;
-            width: 100%;
-            text-align: center;
-            border-bottom: 2px solid var(--brand);
-            padding-bottom: 8px;
-        }
-
-    .thumb {
-        width: 100%;
-        max-width: 300px;
-        aspect-ratio: 1;
-        object-fit: cover;
-        border-radius: 16px;
-        border: 1.5px solid var(--border);
-        background: #f7fef7;
-        cursor: pointer;
-    }
-
-    .card-info {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 8px;
-        width: 100%;
-    }
-
-    .info-item {
-        display: grid;
-        grid-template-columns: auto 1fr;
-        gap: 8px;
-        align-items: baseline;
-        background: #fcfcfc;
-        border: 1px solid var(--border);
-        padding: 8px 10px;
-        border-radius: 8px;
-    }
-
-        .info-item strong {
-            font-weight: 600;
-            color: #555;
-            text-align: right;
-        }
-
-        .info-item span {
-            font-weight: 500;
-            color: #111;
-        }
-
-    .card-footer {
-        display: flex;
-        gap: 8px;
-        justify-content: center;
-        margin-top: auto;
-        padding-top: 8px;
-        width: 100%;
-    }
-
-        .card-footer .action-btn {
-            flex-grow: 1;
-        }
-
-    /* === FAB === */
-    .fab-group {
-        position: fixed;
-        right: 20px;
-        bottom: 20px;
-        display: none;
-        flex-direction: column-reverse;
-        gap: 10px;
-        z-index: 1700;
-    }
-
-    .fab {
-        width: 56px;
-        height: 56px;
-        background-color: var(--brand);
-        color: var(--white);
-        border-radius: 50%;
-        box-shadow: 0 6px 14px rgba(0,0,0,0.18);
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 28px;
-        font-weight: 300;
-        text-decoration: none;
-        border: none;
-        cursor: pointer;
-        transition: transform 0.15s ease;
-    }
-
-        .fab.secondary {
-            background: #ffffff;
-            color: var(--brand-dark);
-            border: 1px solid var(--border);
-            font-size: 20px;
-        }
-
-        .fab:hover {
-            transform: translateY(-2px);
-        }
-
-    .footer {
-        text-align: center;
-        font-size: 16px;
-        padding: 20px 0;
-        color: #3b6b3b;
-    }
-
-    /* === RESPONSIVE === */
-    @@media (min-width: 1200px) {
-        .card-list { grid-template-columns: repeat(2, 1fr); }
-    }
-
-    @@media (min-width: 768px) {
-        .fab-group { display: none !important; }
-    }
-
-    @@media (max-width: 767px) {
-        .fab-group { display: flex; }
-    }
-
-    @@media (max-width: 599px) {
-        .brand img { height: 90px; }
-        .brand h1 { font-size: 20px; }
-        .header-inner { padding: 16px 0; }
-        .container { padding: 12px 10px; }
-        .item-card { padding: 14px; gap: 10px; border-radius: 16px; }
-        .thumb { max-width: 280px; }
-        .card-info { max-width: 100%; }
-        .info-item strong, .info-item span { font-size: 14px; }
-        .card-footer { gap: 6px; }
-        .card-footer .action-btn { padding: 9px 10px; font-size: 13px; max-width: none; }
-        .footer { padding-bottom: 20px; font-size: 14px; }
-    }
-
-    @@media (max-width: 420px) {
-        .brand img { height: 80px; }
-        .brand h1 { font-size: 18px; }
-        .container { padding: 10px 8px; }
-        .thumb { max-width: 240px; }
-        .card-footer .action-btn { padding: 8px; font-size: 12px; }
-        .info-item { grid-template-columns: 1fr; gap: 2px; padding: 6px 8px; }
-        .info-item strong { text-align: left; font-size: 11px; color: #777; }
-        .info-item span { font-size: 13px; }
-    }
-</style>
-
 <header>
     <div class="header-inner">
-        <a class="brand" asp-controller="Photos" asp-action="Index" title="Sample Catalog">
+        <a class="brand" asp-controller="Photos" asp-action="Index">
             <img src="/logo.png" alt="ODPO logo" />
-            <h1 class="visually-hidden">Sample Catalog</h1>
+            <h1>Sample Catalog</h1>
         </a>
     </div>
 </header>
 
-<div id="filterOverlay" class="filter-overlay" role="dialog" aria-modal="true" aria-labelledby="filterPanelTitle" aria-hidden="true">
+<div id="filterOverlay" class="filter-overlay">
     <div class="filter-modal-content">
         <div class="filter-panel-header">
-            <h3 id="filterPanelTitle">Filters</h3>
-            <span id="closeFilterBtn" class="close-icon" title="Close">&times;</span>
+            <h3>Filters</h3>
+            <span id="closeFilterBtn" class="close-icon">&times;</span>
         </div>
         <form method="get" id="mobileFilterForm" class="filter-panel-body">
             <div class="filter-row">
-                <label for="search">Search All</label>
-                <input type="search" id="search" name="search" placeholder="Name, code, notes..." value="@(Model?.Search ?? "")" />
+                <div style="width: 20px; flex-shrink:0;"></div>
+                <div style="flex-grow: 1;">
+                    <label>Search</label>
+                    <input type="search" name="search" placeholder="Search..." value="@(Model?.Search ?? "")" style="width:100%; padding:8px; border-radius:8px; border:1px solid var(--border);" />
+                </div>
             </div>
 
             <div class="filter-row" style="align-items: flex-start;">
-                 <input type="checkbox" class="filter-toggle col-toggle" data-col="mfi" title="Show/hide column" checked style="margin-top: 4px;" />
-                 
-                 <div style="flex-grow: 1; padding-left: 5px;">
-                     <label style="font-size:12px; margin-bottom:12px; display:block; color:#555;">MFI Range</label>
-                     
-                     <div id="mfi-slider" style="margin: 0 10px 10px 10px;"></div>
-                     
-                     <div class="slider-values">
-                         <span id="mfi-min-val">0</span>
-                         <span id="mfi-max-val">100</span>
-                     </div>
-
-                     <input type="hidden" name="minMfi" id="minMfiInput" value="@Context.Request.Query["minMfi"]" />
-                     <input type="hidden" name="maxMfi" id="maxMfiInput" value="@Context.Request.Query["maxMfi"]" />
-                 </div>
+                <input type="checkbox" class="filter-toggle col-toggle" data-col="mfi" title="Show/hide column" checked style="margin-top: 4px;" />
+                <div style="flex-grow: 1; padding-left: 5px;">
+                    <label style="font-size:12px; margin-bottom:12px; display:block; color:#555;">MFI Range</label>
+                    <div id="mfi-slider" style="margin: 0 10px 10px 10px;"></div>
+                    <div class="slider-values">
+                        <span id="mfi-min-val">0</span>
+                        <span id="mfi-max-val">100</span>
+                    </div>
+                    <input type="hidden" name="minMfi" id="minMfiInput" value="@Context.Request.Query["minMfi"]" />
+                    <input type="hidden" name="maxMfi" id="maxMfiInput" value="@Context.Request.Query["maxMfi"]" />
+                </div>
             </div>
+
             @foreach (var filter in filtersToRender)
             {
                 <div class="filter-row">
-                    <input type="checkbox" class="filter-toggle col-toggle"
-                           data-col="@filter.Name.ToLower()" title="Show/hide column" checked />
-
-                    <select id="@($"filter-{filter.Name}")" name="@filter.Name" class="multi-select" multiple="multiple"
-                            data-placeholder="@filter.Placeholder">
-                        @foreach (var val in filter.AllValues)
-                        {
-                            <option value="@val" selected="@(filter.SelectedValues.Contains(val))">@val</option>
-                        }
-                    </select>
+                    <input type="checkbox" class="filter-toggle col-toggle" data-col="@filter.Name.ToLower()" title="Show/hide column" checked />
+                    <div style="flex-grow: 1;">
+                        <label>@filter.Placeholder</label>
+                        <select name="@filter.Name" class="multi-select" multiple="multiple">
+                            @foreach (var val in filter.AllValues)
+                            {
+                                <option value="@val" selected="@(filter.SelectedValues.Contains(val))">@val</option>
+                            }
+                        </select>
+                    </div>
                 </div>
             }
         </form>
         <div class="filter-panel-footer">
-            <button type="button" class="action-btn" id="resetFiltersBtn">Reset All</button>
-            <button type="submit" form="mobileFilterForm" class="action-btn primary">Apply Filters</button>
+            <button type="button" class="action-btn" id="resetFiltersBtn">Reset</button>
+            <button type="submit" form="mobileFilterForm" class="action-btn primary">Apply</button>
         </div>
     </div>
 </div>
 
-<main class="container" role="main">
-    <div class="user-actions" style="display:flex; justify-content:flex-end; margin-bottom:8px; gap: 8px;">
+<main class="container">
+    <div class="user-actions" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; height: 40px;">
+
+        <a asp-controller="Admin" asp-action="Database" class="user-action-link" title="Manage Data">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="3"></circle>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l-.06.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+            </svg>
+            Settings
+        </a>
+
         @if (User?.Identity?.IsAuthenticated ?? false)
         {
-            <form asp-controller="Account" asp-action="Logout" method="post" class="inline-form">
-                @Html.AntiForgeryToken()
-                <button type="submit" class="user-action-link" title="Log out">Log out</button>
+            <form asp-controller="Account" asp-action="Logout" method="post">
+                <button type="submit" class="user-action-link">Log out (@User.Identity.Name)</button>
             </form>
         }
         else
         {
-            <a asp-controller="Account" asp-action="Login" class="user-action-link">Log in</a>
+            <a asp-controller="Account" asp-action="Login" class="user-action-link">Login</a>
         }
     </div>
 
-    <div class="card-list" role="list">
+    <div class="card-list">
         @foreach (var item in Model.Items)
         {
             var src = ImageSrc(item);
-            <div class="item-card" role="listitem">
+            <div class="item-card" onclick="location.href='@Url.Action("Details", new { id = item.Id })'">
 
-                <h3 class="name">@Safe(item.OriginalName)</h3>
+                <input type="checkbox" class="card-select-checkbox" value="@item.Id" onclick="event.stopPropagation()" />
+
+                <h3 class="name">@item.Material</h3>
 
                 @if (!string.IsNullOrEmpty(src))
                 {
-                    <a href="@Url.Action("Details", new { id = item.Id })" style="width:100%;display:flex;justify-content:center;" title="View item details">
-                        <img src="@src" alt="@item.Name" class="thumb" />
-                    </a>
+                    <img src="@src" alt="Photo" class="thumb" />
                 }
 
                 <div class="card-info">
-                    <div class="info-item" data-col="supplier"><strong>Supplier:</strong><span>@Safe(item.Supplier)</span></div>
-                    <div class="info-item" data-col="material"><strong>Material:</strong><span>@Safe(item.Material)</span></div>
-                    <div class="info-item" data-col="color"><strong>Color:</strong><span>@Safe(item.Color)</span></div>
-                    <div class="info-item" data-col="position"><strong>Position:</strong><span>@Safe(item.Position)</span></div>
-                    <div class="info-item" data-col="form"><strong>Form:</strong><span>@Safe(item.Form)</span></div>
-                    <div class="info-item" data-col="filler"><strong>Filler:</strong><span>@Safe(item.Filler)</span></div>
-                    <div class="info-item" data-col="monthlyquantity"><strong>Quantity:</strong><span>@Safe(item.MonthlyQuantity)</span></div>
-                    <div class="info-item" data-col="mfi"><strong>MFI:</strong><span>@Safe(item.Mfi)</span></div>
+                    @if (!string.IsNullOrWhiteSpace(item.OriginalName))
+                    {
+                        <div class="info-item"><strong>Name:</strong><span>@item.OriginalName</span></div>
+                    }
+
+                    @if (!string.IsNullOrWhiteSpace(item.Supplier))
+                    {
+                        <div class="info-item" data-col="supplier"><strong>Supplier:</strong><span>@item.Supplier</span></div>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(item.Color))
+                    {
+                        <div class="info-item" data-col="color"><strong>Color:</strong><span>@item.Color</span></div>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(item.Position))
+                    {
+                        <div class="info-item" data-col="position"><strong>Position:</strong><span>@item.Position</span></div>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(item.Form))
+                    {
+                        <div class="info-item" data-col="form"><strong>Form:</strong><span>@item.Form</span></div>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(item.Filler))
+                    {
+                        <div class="info-item" data-col="filler"><strong>Filler:</strong><span>@item.Filler</span></div>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(item.MonthlyQuantity))
+                    {
+                        <div class="info-item" data-col="monthlyquantity"><strong>Qty:</strong><span>@item.MonthlyQuantity</span></div>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(item.Mfi))
+                    {
+                        <div class="info-item" data-col="mfi"><strong>MFI:</strong><span>@item.Mfi</span></div>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(item.Notes))
+                    {
+                        <div class="info-item" data-col="notes"><strong>Notes:</strong><span>item.Notes</span></div>
+                    }
                 </div>
 
                 <div class="card-footer">
-                    <a href="@Url.Action("Edit", new { id = item.Id })" class="action-btn primary">Edit</a>
+                    <a href="@Url.Action("Edit", new { id = item.Id })" class="action-btn primary" onclick="event.stopPropagation()">Edit</a>
                 </div>
             </div>
         }
     </div>
-
-    <div class="footer">Data is saved in the database. For backup, export the data from the server.</div>
 </main>
 
-<div id="pdf-export-modal" style="display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.5); backdrop-filter: blur(5px); align-items: center; justify-content: center;">
-    <div id="pdf-modal-content" style="background-color: #fefefe; margin: auto; padding: 20px; border: 1px solid #888; width: 90%; max-width: 500px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.3);">
-        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 15px;">
-            <h2 style="margin: 0; font-size: 1.25rem; color:var(--brand-dark);">Export to PDF</h2>
-            <span id="pdf-modal-close" style="color: #aaa; font-size: 28px; font-weight: bold; cursor: pointer;">&times;</span>
+<div id="bulkActionsBar" class="bulk-actions-bar">
+    <div class="bulk-header">
+        <span>Selected: <span id="selectedCount">0</span></span>
+        <button type="button" id="selectAllBtn" style="background:none; border:none; color:var(--brand-dark); font-weight:bold; font-size:14px;">Select All</button>
+    </div>
+    <div class="bulk-buttons">
+        <button type="button" id="bulkPdfBtn" class="action-btn">PDF Summary</button>
+        <button type="button" id="bulkDownloadAllBtn" class="action-btn primary">Bundle (All)</button>
+        <button type="button" id="bulkDeleteBtn" class="action-btn destructive" style="grid-column: span 2;">Delete Selected</button>
+        <button type="button" id="cancelSelectionBtn" class="action-btn" style="grid-column: span 2; background:#f0f0f0;">Cancel</button>
+    </div>
+</div>
+
+<div id="pdf-export-modal" style="display: none; position: fixed; z-index: 2100; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(5px); align-items: center; justify-content: center;">
+    <div style="background: #fff; padding: 20px; width: 90%; max-width: 400px; border-radius: 16px; display:flex; flex-direction:column; max-height:85vh;">
+        <h3 id="pdfModalTitle" style="margin-top:0;">Export PDF</h3>
+        <p style="font-size:14px; color:#666;">Select columns:</p>
+        <div id="pdf-column-list" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; overflow-y:auto;">
         </div>
-
-        <p style="margin-top: 0; margin-bottom: 15px; font-size: 14px; color: #555;">Select columns to include in export:</p>
-
-        <div id="pdf-column-list" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;">
-        </div>
-
-        <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+        <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:auto;">
             <button id="pdf-export-cancel" class="action-btn">Cancel</button>
-            <button id="pdf-export-download" class="action-btn primary">Download PDF</button>
+            <button id="pdf-export-download" class="action-btn primary">Generate</button>
         </div>
     </div>
 </div>
 
-<div class="fab-group" aria-hidden="false">
-    <a asp-controller="Photos" asp-action="Create" class="fab" title="Add new sample" aria-label="Add new sample">+</a>
-
-    <button type="button" class="fab secondary" id="fab-pdf-btn" title="Export to PDF" aria-label="Export to PDF">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-            <polyline points="14 2 14 8 20 8"></polyline>
-            <line x1="16" y1="13" x2="8" y2="13"></line>
-            <line x1="16" y1="17" x2="8" y2="17"></line>
-            <polyline points="10 9 9 9 8 9"></polyline>
-        </svg>
-    </button>
-
-    <a asp-controller="Admin" asp-action="Database" class="fab secondary" title="Settings" aria-label="Settings" role="button">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="3"></circle>
-            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-        </svg>
-    </a>
-
-    <button type="button" class="fab secondary" id="openFilterFab" title="Filters" aria-label="Open filters" aria-haspopup="dialog" aria-expanded="false" aria-controls="filterOverlay">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M3 5h18M6 12h12M10 19h4" />
-        </svg>
+<div class="fab-group">
+    <a asp-controller="Photos" asp-action="Create" class="fab">+</a>
+    <button type="button" class="fab secondary" id="fab-pdf-btn">PDF</button>
+    <button type="button" class="fab secondary" id="openFilterFab">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18M6 12h12M10 19h4" /></svg>
     </button>
 </div>
 
@@ -678,6 +665,9 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function () {
+        // --- SELECT2 INIT ---
+        $('.multi-select').select2({ placeholder: 'Select...', width: '100%', allowClear: true });
+
         // --- FILTER MODAL LOGIC ---
         const filterOverlay = document.getElementById('filterOverlay');
         const openFilterFab = document.getElementById('openFilterFab');
@@ -685,68 +675,20 @@
         const resetFiltersBtn = document.getElementById('resetFiltersBtn');
         const mobileFilterForm = document.getElementById('mobileFilterForm');
 
-        function openFilterPanel() {
-            if (!filterOverlay) return;
-            filterOverlay.classList.add('open');
-            openFilterFab.setAttribute('aria-expanded', 'true');
-        }
+        if (openFilterFab) openFilterFab.addEventListener('click', () => filterOverlay.classList.add('open'));
+        if (closeFilterBtn) closeFilterBtn.addEventListener('click', () => filterOverlay.classList.remove('open'));
 
-        function closeFilterPanel() {
-            if (!filterOverlay) return;
-            filterOverlay.classList.remove('open');
-            openFilterFab.setAttribute('aria-expanded', 'false');
-        }
-
-        if (openFilterFab) {
-            openFilterFab.addEventListener('click', function() {
-                if (!filterOverlay) return;
-                if (filterOverlay.classList.contains('open')) {
-                    closeFilterPanel();
-                } else {
-                    openFilterPanel();
-                }
-            });
-        }
-
-        if (closeFilterBtn) {
-            closeFilterBtn.addEventListener('click', closeFilterPanel);
-        }
-
-        // --- NO UI SLIDER INITIALIZATION ---
-        // Hledáme nejvyšší hodnotu v datech pro nastavení maxima slideru
-        // Pokud data chybí, nastavíme výchozí 100
-const maxMfiFromData = @(Model.Mfis != null && Model.Mfis.Any() 
-    ? Model.Mfis.Max(m => {
-          if (string.IsNullOrWhiteSpace(m)) return 0;
-          
-          // Zde přidáme rozdělení i podle čárky (',') a tečky ('.')
-          // Vezmeme vždy jen první část = celé číslo
-          var part = m.Split(new[] { '/', ',', '.' }, StringSplitOptions.RemoveEmptyEntries)[0].Trim();
-          
-          // Parsujeme jako int (celé číslo), tím se zbavíme problému s desetinami
-          return int.TryParse(part, out int r) ? r : 0;
-      }) 
-    : 100);
-            
-        const sliderMax = Math.ceil(Math.max(maxMfiFromData, 100)); // Minimum 100, nebo více podle dat
+        // --- NO UI SLIDER ---
+        const maxMfiFromData = @(Model.Mfis != null && Model.Mfis.Any() ? Model.Mfis.Max(m => { if (string.IsNullOrWhiteSpace(m)) return 0; var part = m.Split(new[] { '/', ',', '.' }, StringSplitOptions.RemoveEmptyEntries)[0].Trim(); return int.TryParse(part, out int r) ? r : 0; }) : 100);
+        const sliderMax = Math.ceil(Math.max(maxMfiFromData, 100));
         const sliderElement = document.getElementById('mfi-slider');
-        
-        // Načtení existujících hodnot z URL nebo výchozí rozsah
         let urlMin = parseFloat("@Context.Request.Query["minMfi"]");
         let urlMax = parseFloat("@Context.Request.Query["maxMfi"]");
-        
         if (isNaN(urlMin)) urlMin = 0;
         if (isNaN(urlMax)) urlMax = sliderMax;
 
         noUiSlider.create(sliderElement, {
-            start: [urlMin, urlMax],
-            connect: true, // Vybarvení mezi body
-            range: {
-                'min': 0,
-                'max': sliderMax
-            },
-            step: 1, // Krok posunu
-            tooltips: false // Zde vypnuto, hodnoty ukazujeme dole
+            start: [urlMin, urlMax], connect: true, range: { 'min': 0, 'max': sliderMax }, step: 1, tooltips: false
         });
 
         const minValDisplay = document.getElementById('mfi-min-val');
@@ -754,182 +696,163 @@ const maxMfiFromData = @(Model.Mfis != null && Model.Mfis.Any()
         const minInput = document.getElementById('minMfiInput');
         const maxInput = document.getElementById('maxMfiInput');
 
-        // Update hodnot při posunu
         sliderElement.noUiSlider.on('update', function (values, handle) {
             const value = Math.round(values[handle]);
-            if (handle === 0) {
-                minValDisplay.innerHTML = value;
-                minInput.value = value;
-            } else {
-                maxValDisplay.innerHTML = value;
-                maxInput.value = value;
-            }
-        });
-        // --- END SLIDER ---
-
-
-        // --- SELECT2 INITIALIZATION ---
-        $(document).ready(function() {
-            $('.multi-select').each(function() {
-                const placeholderText = $(this).data('placeholder') || 'Select...';
-                $(this).select2({
-                    placeholder: `Select ${placeholderText.toLowerCase()}...`,
-                    allowClear: true,
-                    width: '100%'
-                });
-            });
+            if (handle === 0) { minValDisplay.innerHTML = value; minInput.value = value; }
+            else { maxValDisplay.innerHTML = value; maxInput.value = value; }
         });
 
-        // --- RESET FILTERS ---
+        // --- RESET ---
         if (resetFiltersBtn) {
-            resetFiltersBtn.addEventListener('click', function () {
-                const searchInput = mobileFilterForm.querySelector('input[type="search"]');
-                if (searchInput) searchInput.value = '';
-                
+            resetFiltersBtn.addEventListener('click', () => {
+                mobileFilterForm.querySelector('input[name="search"]').value = "";
                 $('.multi-select').val(null).trigger('change');
-                
-                document.querySelectorAll('.col-toggle').forEach(cb => {
-                    cb.checked = true;
-                });
-
-                // Reset Slider
+                document.querySelectorAll('.col-toggle').forEach(cb => cb.checked = true);
                 sliderElement.noUiSlider.set([0, sliderMax]);
-
-                // Skryté inputy se resetují automaticky přes event slideru, ale pro jistotu:
-                minInput.value = '';
-                maxInput.value = '';
-
-                // Submit (po malé prodlevě, aby se propsaly hodnoty)
+                minInput.value = ''; maxInput.value = '';
                 setTimeout(() => mobileFilterForm.submit(), 50);
             });
         }
 
-        // === LOGIC: Show/Hide Columns ===
-        const checkboxes = document.querySelectorAll(".col-toggle");
-
+         // --- COLUMN TOGGLES ---
+        const colCheckboxes = document.querySelectorAll(".col-toggle");
         function toggleField(colName, isVisible) {
             document.querySelectorAll(`.item-card .info-item[data-col='${colName}']`).forEach(field => {
                 field.style.display = isVisible ? "grid" : "none";
             });
         }
-
-        checkboxes.forEach(cb => {
-            const colName = cb.dataset.col;
-            toggleField(colName, cb.checked);
-            cb.addEventListener("change", function() {
-                toggleField(colName, this.checked);
-            });
+        colCheckboxes.forEach(cb => {
+            toggleField(cb.dataset.col, cb.checked);
+            cb.addEventListener("change", function() { toggleField(this.dataset.col, this.checked); });
         });
 
-        // --- CLOSE PANEL ON CLICK OUTSIDE ---
-        document.addEventListener('click', function(event) {
-            if (!filterOverlay || !filterOverlay.classList.contains('open')) return;
-            if (event.target === filterOverlay) {
-                closeFilterPanel();
+        // --- BULK SELECTION ---
+        const checkboxes = document.querySelectorAll('.card-select-checkbox');
+        const bulkBar = document.getElementById('bulkActionsBar');
+        const selectedCount = document.getElementById('selectedCount');
+        const selectAllBtn = document.getElementById('selectAllBtn');
+        const cancelSelBtn = document.getElementById('cancelSelectionBtn');
+        let selectedIds = [];
+
+        function updateBulkUI() {
+            selectedIds = Array.from(checkboxes).filter(cb => cb.checked).map(cb => cb.value);
+            selectedCount.innerText = selectedIds.length;
+            if (selectedIds.length > 0) {
+                bulkBar.classList.add('visible');
+                document.body.classList.add('bulk-active');
+            } else {
+                bulkBar.classList.remove('visible');
+                document.body.classList.remove('bulk-active');
             }
+            checkboxes.forEach(cb => {
+                const card = cb.closest('.item-card');
+                if(cb.checked) card.classList.add('selected'); else card.classList.remove('selected');
+            });
+            const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+            selectAllBtn.innerText = allChecked ? "Deselect All" : "Select All";
+        }
+
+        checkboxes.forEach(cb => cb.addEventListener('change', updateBulkUI));
+
+        if (selectAllBtn) {
+            selectAllBtn.addEventListener('click', () => {
+                const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+                checkboxes.forEach(cb => cb.checked = !allChecked);
+                updateBulkUI();
+            });
+        }
+
+        if (cancelSelBtn) {
+            cancelSelBtn.addEventListener('click', () => {
+                checkboxes.forEach(cb => cb.checked = false);
+                updateBulkUI();
+            });
+        }
+
+        // --- BULK DELETE ---
+        document.getElementById('bulkDeleteBtn').addEventListener('click', () => {
+            if(!confirm(`Delete ${selectedIds.length} items?`)) return;
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '@Url.Action("DeleteMultiple", "Photos")';
+            const token = document.querySelector('input[name="__RequestVerificationToken"]');
+            if(token) form.appendChild(token.cloneNode());
+            selectedIds.forEach(id => {
+                const input = document.createElement('input');
+                input.type = 'hidden'; input.name = 'ids'; input.value = id;
+                form.appendChild(input);
+            });
+            document.body.appendChild(form);
+            form.submit();
         });
 
+        // --- PDF EXPORT ---
+        const pdfModal = document.getElementById('pdf-export-modal');
+        const fabPdfBtn = document.getElementById('fab-pdf-btn');
+        const bulkPdfBtn = document.getElementById('bulkPdfBtn');
+        const bulkBundleBtn = document.getElementById('bulkDownloadAllBtn');
+        const pdfDownloadBtn = document.getElementById('pdf-export-download');
+        const pdfCancelBtn = document.getElementById('pdf-export-cancel');
+        const columnList = document.getElementById('pdf-column-list');
+        const pdfTitle = document.getElementById('pdfModalTitle');
 
-        // --- PDF EXPORT LOGIC ---
-        const modal = document.getElementById('pdf-export-modal');
-        const fabPdfBtn = document.getElementById('fab-pdf-btn'); 
-        const closeBtn = document.getElementById('pdf-modal-close');
-        const cancelBtn = document.getElementById('pdf-export-cancel');
-        const downloadBtn = document.getElementById('pdf-export-download');
-        const columnListDiv = document.getElementById('pdf-column-list');
+        let pdfMode = 'standard';
+        const allColumns = { "Id": "ID", "Supplier": "Supplier", "Material": "Material", "Color": "Color", "Position": "Position", "Form": "Form", "Filler": "Filler", "Mfi": "MFI", "Notes": "Notes", "MonthlyQuantity": "Qty" };
+        const defaultCols = ["Id", "Material", "Color", "Mfi", "MonthlyQuantity", "Filler"];
 
-        const allColumns = {
-            "Id": "ID",
-            "Supplier": "Supplier",
-            "Material": "Material (Internal Name)",
-            "OriginalName": "Original Name",
-            "Color": "Color",
-            "Position": "Position",
-            "Form": "Form",
-            "Filler": "Filler",
-            "Mfi": "MFI",
-            "Notes": "Notes"
-        };
-
-        function openPdfModal() {
-            columnListDiv.innerHTML = '';
+        function openPdfModal(mode, title) {
+            pdfMode = mode;
+            pdfTitle.innerText = title;
+            columnList.innerHTML = '';
             for (const [key, label] of Object.entries(allColumns)) {
-                columnListDiv.innerHTML += `
-                    <label style="display: flex; align-items: center; gap: 8px; font-size: 14px;">
-                        <input type="checkbox" class="pdf-column-checkbox" value="${key}" checked>
-                        ${label}
-                    </label>
-                `;
+                const checked = defaultCols.includes(key) ? 'checked' : '';
+                columnList.innerHTML += `<label style="display:flex;align-items:center;gap:6px; margin-bottom:4px;"><input type="checkbox" value="${key}" ${checked}> ${label}</label>`;
             }
-            modal.style.display = 'flex';
+            pdfDownloadBtn.innerText = mode === 'bundle' ? "Download All" : "Generate PDF";
+            pdfModal.style.display = 'flex';
         }
 
-        function closePdfModal() {
-            modal.style.display = 'none';
-        }
+        function closePdfModal() { pdfModal.style.display = 'none'; }
 
-        if (fabPdfBtn) fabPdfBtn.addEventListener('click', openPdfModal);
-        if (closeBtn) closeBtn.addEventListener('click', closePdfModal);
-        if (cancelBtn) cancelBtn.addEventListener('click', closePdfModal);
-        if (modal) {
-            modal.addEventListener('click', function(event) {
-                if (event.target === modal) closePdfModal();
-            });
-        }
+        fabPdfBtn.addEventListener('click', () => openPdfModal('standard', 'Export Filtered List'));
+        if(bulkPdfBtn) bulkPdfBtn.addEventListener('click', () => openPdfModal('summary', `Export Summary (${selectedIds.length})`));
+        if(bulkBundleBtn) bulkBundleBtn.addEventListener('click', () => openPdfModal('bundle', `Bundle Download (${selectedIds.length})`));
+        pdfCancelBtn.addEventListener('click', closePdfModal);
 
-if (downloadBtn) {
-            downloadBtn.addEventListener('click', function() {
-                const selectedColumns = [];
-                document.querySelectorAll('.pdf-column-checkbox:checked').forEach(cb => {
-                    selectedColumns.push(cb.value);
-                });
+        pdfDownloadBtn.addEventListener('click', () => {
+            const checkedCols = Array.from(document.querySelectorAll('#pdf-column-list input:checked')).map(cb => `columnsToInclude=${cb.value}`).join('&');
 
-                if (selectedColumns.length === 0) {
-                    alert("You must select at least one column for export.");
-                    return;
-                }
-
-                const mainForm = document.getElementById('mobileFilterForm');
-                const formData = new FormData(mainForm);
-                const params = new URLSearchParams(formData);
-
-                // === OPRAVA PRO MFI NULL HODNOTY ===
-                // Získáme aktuální hodnoty ze skrytých inputů
-                const currentMin = parseFloat(document.getElementById('minMfiInput').value);
-                const currentMax = parseFloat(document.getElementById('maxMfiInput').value);
-
-                // Získáme maximální hodnotu slideru (proměnná sliderMax je definována výše ve vašem skriptu)
-                // Logika: Pokud je min 0 (nebo méně/prázdné) A ZÁROVEŇ je max rovno nebo větší než limit,
-                // znamená to, že uživatel nefiltroval MFI (nebo dal reset).
-                // V tom případě parametry odstraníme, aby server zahrnul i NULL hodnoty.
+            if(pdfMode === 'standard') {
+                const currentMin = parseFloat(minInput.value);
+                const currentMax = parseFloat(maxInput.value);
                 if ((isNaN(currentMin) || currentMin <= 0) && (isNaN(currentMax) || currentMax >= sliderMax)) {
-                    params.delete('minMfi');
-                    params.delete('maxMfi');
+                     minInput.disabled = true; maxInput.disabled = true;
                 }
-                // ===================================
+                const fd = new FormData(document.getElementById('mobileFilterForm'));
+                const params = new URLSearchParams(fd);
+                minInput.disabled = false; maxInput.disabled = false;
+                window.open(`@Url.Action("ExportPdf", "Photos")?${params.toString()}&${checkedCols}`, '_blank');
+            }
+            else if (pdfMode === 'summary' || pdfMode === 'bundle') {
+                let params = selectedIds.map(id => `ids=${id}`).join('&');
+                window.open(`@Url.Action("ExportPdf", "Photos")?${params}&${checkedCols}`, '_blank');
 
-                selectedColumns.forEach(col => {
-                    params.append('columnsToInclude', col);
-                });
-
-                const exportUrl = `@Url.Action("ExportPdf", "Photos")?${params.toString()}`;
-                window.open(exportUrl, '_blank');
-                closePdfModal();
-            });
-        }
-        // --- SERVICE WORKER ---
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/service-worker.js', { scope: '/' })
-                    .then(registration => console.log('Service Worker: Registered'))
-                    .catch(error => console.error('Service Worker registration failed:', error));
-            });
-        }
-
-        let deferredPrompt;
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
+                if (pdfMode === 'bundle') {
+                    if(!confirm(`Download ${selectedIds.length} individual files? (Allow pop-ups)`)) return;
+                    selectedIds.forEach((id, i) => {
+                        setTimeout(() => {
+                            const link = document.createElement('a');
+                            link.href = `@Url.Action("ExportSinglePdf", "Photos")?id=${id}&${checkedCols}`;
+                            link.download = ''; document.body.appendChild(link); link.click(); document.body.removeChild(link);
+                        }, (i * 1000) + 1200);
+                    });
+                }
+            }
+            closePdfModal();
         });
+
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => { navigator.serviceWorker.register('/service-worker.js', { scope: '/' }); });
+        }
     });
 </script>

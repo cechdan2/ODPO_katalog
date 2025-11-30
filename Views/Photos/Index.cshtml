@@ -992,8 +992,10 @@
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
-    // GLOBÁLNÍ FUNKCE PRO PŘÍMÉ OTEVŘENÍ OVERLAYE (Pro vedlejší fotky - kliknutím)
+    // GLOBÁLNÍ FUNKCE PRO PŘÍMÉ OTEVŘENÍ OVERLAYE
     window.showDirectOverlay = function(src) {
         document.getElementById('overlay-image').src = src;
         document.getElementById('image-overlay').classList.add('active');
@@ -1002,6 +1004,7 @@
     document.addEventListener("DOMContentLoaded", function() {
         setTimeout(() => $('.multi-select').select2({ allowClear: true, closeOnSelect: false }), 100);
 
+        // --- UI & FILTERS ---
         const toggleBtn = document.getElementById('sidebar-toggle-btn');
         const body = document.body;
         if (localStorage.getItem('filtersVisible') === 'true') body.classList.add('filters-visible');
@@ -1037,8 +1040,29 @@
             cb.addEventListener("change", function() { toggleField(colName, this.checked); });
         });
 
-        // --- SELECT ALL BUTTON LOGIC ---
+        // --- BULK ACTIONS & SELECTION ---
         const selectAllBtn = document.getElementById('selectAllBtn');
+        const bulkBar = document.getElementById('bulkActionsBar');
+        const selectedCountSpan = document.getElementById('selectedCount');
+        const checkboxes = document.querySelectorAll('.card-select-checkbox');
+        let selectedIds = [];
+
+        function updateBulkUI() {
+            selectedIds = Array.from(checkboxes).filter(cb => cb.checked).map(cb => cb.value);
+            selectedCountSpan.textContent = selectedIds.length;
+            if (selectedIds.length > 0) {
+                bulkBar.classList.add('visible');
+                document.body.classList.add('bulk-active');
+            } else {
+                bulkBar.classList.remove('visible');
+                document.body.classList.remove('bulk-active');
+            }
+            checkboxes.forEach(cb => {
+                const card = cb.closest('.sample-card');
+                if (cb.checked) card.classList.add('selected'); else card.classList.remove('selected');
+            });
+        }
+
         if (selectAllBtn) {
             selectAllBtn.addEventListener('click', () => {
                 const visibleCheckboxes = document.querySelectorAll('.sample-card:not([style*="display: none"]) .card-select-checkbox');
@@ -1048,25 +1072,10 @@
             });
         }
 
-        // --- BULK ACTIONS LOGIC ---
-        const bulkBar = document.getElementById('bulkActionsBar');
-        const selectedCountSpan = document.getElementById('selectedCount');
-        const checkboxes = document.querySelectorAll('.card-select-checkbox');
-        let selectedIds = [];
-
-        function updateBulkUI() {
-            selectedIds = Array.from(checkboxes).filter(cb => cb.checked).map(cb => cb.value);
-            selectedCountSpan.textContent = selectedIds.length;
-            if (selectedIds.length > 0) { bulkBar.classList.add('visible'); document.body.classList.add('bulk-active'); }
-            else { bulkBar.classList.remove('visible'); document.body.classList.remove('bulk-active'); }
-            checkboxes.forEach(cb => {
-                const card = cb.closest('.sample-card');
-                if (cb.checked) card.classList.add('selected'); else card.classList.remove('selected');
-            });
-        }
         checkboxes.forEach(cb => cb.addEventListener('change', updateBulkUI));
         document.getElementById('cancelSelectionBtn').addEventListener('click', () => { checkboxes.forEach(cb => cb.checked = false); updateBulkUI(); });
 
+        // --- BULK DELETE ---
         document.getElementById('bulkDeleteBtn').addEventListener('click', function() {
             if (confirm(`Delete ${selectedIds.length} samples?`)) {
                 const form = document.createElement('form');
@@ -1088,98 +1097,107 @@
             }
         });
 
-        // --- DOWNLOAD ALL BUNDLE (NO ZIP) ---
-        document.getElementById('bulkDownloadAllBtn').addEventListener('click', function() {
-            if(selectedIds.length === 0) return;
-            if(!confirm(`Start downloading ${selectedIds.length + 1} files? (Please allow pop-ups if prompted)`)) return;
-
-            let params = new URLSearchParams();
-            selectedIds.forEach(id => params.append('ids', id));
-            ["Id", "Supplier", "Material", "OriginalName", "Mfi"].forEach(c => params.append('columnsToInclude', c));
-            const summaryUrl = `@Url.Action("ExportPdf", "Photos")?${params.toString()}`;
-            window.open(summaryUrl, '_blank');
-
-            selectedIds.forEach((id, index) => {
-                setTimeout(() => {
-                    const singleUrl = `@Url.Action("ExportSinglePdf", "Photos")?id=${id}`;
-                    const link = document.createElement('a');
-                    link.href = singleUrl;
-                    link.download = '';
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                }, (index * 800) + 1200);
-            });
-        });
-
-        // --- PDF MODAL ---
+        // --- PDF MODAL & EXPORT LOGIC ---
         const pdfModal = document.getElementById('pdfModal');
-        const openBtn = document.getElementById('open-pdf-export-btn');
+        const openBtn = document.getElementById('open-pdf-export-btn'); // Main export button
         const openBtnMobile = document.getElementById('openPdfModalBtnMobile');
         const closePdfBtn = document.getElementById('pdfModalClose');
-        const bulkPdfBtn = document.getElementById('bulkPdfBtn');
+        const bulkPdfBtn = document.getElementById('bulkPdfBtn'); // Bulk Summary
+        const bulkDownloadAllBtn = document.getElementById('bulkDownloadAllBtn'); // Bulk Bundle
+        const generatePdfBtn = document.getElementById('generatePdfBtn');
+        const pdfModalTitle = document.getElementById('pdfModalTitle');
 
-        // ZMĚNA ZDE: Funkce nyní nastavuje výchozí hodnoty při každém otevření
-        function openPdfModal() {
+        // State to track if we are doing a bundle download or a single PDF
+        let pdfExportMode = 'standard'; // 'standard' or 'bundle'
+
+        function openPdfModal(mode, title) {
             if (pdfModal) {
-                pdfModal.style.display = 'flex';
+                pdfExportMode = mode;
+                pdfModalTitle.innerText = title;
 
-                // Seznam hodnot, které mají být VŽDY zaškrtnuté při otevření
-                // (Text musí přesně odpovídat tomu, co je v HTML v atributu value="...")
-                const defaults = [
-                    // "Photo",  // Fotku defaultně nechceme
-                    // "QrCode", // QR kód defaultně nechceme
-                    "Id",
-                    "Material",
-                    "Color",
-                    "Form",
-                    "Mfi",
-                    "Filler",
-                    "MonthlyQuantity",
-                    "Notes"
-                    // Ostatní (Position, Supplier, OriginalName...) také defaultně nechceme
-                ];
-
-                const checkboxes = document.querySelectorAll('#pdf-column-list input[type="checkbox"]');
-                checkboxes.forEach(cb => {
-                    // Nastaví checked na true, pokud je hodnota checkboxu v poli 'defaults', jinak false
+                // Set defaults
+                const defaults = ["Id", "Material", "Color", "Form", "Mfi", "Filler", "MonthlyQuantity", "Notes"];
+                document.querySelectorAll('#pdf-column-list input[type="checkbox"]').forEach(cb => {
                     cb.checked = defaults.includes(cb.value);
                 });
+
+                // Update button text
+                generatePdfBtn.innerText = mode === 'bundle' ? "Start Bundle Download" : "Generate PDF";
+                pdfModal.style.display = 'flex';
             }
         }
 
         function closePdfModal() { if (pdfModal) pdfModal.style.display = 'none'; }
 
-        if (openBtn) openBtn.addEventListener('click', () => { document.getElementById('pdfModalTitle').innerText = "Export to PDF (Filtered)"; openPdfModal(); });
-        if (openBtnMobile) openBtnMobile.addEventListener('click', openPdfModal);
+        // Event Listeners for Opening Modal
+        if (openBtn) openBtn.addEventListener('click', () => openPdfModal('standard', "Export to PDF (Filtered)"));
+        if (openBtnMobile) openBtnMobile.addEventListener('click', () => openPdfModal('standard', "Export to PDF"));
         if (closePdfBtn) closePdfBtn.addEventListener('click', closePdfModal);
-        if (bulkPdfBtn) bulkPdfBtn.addEventListener('click', () => { document.getElementById('pdfModalTitle').innerText = `Export ${selectedIds.length} selected to PDF`; openPdfModal(); });
 
-        const generatePdfBtn = document.getElementById('generatePdfBtn');
+        // 1. Bulk Summary PDF
+        if (bulkPdfBtn) bulkPdfBtn.addEventListener('click', () => openPdfModal('standard', `Export Summary (${selectedIds.length} items)`));
+
+        // 2. Bulk Bundle Download (CHANGED: Now opens modal)
+        if (bulkDownloadAllBtn) bulkDownloadAllBtn.addEventListener('click', () => openPdfModal('bundle', `Download Bundle (${selectedIds.length} files)`));
+
+        // Generate Action
         if (generatePdfBtn) {
             generatePdfBtn.addEventListener('click', function() {
                 const checkedBoxes = document.querySelectorAll('#pdf-column-list input[type="checkbox"]:checked');
-                let params = new URLSearchParams();
-                if (selectedIds.length > 0) selectedIds.forEach(id => params.append('ids', id));
-                else {
-                    const fd = new FormData(document.getElementById('desktopFilterForm'));
-                    params = new URLSearchParams(fd);
+
+                // Get selected columns
+                let columnsParams = "";
+                checkedBoxes.forEach(cb => columnsParams += `&columnsToInclude=${cb.value}`);
+
+                if (pdfExportMode === 'standard') {
+                    // --- STANDARD / SUMMARY EXPORT ---
+                    let params = new URLSearchParams();
+                    if (selectedIds.length > 0) {
+                        selectedIds.forEach(id => params.append('ids', id));
+                    } else {
+                        const fd = new FormData(document.getElementById('desktopFilterForm'));
+                        params = new URLSearchParams(fd);
+                    }
+                    // Append columns
+                    const finalUrl = `@Url.Action("ExportPdf", "Photos")?${params.toString()}${columnsParams}`;
+                    window.open(finalUrl, '_blank');
+
+                } else if (pdfExportMode === 'bundle') {
+                    // --- BUNDLE DOWNLOAD LOOP ---
+                    if (selectedIds.length === 0) return;
+                    if (!confirm(`Start downloading ${selectedIds.length + 1} files? Please allow pop-ups.`)) return;
+
+                    // 1. Download Summary First
+                    let summaryParams = new URLSearchParams();
+                    selectedIds.forEach(id => summaryParams.append('ids', id));
+                    const summaryUrl = `@Url.Action("ExportPdf", "Photos")?${summaryParams.toString()}${columnsParams}`;
+                    window.open(summaryUrl, '_blank');
+
+                    // 2. Loop for individual files
+                    selectedIds.forEach((id, index) => {
+                        setTimeout(() => {
+                            // We pass the SAME column selection to the single export
+                            const singleUrl = `@Url.Action("ExportSinglePdf", "Photos")?id=${id}${columnsParams}`;
+                            const link = document.createElement('a');
+                            link.href = singleUrl;
+                            link.download = '';
+                            document.body.appendChild(link);
+                            link.click();
+                            document.body.removeChild(link);
+                        }, (index * 800) + 1200);
+                    });
                 }
-                checkedBoxes.forEach(cb => params.append('columnsToInclude', cb.value));
-                window.open(`@Url.Action("ExportPdf", "Photos")?${params.toString()}`, '_blank');
                 closePdfModal();
             });
         }
 
-        // --- ZOOM LOGIC (Unified) ---
+        // --- ZOOM LOGIC ---
         const overlay = document.getElementById('image-overlay');
         const overlayImg = document.getElementById('overlay-image');
-        const closeBtn = document.querySelector('.close-overlay-btn');
+        const closeOverlayBtn = document.querySelector('.close-overlay-btn');
         let hoverTimer = null;
 
-        function closeOverlay() {
-            overlay.classList.remove('active');
-        }
+        function closeOverlay() { overlay.classList.remove('active'); }
 
         document.querySelectorAll('.thumb').forEach(thumb => {
             thumb.addEventListener('mouseenter', () => {
@@ -1194,10 +1212,8 @@
             });
         });
 
-        if(closeBtn) closeBtn.addEventListener('click', closeOverlay);
-        overlay.addEventListener('click', (e) => {
-            closeOverlay();
-        });
+        if(closeOverlayBtn) closeOverlayBtn.addEventListener('click', closeOverlay);
+        overlay.addEventListener('click', closeOverlay);
         document.addEventListener('keydown', (e) => { if (e.key === "Escape") closeOverlay(); });
     });
 </script>

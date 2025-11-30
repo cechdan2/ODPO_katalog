@@ -3,13 +3,15 @@ using PhotoApp.Models;
 
 namespace PhotoApp.Data
 {
-    // DbContext s explicitním mapováním PhotoRecord -> Photos a základnou konfigurací sloupcù.
-    // To pomùže zajistit, že EF bude oèekávat správné názvy tabulek/sloupcù a že migrace budou jasnìjší.
+    // DbContext with explicit mapping PhotoRecord -> Photos and basic column configuration.
+    // This ensures EF expects correct table/column names and migrations are clearer.
     public class AppDbContext : DbContext
     {
         public AppDbContext(DbContextOptions<AppDbContext> options)
             : base(options) { }
 
+        // Existing DbSets
+        public DbSet<FilterOption> FilterOptions { get; set; }
         public DbSet<CustomUser> Users { get; set; } = default!;
         public DbSet<PhotoRecord> Photos { get; set; } = default!;
 
@@ -17,7 +19,7 @@ namespace PhotoApp.Data
         {
             base.OnModelCreating(modelBuilder);
 
-            // Explicitnì mapujeme PhotoRecord na tabulku "Photos" (pokud má DB jiný název, zmìòte zde)
+            // Explicitly map PhotoRecord to table "Photos"
             modelBuilder.Entity<PhotoRecord>(entity =>
             {
                 entity.ToTable("Photos");
@@ -79,7 +81,7 @@ namespace PhotoApp.Data
                 entity.Property(e => e.ExternalId)
                       .HasMaxLength(200);
 
-                // Doporuèené výchozí hodnoty pro èasová pole v SQLite
+                // Default values for timestamps (SQLite syntax)
                 entity.Property(e => e.CreatedAt)
                       .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
@@ -87,13 +89,81 @@ namespace PhotoApp.Data
                       .HasDefaultValueSql("CURRENT_TIMESTAMP");
             });
 
-            // Pokud používáte vlastní CustomUser (Identity), zajistìte mapování (pokud chcete jiný název tabulky).
-            // Pokud používáte standardní ASP.NET Identity, nechte to v defaultu nebo mapujte na "AspNetUsers".
+            // If using CustomUser (Identity), ensure mapping if a different table name is needed.
+            // If using standard ASP.NET Identity, leave default or map to "AspNetUsers".
             modelBuilder.Entity<CustomUser>(entity =>
             {
-                // odkomentujte a upravte podle potøeby:
+                // Uncomment and adjust as needed:
                 // entity.ToTable("AspNetUsers");
             });
+
+            // Seeding logic for FilterOptions
+            // This populates the database with initial values for dropdowns/filters
+            int idCounter = 1;
+
+            // --- SUPPLIER ---
+            var suppliers = new[]
+            {
+                "Oprava", "AA Group", "AGC", "Agor", "Archeo", "Vážeme", "Badico", "BBH",
+                "Delasitas", "Dijmex", "Duo Pet", "JMK", "Ecoprimus", "EF Recycling", "Eri-trade",
+                "Rumpold", "Fatra", "Gabeo", "GID", "Neveon", "Gumotex", "GZR", "Chintex",
+                "Inno Comp", "Repla", "Juta", "Kamiddos", "Kantoøík", "Kužílek", "KV Ekoplast",
+                "Laszlo", "Leifheit", "Magna", "Mondeco", "Nexis", "Oceanize", "odpo",
+                "Power-Full", "PFN", "PlastMetal", "Pošumavská", "Prodos rec", "Rapol",
+                "Regoplast", "Remaq", "Renoplasti", "Reyond", "Silon Recy", "Suchan",
+                "TKC Kunst", "Torray", "Valek", "Vansida", "Witt and M", "Witte", "Zeba", "ZMPB"
+            };
+
+            foreach (var s in suppliers)
+            {
+                modelBuilder.Entity<FilterOption>().HasData(new FilterOption
+                { Id = idCounter++, Category = "supplier", Value = s });
+            }
+
+            // --- FORM ---
+            var forms = new[]
+            {
+                "Form", "Regrind", "Scrap", "Regranulate", "Ingots", "Pellets",
+                "Yarn", "Bales", "Lumps", "Rolls", "Other", "Virgin"
+            };
+
+            foreach (var f in forms)
+            {
+                modelBuilder.Entity<FilterOption>().HasData(new FilterOption
+                { Id = idCounter++, Category = "form", Value = f });
+            }
+
+            // --- FILLER ---
+            var fillers = new[]
+            {
+                "Filler", "GF", "TD", "MD", "TV", "CF", "LGF", "ESD"
+            };
+
+            foreach (var fi in fillers)
+            {
+                modelBuilder.Entity<FilterOption>().HasData(new FilterOption
+                { Id = idCounter++, Category = "filler", Value = fi });
+            }
+
+            // --- COLOR ---
+            var colors = new[]
+            {
+                "Colour", "Red", "Black", "Blue", "Grey"
+            };
+
+            foreach (var c in colors)
+            {
+                modelBuilder.Entity<FilterOption>().HasData(new FilterOption
+                { Id = idCounter++, Category = "color", Value = c });
+            }
+
+            // --- MATERIAL ---
+            var materials = new[] { "PP", "LDPE", "HDPE", "PC/ABS", "PA6", "PA66" };
+            foreach (var m in materials)
+            {
+                modelBuilder.Entity<FilterOption>().HasData(new FilterOption
+                { Id = idCounter++, Category = "material", Value = m });
+            }
         }
     }
 }
