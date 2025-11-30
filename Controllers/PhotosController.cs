@@ -552,7 +552,7 @@ public class PhotosController : Controller
                             if (System.IO.File.Exists(logoPath)) c.Item().AlignMiddle().MaxHeight(75).Image(logoPath).FitArea();
                         });
                         row.RelativeItem(1).Column(c => {
-                            c.Item().AlignRight().Text("Technical Data Sheet").SemiBold().FontColor(Color.FromHex("#182c25")).FontSize(16);
+                            c.Item().AlignRight().Text("List Of Materials").SemiBold().FontColor(Color.FromHex("#182c25")).FontSize(16);
                             c.Item().AlignRight().Text($"Date: {DateTime.Now:d. M. yyyy}").FontSize(9);
                             c.Item().AlignRight().Text($"Count: {itemsList.Count}").FontSize(9);
                             c.Item().AlignRight().Text("Riegrova 59, CZ - 388 01 Blatná").FontSize(10);

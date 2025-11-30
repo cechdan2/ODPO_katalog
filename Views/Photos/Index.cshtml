@@ -1,4 +1,6 @@
 ﻿@using System.Linq
+@using Microsoft.EntityFrameworkCore
+@inject PhotoApp.Data.AppDbContext _context
 @model PhotoApp.ViewModels.PhotosIndexViewModel
 @{
     ViewData["Title"] = "ODPO s.r.o. – Plastic Samples Catalog";
@@ -7,14 +9,29 @@
         !string.IsNullOrWhiteSpace(item.ImagePath) ? Url.Content(item.ImagePath) :
         !string.IsNullOrWhiteSpace(item.PhotoPath) ? Url.Content(item.PhotoPath) : null;
 
+    // --- NAČTENÍ DAT Z NOVÉ TABULKY (FILTER OPTIONS) ---
+    // Načteme všechny možnosti najednou do paměti (je to velmi rychlé pro stovky položek)
+    var allOptions = _context.FilterOptions.AsNoTracking().ToList();
+
+    // Vytvoříme seznamy pro jednotlivé filtry
+    var suppliersList = allOptions.Where(x => x.Category == "supplier").Select(x => x.Value).OrderBy(x => x).ToList();
+    var materialsList = allOptions.Where(x => x.Category == "material").Select(x => x.Value).OrderBy(x => x).ToList();
+    var colorsList = allOptions.Where(x => x.Category == "color").Select(x => x.Value).OrderBy(x => x).ToList();
+    var positionsList = allOptions.Where(x => x.Category == "position").Select(x => x.Value).OrderBy(x => x).ToList();
+    var formsList = allOptions.Where(x => x.Category == "form").Select(x => x.Value).OrderBy(x => x).ToList();
+    var fillersList = allOptions.Where(x => x.Category == "filler").Select(x => x.Value).OrderBy(x => x).ToList();
+
+    // MonthlyQuantity necháme zatím z Modelu
+
+    // OPRAVA: Všechny kolekce explicitně přetypujeme na IEnumerable<string>, aby měly anonymní objekty stejný typ
     var filtersToRender = new[] {
-        new { Name = "supplier", Placeholder = "Supplier", AllValues = Model.Suppliers, SelectedValues = Model.Supplier },
-        new { Name = "material", Placeholder = "Material", AllValues = Model.Materials, SelectedValues = Model.Material },
-        new { Name = "color", Placeholder = "Color", AllValues = Model.Colors, SelectedValues = Model.Color },
-        new { Name = "position", Placeholder = "Position", AllValues = Model.Positions, SelectedValues = Model.Position },
-        new { Name = "form", Placeholder = "Form", AllValues = Model.Forms, SelectedValues = Model.Form },
-        new { Name = "filler", Placeholder = "Filler", AllValues = Model.Fillers, SelectedValues = Model.Filler },
-        new { Name = "monthlyQuantity", Placeholder = "Monthly Quantity", AllValues = Model.MonthlyQuantities, SelectedValues = Model.MonthlyQuantity }
+        new { Name = "supplier",        Placeholder = "Supplier",         AllValues = (IEnumerable<string>)suppliersList,           SelectedValues = (IEnumerable<string>)Model.Supplier },
+        new { Name = "material",        Placeholder = "Material",         AllValues = (IEnumerable<string>)materialsList,           SelectedValues = (IEnumerable<string>)Model.Material },
+        new { Name = "color",           Placeholder = "Color",            AllValues = (IEnumerable<string>)colorsList,              SelectedValues = (IEnumerable<string>)Model.Color },
+        new { Name = "position",        Placeholder = "Position",         AllValues = (IEnumerable<string>)positionsList,           SelectedValues = (IEnumerable<string>)Model.Position },
+        new { Name = "form",            Placeholder = "Form",             AllValues = (IEnumerable<string>)formsList,               SelectedValues = (IEnumerable<string>)Model.Form },
+        new { Name = "filler",          Placeholder = "Filler",           AllValues = (IEnumerable<string>)fillersList,             SelectedValues = (IEnumerable<string>)Model.Filler },
+        new { Name = "monthlyQuantity", Placeholder = "Monthly Quantity", AllValues = (IEnumerable<string>)Model.MonthlyQuantities, SelectedValues = (IEnumerable<string>)Model.MonthlyQuantity }
     };
 }
 <head>
@@ -620,24 +637,22 @@
         color: var(--brand-dark);
         margin-right: 10px;
     }
+
     @@media (max-width: 768px) {
-        .bulk-actions-bar
+        .bulk-actions-bar {
+            flex-direction: column;
+            gap: 10px;
+            padding-bottom: 20px;
+        }
 
-    {
-        flex-direction: column;
-        gap: 10px;
-        padding-bottom: 20px;
-    }
+        .fab-group {
+            bottom: 100px;
+            transition: bottom 0.3s;
+        }
 
-    .fab-group {
-        bottom: 100px;
-        transition: bottom 0.3s;
-    }
-
-    body.bulk-active .fab-group {
-        bottom: 140px;
-    }
-
+        body.bulk-active .fab-group {
+            bottom: 140px;
+        }
     }
 
     /* === PLUGINS & FAB === */
@@ -753,13 +768,11 @@
             cursor: pointer;
             font-size: 0.95rem;
         }
+
     @@media (max-width: 500px) {
-        #pdf-column-list
-
-    {
-        grid-template-columns: 1fr;
-    }
-
+        #pdf-column-list {
+            grid-template-columns: 1fr;
+        }
     }
 </style>
 
@@ -992,10 +1005,8 @@
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
-    // GLOBÁLNÍ FUNKCE PRO PŘÍMÉ OTEVŘENÍ OVERLAYE
+    // GLOBÁLNÍ FUNKCE PRO PŘÍMÉ OTEVŘENÍ OVERLAYE (Pro vedlejší fotky - kliknutím)
     window.showDirectOverlay = function(src) {
         document.getElementById('overlay-image').src = src;
         document.getElementById('image-overlay').classList.add('active');
@@ -1004,7 +1015,6 @@
     document.addEventListener("DOMContentLoaded", function() {
         setTimeout(() => $('.multi-select').select2({ allowClear: true, closeOnSelect: false }), 100);
 
-        // --- UI & FILTERS ---
         const toggleBtn = document.getElementById('sidebar-toggle-btn');
         const body = document.body;
         if (localStorage.getItem('filtersVisible') === 'true') body.classList.add('filters-visible');
@@ -1040,29 +1050,8 @@
             cb.addEventListener("change", function() { toggleField(colName, this.checked); });
         });
 
-        // --- BULK ACTIONS & SELECTION ---
+        // --- SELECT ALL BUTTON LOGIC ---
         const selectAllBtn = document.getElementById('selectAllBtn');
-        const bulkBar = document.getElementById('bulkActionsBar');
-        const selectedCountSpan = document.getElementById('selectedCount');
-        const checkboxes = document.querySelectorAll('.card-select-checkbox');
-        let selectedIds = [];
-
-        function updateBulkUI() {
-            selectedIds = Array.from(checkboxes).filter(cb => cb.checked).map(cb => cb.value);
-            selectedCountSpan.textContent = selectedIds.length;
-            if (selectedIds.length > 0) {
-                bulkBar.classList.add('visible');
-                document.body.classList.add('bulk-active');
-            } else {
-                bulkBar.classList.remove('visible');
-                document.body.classList.remove('bulk-active');
-            }
-            checkboxes.forEach(cb => {
-                const card = cb.closest('.sample-card');
-                if (cb.checked) card.classList.add('selected'); else card.classList.remove('selected');
-            });
-        }
-
         if (selectAllBtn) {
             selectAllBtn.addEventListener('click', () => {
                 const visibleCheckboxes = document.querySelectorAll('.sample-card:not([style*="display: none"]) .card-select-checkbox');
@@ -1072,10 +1061,25 @@
             });
         }
 
+        // --- BULK ACTIONS LOGIC ---
+        const bulkBar = document.getElementById('bulkActionsBar');
+        const selectedCountSpan = document.getElementById('selectedCount');
+        const checkboxes = document.querySelectorAll('.card-select-checkbox');
+        let selectedIds = [];
+
+        function updateBulkUI() {
+            selectedIds = Array.from(checkboxes).filter(cb => cb.checked).map(cb => cb.value);
+            selectedCountSpan.textContent = selectedIds.length;
+            if (selectedIds.length > 0) { bulkBar.classList.add('visible'); document.body.classList.add('bulk-active'); }
+            else { bulkBar.classList.remove('visible'); document.body.classList.remove('bulk-active'); }
+            checkboxes.forEach(cb => {
+                const card = cb.closest('.sample-card');
+                if (cb.checked) card.classList.add('selected'); else card.classList.remove('selected');
+            });
+        }
         checkboxes.forEach(cb => cb.addEventListener('change', updateBulkUI));
         document.getElementById('cancelSelectionBtn').addEventListener('click', () => { checkboxes.forEach(cb => cb.checked = false); updateBulkUI(); });
 
-        // --- BULK DELETE ---
         document.getElementById('bulkDeleteBtn').addEventListener('click', function() {
             if (confirm(`Delete ${selectedIds.length} samples?`)) {
                 const form = document.createElement('form');
@@ -1097,60 +1101,63 @@
             }
         });
 
-        // --- PDF MODAL & EXPORT LOGIC ---
+        // --- DOWNLOAD ALL BUNDLE (NO ZIP) ---
+        document.getElementById('bulkDownloadAllBtn').addEventListener('click', function() {
+            openPdfModal('bundle', `Download Bundle (${selectedIds.length} files)`);
+        });
+
+        // --- PDF MODAL ---
         const pdfModal = document.getElementById('pdfModal');
-        const openBtn = document.getElementById('open-pdf-export-btn'); // Main export button
+        const openBtn = document.getElementById('open-pdf-export-btn');
         const openBtnMobile = document.getElementById('openPdfModalBtnMobile');
         const closePdfBtn = document.getElementById('pdfModalClose');
-        const bulkPdfBtn = document.getElementById('bulkPdfBtn'); // Bulk Summary
-        const bulkDownloadAllBtn = document.getElementById('bulkDownloadAllBtn'); // Bulk Bundle
+        const bulkPdfBtn = document.getElementById('bulkPdfBtn');
         const generatePdfBtn = document.getElementById('generatePdfBtn');
         const pdfModalTitle = document.getElementById('pdfModalTitle');
 
-        // State to track if we are doing a bundle download or a single PDF
         let pdfExportMode = 'standard'; // 'standard' or 'bundle'
 
         function openPdfModal(mode, title) {
             if (pdfModal) {
                 pdfExportMode = mode;
                 pdfModalTitle.innerText = title;
+                pdfModal.style.display = 'flex';
 
-                // Set defaults
-                const defaults = ["Id", "Material", "Color", "Form", "Mfi", "Filler", "MonthlyQuantity", "Notes"];
-                document.querySelectorAll('#pdf-column-list input[type="checkbox"]').forEach(cb => {
+                // Seznam hodnot, které mají být VŽDY zaškrtnuté při otevření
+                const defaults = [
+                    "Id",
+                    "Material",
+                    "Color",
+                    "Form",
+                    "Mfi",
+                    "Filler",
+                    "MonthlyQuantity",
+                    "Notes"
+                ];
+
+                const checkboxes = document.querySelectorAll('#pdf-column-list input[type="checkbox"]');
+                checkboxes.forEach(cb => {
                     cb.checked = defaults.includes(cb.value);
                 });
 
-                // Update button text
                 generatePdfBtn.innerText = mode === 'bundle' ? "Start Bundle Download" : "Generate PDF";
-                pdfModal.style.display = 'flex';
             }
         }
 
         function closePdfModal() { if (pdfModal) pdfModal.style.display = 'none'; }
 
-        // Event Listeners for Opening Modal
         if (openBtn) openBtn.addEventListener('click', () => openPdfModal('standard', "Export to PDF (Filtered)"));
         if (openBtnMobile) openBtnMobile.addEventListener('click', () => openPdfModal('standard', "Export to PDF"));
         if (closePdfBtn) closePdfBtn.addEventListener('click', closePdfModal);
-
-        // 1. Bulk Summary PDF
         if (bulkPdfBtn) bulkPdfBtn.addEventListener('click', () => openPdfModal('standard', `Export Summary (${selectedIds.length} items)`));
 
-        // 2. Bulk Bundle Download (CHANGED: Now opens modal)
-        if (bulkDownloadAllBtn) bulkDownloadAllBtn.addEventListener('click', () => openPdfModal('bundle', `Download Bundle (${selectedIds.length} files)`));
-
-        // Generate Action
         if (generatePdfBtn) {
             generatePdfBtn.addEventListener('click', function() {
                 const checkedBoxes = document.querySelectorAll('#pdf-column-list input[type="checkbox"]:checked');
-
-                // Get selected columns
                 let columnsParams = "";
                 checkedBoxes.forEach(cb => columnsParams += `&columnsToInclude=${cb.value}`);
 
                 if (pdfExportMode === 'standard') {
-                    // --- STANDARD / SUMMARY EXPORT ---
                     let params = new URLSearchParams();
                     if (selectedIds.length > 0) {
                         selectedIds.forEach(id => params.append('ids', id));
@@ -1158,25 +1165,18 @@
                         const fd = new FormData(document.getElementById('desktopFilterForm'));
                         params = new URLSearchParams(fd);
                     }
-                    // Append columns
-                    const finalUrl = `@Url.Action("ExportPdf", "Photos")?${params.toString()}${columnsParams}`;
-                    window.open(finalUrl, '_blank');
-
+                    window.open(`@Url.Action("ExportPdf", "Photos")?${params.toString()}${columnsParams}`, '_blank');
                 } else if (pdfExportMode === 'bundle') {
-                    // --- BUNDLE DOWNLOAD LOOP ---
-                    if (selectedIds.length === 0) return;
-                    if (!confirm(`Start downloading ${selectedIds.length + 1} files? Please allow pop-ups.`)) return;
+                    if(selectedIds.length === 0) return;
+                    if(!confirm(`Start downloading ${selectedIds.length + 1} files? (Please allow pop-ups if prompted)`)) return;
 
-                    // 1. Download Summary First
                     let summaryParams = new URLSearchParams();
                     selectedIds.forEach(id => summaryParams.append('ids', id));
                     const summaryUrl = `@Url.Action("ExportPdf", "Photos")?${summaryParams.toString()}${columnsParams}`;
                     window.open(summaryUrl, '_blank');
 
-                    // 2. Loop for individual files
                     selectedIds.forEach((id, index) => {
                         setTimeout(() => {
-                            // We pass the SAME column selection to the single export
                             const singleUrl = `@Url.Action("ExportSinglePdf", "Photos")?id=${id}${columnsParams}`;
                             const link = document.createElement('a');
                             link.href = singleUrl;
@@ -1191,13 +1191,15 @@
             });
         }
 
-        // --- ZOOM LOGIC ---
+        // --- ZOOM LOGIC (Unified) ---
         const overlay = document.getElementById('image-overlay');
         const overlayImg = document.getElementById('overlay-image');
-        const closeOverlayBtn = document.querySelector('.close-overlay-btn');
+        const closeBtn = document.querySelector('.close-overlay-btn');
         let hoverTimer = null;
 
-        function closeOverlay() { overlay.classList.remove('active'); }
+        function closeOverlay() {
+            overlay.classList.remove('active');
+        }
 
         document.querySelectorAll('.thumb').forEach(thumb => {
             thumb.addEventListener('mouseenter', () => {
@@ -1212,8 +1214,10 @@
             });
         });
 
-        if(closeOverlayBtn) closeOverlayBtn.addEventListener('click', closeOverlay);
-        overlay.addEventListener('click', closeOverlay);
+        if(closeBtn) closeBtn.addEventListener('click', closeOverlay);
+        overlay.addEventListener('click', (e) => {
+            closeOverlay();
+        });
         document.addEventListener('keydown', (e) => { if (e.key === "Escape") closeOverlay(); });
     });
 </script>

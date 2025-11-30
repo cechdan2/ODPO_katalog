@@ -1,29 +1,46 @@
 ﻿@using System.Linq
+@using Microsoft.EntityFrameworkCore
+@inject PhotoApp.Data.AppDbContext _context
 @model PhotoApp.ViewModels.PhotosIndexViewModel
 @{
     ViewData["Title"] = "ODPO s.r.o. – Plastic Sample Catalog";
 
-    // Helper for images
+    // Helper pro obrázky
     Func<PhotoApp.Models.PhotoRecord, string> ImageSrc = item =>
         !string.IsNullOrWhiteSpace(item.ImagePath) ? Url.Content(item.ImagePath) :
         !string.IsNullOrWhiteSpace(item.PhotoPath) ? Url.Content(item.PhotoPath) : null;
 
-    // Filters definition
+    // --- 1. NAČTENÍ DAT PRO NAŠEPTÁVAČE Z DB ---
+    // Načteme data přímo z databáze
+    var allOptions = _context.FilterOptions.AsNoTracking().ToList();
+
+    var suppliersList = allOptions.Where(x => x.Category == "supplier").Select(x => x.Value).OrderBy(x => x).ToList();
+    var materialsList = allOptions.Where(x => x.Category == "material").Select(x => x.Value).OrderBy(x => x).ToList();
+    var colorsList = allOptions.Where(x => x.Category == "color").Select(x => x.Value).OrderBy(x => x).ToList();
+    var positionsList = allOptions.Where(x => x.Category == "position").Select(x => x.Value).OrderBy(x => x).ToList();
+    var formsList = allOptions.Where(x => x.Category == "form").Select(x => x.Value).OrderBy(x => x).ToList();
+    var fillersList = allOptions.Where(x => x.Category == "filler").Select(x => x.Value).OrderBy(x => x).ToList();
+
+    // Monthly Quantity bereme z modelu, pokud nemáte kategorii v DB, jinak přidejte "monthlyQuantity" do FilterOptions
+    var quantityList = Model.MonthlyQuantities;
+
+    // --- 2. DEFINICE FILTRŮ PRO UI ---
     var filtersToRender = new[]
     {
-        new { Name = "supplier",        Placeholder = "Supplier",         AllValues = Model.Suppliers,         SelectedValues = Model.Supplier },
-        new { Name = "material",        Placeholder = "Material",         AllValues = Model.Materials,         SelectedValues = Model.Material },
-        new { Name = "color",           Placeholder = "Color",            AllValues = Model.Colors,            SelectedValues = Model.Color },
-        new { Name = "position",        Placeholder = "Position",         AllValues = Model.Positions,         SelectedValues = Model.Position },
-        new { Name = "form",            Placeholder = "Form",             AllValues = Model.Forms,             SelectedValues = Model.Form },
-        new { Name = "filler",          Placeholder = "Filler",           AllValues = Model.Fillers,           SelectedValues = Model.Filler },
-        new { Name = "monthlyQuantity", Placeholder = "Monthly Quantity", AllValues = Model.MonthlyQuantities, SelectedValues = Model.MonthlyQuantity }
+        new { Name = "supplier",        Placeholder = "Supplier",         AllValues = (IEnumerable<string>)suppliersList,           SelectedValues = (IEnumerable<string>)Model.Supplier },
+        new { Name = "material",        Placeholder = "Material",         AllValues = (IEnumerable<string>)materialsList,           SelectedValues = (IEnumerable<string>)Model.Material },
+        new { Name = "color",           Placeholder = "Color",            AllValues = (IEnumerable<string>)colorsList,              SelectedValues = (IEnumerable<string>)Model.Color },
+        new { Name = "position",        Placeholder = "Position",         AllValues = (IEnumerable<string>)positionsList,           SelectedValues = (IEnumerable<string>)Model.Position },
+        new { Name = "form",            Placeholder = "Form",             AllValues = (IEnumerable<string>)formsList,               SelectedValues = (IEnumerable<string>)Model.Form },
+        new { Name = "filler",          Placeholder = "Filler",           AllValues = (IEnumerable<string>)fillersList,             SelectedValues = (IEnumerable<string>)Model.Filler },
+        new { Name = "monthlyQuantity", Placeholder = "Monthly Quantity", AllValues = (IEnumerable<string>)quantityList,            SelectedValues = (IEnumerable<string>)Model.MonthlyQuantity }
     };
 }
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <meta name="theme-color" content="#16a34a">
 <link rel="manifest" href="/manifest.json">
 <meta name="mobile-web-app-capable" content="yes">
+
 <head>
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/nouislider@14.6.3/distribute/nouislider.min.css" rel="stylesheet">
@@ -52,7 +69,7 @@
             background: var(--bg);
             margin: 0;
             padding: 0;
-            padding-bottom: 100px; /* Space for FABs */
+            padding-bottom: 100px;
             transition: padding-bottom 0.3s ease;
         }
 
@@ -61,31 +78,34 @@
             background: #fff;
             border-bottom: 2px solid var(--border);
             box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            position: sticky;
+            top: 0;
+            z-index: 100;
         }
 
         .header-inner {
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 15px var(--pad);
+            padding: 10px var(--pad);
         }
 
         .brand {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 8px;
+            gap: 4px;
             text-decoration: none;
             color: inherit;
         }
 
             .brand img {
-                height: 80px;
+                height: 60px;
             }
 
             .brand h1 {
                 margin: 0;
-                font-size: 18px;
+                font-size: 16px;
                 font-weight: 700;
                 color: var(--brand-dark);
             }
@@ -95,7 +115,7 @@
             width: 100%;
             max-width: 800px;
             margin: 0 auto;
-            padding: var(--pad);
+            padding: 10px;
         }
 
         /* === BUTTONS & LINKS === */
@@ -127,9 +147,9 @@
             }
 
         .user-action-link {
-            display: inline-flex; /* Změna z inline-block na inline-flex pro vnitřní zarovnání */
-            align-items: center; /* Vertikálně vycentruje ikonku a text */
-            gap: 6px; /* Mezera mezi ikonkou a textem (nahrazuje margin-right u svg) */
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
             padding: 8px 12px;
             color: var(--brand-dark);
             text-decoration: none;
@@ -138,7 +158,7 @@
             background: transparent;
             border: none;
             cursor: pointer;
-            line-height: 1; /* Důležité pro srovnání výšky řádku */
+            line-height: 1;
         }
 
             .user-action-link:hover {
@@ -146,32 +166,31 @@
                 border-radius: 8px;
             }
 
-        /* Pojistka pro formulář, aby nedělal odsazení navíc */
         .user-actions form {
             margin: 0;
             display: flex;
         }
 
-        /* === CARDS === */
+        /* === CARDS LAYOUT (1 Column for cards, 2 Columns for info inside) === */
         .card-list {
             display: grid;
-            grid-template-columns: 1fr;
-            gap: var(--gap);
+            grid-template-columns: 1fr; /* Karty pod sebou */
+            gap: 12px;
             padding-bottom: 16px;
         }
 
         .item-card {
             background: #fff;
-            border-radius: 20px;
-            padding: 16px;
+            border-radius: 12px;
+            padding: 10px;
             border: 1px solid var(--border);
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 12px;
+            gap: 8px;
             position: relative;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-            transition: border-color 0.2s, background-color 0.2s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+            overflow: hidden;
         }
 
             .item-card.selected {
@@ -181,8 +200,8 @@
 
         .card-select-checkbox {
             position: absolute;
-            top: 12px;
-            left: 12px;
+            top: 8px;
+            left: 8px;
             width: 24px;
             height: 24px;
             z-index: 10;
@@ -191,62 +210,72 @@
         }
 
         .item-card .name {
-            font-size: 18px;
+            font-size: 16px;
             font-weight: 700;
             color: var(--brand-dark);
             margin: 0;
             width: 100%;
             text-align: center;
-            border-bottom: 2px solid var(--brand);
+            border-bottom: 1px solid #eee;
             padding-bottom: 8px;
             padding-left: 30px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .thumb {
             width: 100%;
-            max-width: 250px;
+            max-width: 300px;
             aspect-ratio: 1;
             object-fit: cover;
-            border-radius: 16px;
-            border: 1.5px solid var(--border);
+            border-radius: 8px;
+            border: 1px solid var(--border);
         }
 
+        /* === INFO GRID (2 Sloupce uvnitř karty) === */
         .card-info {
             display: grid;
-            grid-template-columns: 1fr;
-            gap: 6px;
+            grid-template-columns: 1fr 1fr; /* Dva sloupce */
+            gap: 8px 12px;
             width: 100%;
+            margin-top: 4px;
         }
 
         .info-item {
-            display: grid;
-            grid-template-columns: auto 1fr;
-            gap: 8px;
-            align-items: baseline;
-            background: #fcfcfc;
-            border: 1px solid var(--border);
-            padding: 8px;
-            border-radius: 8px;
             font-size: 13px;
+            color: #333;
+            line-height: 1.4;
+            background: #fcfcfc;
+            padding: 6px 8px;
+            border-radius: 6px;
+            border: 1px solid #eee;
+            display: flex;
+            flex-direction: column;
         }
 
             .info-item strong {
+                color: #666;
                 font-weight: 600;
-                color: #555;
+                font-size: 11px;
+                text-transform: uppercase;
+                margin-bottom: 2px;
             }
 
         .card-footer {
             display: flex;
-            gap: 8px;
             width: 100%;
-            margin-top: auto;
+            margin-top: 8px;
         }
 
             .card-footer .action-btn {
                 flex-grow: 1;
+                padding: 8px;
+                font-size: 14px;
+                border-radius: 8px;
             }
 
-        /* === BULK ACTIONS BAR === */
+        /* === BULK BAR === */
         .bulk-actions-bar {
             position: fixed;
             bottom: 0;
@@ -254,14 +283,14 @@
             width: 100%;
             background: white;
             border-top: 1px solid var(--border);
-            padding: 12px 16px;
+            padding: 12px;
             display: flex;
             flex-direction: column;
             gap: 10px;
             box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
             z-index: 1600;
             transform: translateY(110%);
-            transition: transform 0.3s ease-in-out;
+            transition: transform 0.3s;
         }
 
             .bulk-actions-bar.visible {
@@ -274,7 +303,6 @@
             align-items: center;
             font-weight: 600;
             font-size: 14px;
-            color: var(--brand-dark);
         }
 
         .bulk-buttons {
@@ -283,22 +311,42 @@
             gap: 8px;
         }
 
-        /* === FAB GROUP & ANIMATION === */
+        /* === FAB === */
         .fab-group {
             position: fixed;
             right: 20px;
-            bottom: 20px; /* Default Position */
+            bottom: 20px;
             display: flex;
             flex-direction: column-reverse;
             gap: 12px;
             z-index: 1700;
-            transition: bottom 0.3s cubic-bezier(0.4, 0, 0.2, 1); /* Smooth animation */
+            transition: bottom 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        /* Move FAB up when bulk bar is active */
         body.bulk-active .fab-group {
-            bottom: 230px; /* Moves up to clear the bulk bar */
+            bottom: 230px;
         }
+
+        .fab {
+            width: 50px;
+            height: 50px;
+            background: var(--brand);
+            color: #fff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            border: none;
+            text-decoration: none;
+        }
+
+            .fab.secondary {
+                background: #fff;
+                color: var(--brand-dark);
+                font-size: 18px;
+            }
 
         /* === FILTER MODAL === */
         .filter-overlay {
@@ -336,16 +384,6 @@
             border-bottom: 1px solid var(--border);
         }
 
-            .filter-panel-header h3 {
-                margin: 0;
-                color: var(--brand-dark);
-            }
-
-        .close-icon {
-            font-size: 24px;
-            cursor: pointer;
-        }
-
         .filter-panel-body {
             padding: 15px;
             overflow-y: auto;
@@ -358,14 +396,27 @@
             gap: 10px;
         }
 
-            .filter-row label {
-                display: block;
-                font-weight: 600;
-                margin-bottom: 5px;
-                font-size: 14px;
-                color: #333;
-            }
+        .select2-container {
+            flex-grow: 1;
+            width: auto !important;
+        }
 
+        .filter-toggle {
+            width: 20px;
+            height: 20px;
+            margin-top: 4px;
+            flex-shrink: 0;
+        }
+
+        .filter-panel-footer {
+            padding: 15px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            border-top: 1px solid var(--border);
+        }
+
+        /* Select2 styling */
         .select2-container .select2-selection--multiple {
             border-radius: 8px !important;
             border-color: var(--border) !important;
@@ -378,48 +429,14 @@
             color: white !important;
         }
 
-        #mobileFilterForm .select2-container {
-            flex-grow: 1;
-            width: auto !important;
-        }
-
-        .filter-toggle {
-            -webkit-appearance: none;
-            appearance: none;
-            position: relative;
-            width: 20px;
-            height: 20px;
-            border: 2px solid #ccc;
-            border-radius: 5px;
-            cursor: pointer;
-            flex-shrink: 0;
-            transition: background-color 0.2s, border-color 0.2s;
-            margin-top: 4px;
-        }
-
-            .filter-toggle:checked {
-                background-color: var(--brand);
-                border-color: var(--brand-dark);
-            }
-
-                .filter-toggle:checked::after {
-                    content: '✔';
-                    position: absolute;
-                    top: 50%;
-                    left: 50%;
-                    transform: translate(-50%, -50%);
-                    font-size: 14px;
-                    color: white;
-                }
-
-        /* Slider Styles */
+        /* Slider */
         .slider-values {
             display: flex;
             justify-content: space-between;
             margin-top: 10px;
-            font-size: 13px;
+            font-size: 12px;
+            font-weight: bold;
             color: var(--brand-dark);
-            font-weight: 600;
         }
 
         .noUi-connect {
@@ -428,45 +445,14 @@
 
         .noUi-handle {
             border-radius: 50%;
-            box-shadow: none;
             border: 2px solid var(--brand);
             background: #fff;
+            box-shadow: none;
             cursor: pointer;
         }
 
-            .noUi-handle:before, .noUi-handle:after {
+            .noUi-handle::before, .noUi-handle::after {
                 display: none;
-            }
-
-        .filter-panel-footer {
-            padding: 15px;
-            border-top: 1px solid var(--border);
-            display: flex;
-            justify-content: flex-end;
-            gap: 10px;
-            background: #f9f9f9;
-            border-radius: 0 0 16px 16px;
-        }
-
-        .fab {
-            width: 50px;
-            height: 50px;
-            background: var(--brand);
-            color: #fff;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-            border: none;
-            text-decoration: none;
-        }
-
-            .fab.secondary {
-                background: #fff;
-                color: var(--brand-dark);
-                font-size: 18px;
             }
 
         /* === RESPONSIVE === */
@@ -482,31 +468,34 @@
     <div class="header-inner">
         <a class="brand" asp-controller="Photos" asp-action="Index">
             <img src="/logo.png" alt="ODPO logo" />
-            <h1>Sample Catalog</h1>
+            <h1>Catalog</h1>
         </a>
     </div>
 </header>
 
+<!-- FILTER MODAL -->
 <div id="filterOverlay" class="filter-overlay">
     <div class="filter-modal-content">
         <div class="filter-panel-header">
-            <h3>Filters</h3>
-            <span id="closeFilterBtn" class="close-icon">&times;</span>
+            <h3 style="margin:0;color:var(--brand-dark);">Filters</h3>
+            <span id="closeFilterBtn" style="font-size:24px;cursor:pointer;">&times;</span>
         </div>
         <form method="get" id="mobileFilterForm" class="filter-panel-body">
+            <!-- Search -->
             <div class="filter-row">
                 <div style="width: 20px; flex-shrink:0;"></div>
                 <div style="flex-grow: 1;">
-                    <label>Search</label>
+                    <label style="display:block;font-weight:600;margin-bottom:5px;">Search</label>
                     <input type="search" name="search" placeholder="Search..." value="@(Model?.Search ?? "")" style="width:100%; padding:8px; border-radius:8px; border:1px solid var(--border);" />
                 </div>
             </div>
 
-            <div class="filter-row" style="align-items: flex-start;">
-                <input type="checkbox" class="filter-toggle col-toggle" data-col="mfi" title="Show/hide column" checked style="margin-top: 4px;" />
-                <div style="flex-grow: 1; padding-left: 5px;">
-                    <label style="font-size:12px; margin-bottom:12px; display:block; color:#555;">MFI Range</label>
-                    <div id="mfi-slider" style="margin: 0 10px 10px 10px;"></div>
+            <!-- MFI Slider -->
+            <div class="filter-row">
+                <input type="checkbox" class="filter-toggle col-toggle" data-col="mfi" checked />
+                <div style="flex-grow: 1;">
+                    <label style="display:block;font-weight:600;margin-bottom:12px;">MFI Range</label>
+                    <div id="mfi-slider" style="margin: 0 10px;"></div>
                     <div class="slider-values">
                         <span id="mfi-min-val">0</span>
                         <span id="mfi-max-val">100</span>
@@ -516,16 +505,17 @@
                 </div>
             </div>
 
+            <!-- Dynamic Filters with Select2 -->
             @foreach (var filter in filtersToRender)
             {
                 <div class="filter-row">
-                    <input type="checkbox" class="filter-toggle col-toggle" data-col="@filter.Name.ToLower()" title="Show/hide column" checked />
+                    <input type="checkbox" class="filter-toggle col-toggle" data-col="@filter.Name.ToLower()" checked />
                     <div style="flex-grow: 1;">
-                        <label>@filter.Placeholder</label>
+                        <label style="display:block;font-weight:600;margin-bottom:5px;">@filter.Placeholder</label>
                         <select name="@filter.Name" class="multi-select" multiple="multiple">
                             @foreach (var val in filter.AllValues)
                             {
-                                <option value="@val" selected="@(filter.SelectedValues.Contains(val))">@val</option>
+                                <option value="@val" selected="@(filter.SelectedValues != null && filter.SelectedValues.Contains(val))">@val</option>
                             }
                         </select>
                     </div>
@@ -541,15 +531,13 @@
 
 <main class="container">
     <div class="user-actions" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; height: 40px;">
-
+        <!-- Settings -->
         <a asp-controller="Admin" asp-action="Database" class="user-action-link" title="Manage Data">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="3"></circle>
-                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l-.06.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-            </svg>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
             Settings
         </a>
 
+        <!-- Auth -->
         @if (User?.Identity?.IsAuthenticated ?? false)
         {
             <form asp-controller="Account" asp-action="Logout" method="post">
@@ -580,40 +568,39 @@
                 <div class="card-info">
                     @if (!string.IsNullOrWhiteSpace(item.OriginalName))
                     {
-                        <div class="info-item"><strong>Name:</strong><span>@item.OriginalName</span></div>
+                        <div class="info-item"><strong>Name</strong>@item.OriginalName</div>
                     }
-
                     @if (!string.IsNullOrWhiteSpace(item.Supplier))
                     {
-                        <div class="info-item" data-col="supplier"><strong>Supplier:</strong><span>@item.Supplier</span></div>
+                        <div class="info-item" data-col="supplier"><strong>Supplier</strong>@item.Supplier</div>
                     }
                     @if (!string.IsNullOrWhiteSpace(item.Color))
                     {
-                        <div class="info-item" data-col="color"><strong>Color:</strong><span>@item.Color</span></div>
+                        <div class="info-item" data-col="color"><strong>Color</strong>@item.Color</div>
                     }
                     @if (!string.IsNullOrWhiteSpace(item.Position))
                     {
-                        <div class="info-item" data-col="position"><strong>Position:</strong><span>@item.Position</span></div>
+                        <div class="info-item" data-col="position"><strong>Pos</strong>@item.Position</div>
                     }
                     @if (!string.IsNullOrWhiteSpace(item.Form))
                     {
-                        <div class="info-item" data-col="form"><strong>Form:</strong><span>@item.Form</span></div>
+                        <div class="info-item" data-col="form"><strong>Form</strong>@item.Form</div>
                     }
                     @if (!string.IsNullOrWhiteSpace(item.Filler))
                     {
-                        <div class="info-item" data-col="filler"><strong>Filler:</strong><span>@item.Filler</span></div>
+                        <div class="info-item" data-col="filler"><strong>Filler</strong>@item.Filler</div>
                     }
                     @if (!string.IsNullOrWhiteSpace(item.MonthlyQuantity))
                     {
-                        <div class="info-item" data-col="monthlyquantity"><strong>Qty:</strong><span>@item.MonthlyQuantity</span></div>
+                        <div class="info-item" data-col="monthlyquantity"><strong>Qty</strong>@item.MonthlyQuantity</div>
                     }
                     @if (!string.IsNullOrWhiteSpace(item.Mfi))
                     {
-                        <div class="info-item" data-col="mfi"><strong>MFI:</strong><span>@item.Mfi</span></div>
+                        <div class="info-item" data-col="mfi"><strong>MFI</strong>@item.Mfi</div>
                     }
                     @if (!string.IsNullOrWhiteSpace(item.Notes))
                     {
-                        <div class="info-item" data-col="notes"><strong>Notes:</strong><span>item.Notes</span></div>
+                        <div class="info-item" data-col="notes" style="grid-column: 1 / -1;"><strong>Notes</strong>@item.Notes</div>
                     }
                 </div>
 
@@ -625,6 +612,7 @@
     </div>
 </main>
 
+<!-- BULK ACTIONS BAR -->
 <div id="bulkActionsBar" class="bulk-actions-bar">
     <div class="bulk-header">
         <span>Selected: <span id="selectedCount">0</span></span>
@@ -632,25 +620,26 @@
     </div>
     <div class="bulk-buttons">
         <button type="button" id="bulkPdfBtn" class="action-btn">PDF Summary</button>
-        <button type="button" id="bulkDownloadAllBtn" class="action-btn primary">Bundle (All)</button>
+        <button type="button" id="bulkDownloadAllBtn" class="action-btn primary">Bundle</button>
         <button type="button" id="bulkDeleteBtn" class="action-btn destructive" style="grid-column: span 2;">Delete Selected</button>
         <button type="button" id="cancelSelectionBtn" class="action-btn" style="grid-column: span 2; background:#f0f0f0;">Cancel</button>
     </div>
 </div>
 
+<!-- PDF CONFIG MODAL -->
 <div id="pdf-export-modal" style="display: none; position: fixed; z-index: 2100; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(5px); align-items: center; justify-content: center;">
-    <div style="background: #fff; padding: 20px; width: 90%; max-width: 400px; border-radius: 16px; display:flex; flex-direction:column; max-height:85vh;">
+    <div style="background: #fff; padding: 20px; width: 90%; max-width: 400px; border-radius: 16px;">
         <h3 id="pdfModalTitle" style="margin-top:0;">Export PDF</h3>
         <p style="font-size:14px; color:#666;">Select columns:</p>
-        <div id="pdf-column-list" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; overflow-y:auto;">
-        </div>
-        <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:auto;">
+        <div id="pdf-column-list" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; max-height: 300px; overflow-y:auto;"></div>
+        <div style="display:flex; justify-content:flex-end; gap:10px;">
             <button id="pdf-export-cancel" class="action-btn">Cancel</button>
             <button id="pdf-export-download" class="action-btn primary">Generate</button>
         </div>
     </div>
 </div>
 
+<!-- FABs -->
 <div class="fab-group">
     <a asp-controller="Photos" asp-action="Create" class="fab">+</a>
     <button type="button" class="fab secondary" id="fab-pdf-btn">PDF</button>
@@ -675,13 +664,17 @@
         const resetFiltersBtn = document.getElementById('resetFiltersBtn');
         const mobileFilterForm = document.getElementById('mobileFilterForm');
 
-        if (openFilterFab) openFilterFab.addEventListener('click', () => filterOverlay.classList.add('open'));
-        if (closeFilterBtn) closeFilterBtn.addEventListener('click', () => filterOverlay.classList.remove('open'));
+        if(openFilterFab) openFilterFab.addEventListener('click', () => filterOverlay.classList.add('open'));
+        if(closeFilterBtn) closeFilterBtn.addEventListener('click', () => filterOverlay.classList.remove('open'));
 
-        // --- NO UI SLIDER ---
+        // --- SLIDER ---
+        const sliderElement = document.getElementById('mfi-slider');
+        const minInput = document.getElementById('minMfiInput');
+        const maxInput = document.getElementById('maxMfiInput');
+
         const maxMfiFromData = @(Model.Mfis != null && Model.Mfis.Any() ? Model.Mfis.Max(m => { if (string.IsNullOrWhiteSpace(m)) return 0; var part = m.Split(new[] { '/', ',', '.' }, StringSplitOptions.RemoveEmptyEntries)[0].Trim(); return int.TryParse(part, out int r) ? r : 0; }) : 100);
         const sliderMax = Math.ceil(Math.max(maxMfiFromData, 100));
-        const sliderElement = document.getElementById('mfi-slider');
+
         let urlMin = parseFloat("@Context.Request.Query["minMfi"]");
         let urlMax = parseFloat("@Context.Request.Query["maxMfi"]");
         if (isNaN(urlMin)) urlMin = 0;
@@ -693,32 +686,29 @@
 
         const minValDisplay = document.getElementById('mfi-min-val');
         const maxValDisplay = document.getElementById('mfi-max-val');
-        const minInput = document.getElementById('minMfiInput');
-        const maxInput = document.getElementById('maxMfiInput');
 
         sliderElement.noUiSlider.on('update', function (values, handle) {
-            const value = Math.round(values[handle]);
-            if (handle === 0) { minValDisplay.innerHTML = value; minInput.value = value; }
-            else { maxValDisplay.innerHTML = value; maxInput.value = value; }
+            const val = Math.round(values[handle]);
+            if (handle === 0) { minValDisplay.innerText = val; minInput.value = val; }
+            else { maxValDisplay.innerText = val; maxInput.value = val; }
         });
 
         // --- RESET ---
-        if (resetFiltersBtn) {
+        if(resetFiltersBtn) {
             resetFiltersBtn.addEventListener('click', () => {
                 mobileFilterForm.querySelector('input[name="search"]').value = "";
                 $('.multi-select').val(null).trigger('change');
                 document.querySelectorAll('.col-toggle').forEach(cb => cb.checked = true);
                 sliderElement.noUiSlider.set([0, sliderMax]);
-                minInput.value = ''; maxInput.value = '';
                 setTimeout(() => mobileFilterForm.submit(), 50);
             });
         }
 
-         // --- COLUMN TOGGLES ---
+         // --- TOGGLES ---
         const colCheckboxes = document.querySelectorAll(".col-toggle");
         function toggleField(colName, isVisible) {
             document.querySelectorAll(`.item-card .info-item[data-col='${colName}']`).forEach(field => {
-                field.style.display = isVisible ? "grid" : "none";
+                field.style.display = isVisible ? "flex" : "none";
             });
         }
         colCheckboxes.forEach(cb => {
@@ -737,6 +727,7 @@
         function updateBulkUI() {
             selectedIds = Array.from(checkboxes).filter(cb => cb.checked).map(cb => cb.value);
             selectedCount.innerText = selectedIds.length;
+
             if (selectedIds.length > 0) {
                 bulkBar.classList.add('visible');
                 document.body.classList.add('bulk-active');
@@ -744,47 +735,43 @@
                 bulkBar.classList.remove('visible');
                 document.body.classList.remove('bulk-active');
             }
+
             checkboxes.forEach(cb => {
                 const card = cb.closest('.item-card');
                 if(cb.checked) card.classList.add('selected'); else card.classList.remove('selected');
             });
+
             const allChecked = Array.from(checkboxes).every(cb => cb.checked);
-            selectAllBtn.innerText = allChecked ? "Deselect All" : "Select All";
+            if(selectAllBtn) selectAllBtn.innerText = allChecked ? "Deselect All" : "Select All";
         }
 
         checkboxes.forEach(cb => cb.addEventListener('change', updateBulkUI));
-
-        if (selectAllBtn) {
-            selectAllBtn.addEventListener('click', () => {
-                const allChecked = Array.from(checkboxes).every(cb => cb.checked);
-                checkboxes.forEach(cb => cb.checked = !allChecked);
-                updateBulkUI();
-            });
-        }
-
-        if (cancelSelBtn) {
-            cancelSelBtn.addEventListener('click', () => {
-                checkboxes.forEach(cb => cb.checked = false);
-                updateBulkUI();
-            });
-        }
+        if(selectAllBtn) selectAllBtn.addEventListener('click', () => {
+            const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+            checkboxes.forEach(cb => cb.checked = !allChecked);
+            updateBulkUI();
+        });
+        if(cancelSelBtn) cancelSelBtn.addEventListener('click', () => { checkboxes.forEach(cb => cb.checked = false); updateBulkUI(); });
 
         // --- BULK DELETE ---
-        document.getElementById('bulkDeleteBtn').addEventListener('click', () => {
-            if(!confirm(`Delete ${selectedIds.length} items?`)) return;
-            const form = document.createElement('form');
-            form.method = 'POST';
-            form.action = '@Url.Action("DeleteMultiple", "Photos")';
-            const token = document.querySelector('input[name="__RequestVerificationToken"]');
-            if(token) form.appendChild(token.cloneNode());
-            selectedIds.forEach(id => {
-                const input = document.createElement('input');
-                input.type = 'hidden'; input.name = 'ids'; input.value = id;
-                form.appendChild(input);
+        const bulkDeleteBtn = document.getElementById('bulkDeleteBtn');
+        if(bulkDeleteBtn) {
+            bulkDeleteBtn.addEventListener('click', () => {
+                if(!confirm(`Delete ${selectedIds.length} items?`)) return;
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = '@Url.Action("DeleteMultiple", "Photos")';
+                const token = document.querySelector('input[name="__RequestVerificationToken"]');
+                if(token) form.appendChild(token.cloneNode());
+                selectedIds.forEach(id => {
+                    const input = document.createElement('input');
+                    input.type = 'hidden'; input.name = 'ids'; input.value = id;
+                    form.appendChild(input);
+                });
+                document.body.appendChild(form);
+                form.submit();
             });
-            document.body.appendChild(form);
-            form.submit();
-        });
+        }
 
         // --- PDF EXPORT ---
         const pdfModal = document.getElementById('pdf-export-modal');
@@ -802,57 +789,61 @@
 
         function openPdfModal(mode, title) {
             pdfMode = mode;
-            pdfTitle.innerText = title;
-            columnList.innerHTML = '';
-            for (const [key, label] of Object.entries(allColumns)) {
-                const checked = defaultCols.includes(key) ? 'checked' : '';
-                columnList.innerHTML += `<label style="display:flex;align-items:center;gap:6px; margin-bottom:4px;"><input type="checkbox" value="${key}" ${checked}> ${label}</label>`;
+            if(pdfTitle) pdfTitle.innerText = title;
+            if(columnList) {
+                columnList.innerHTML = '';
+                for (const [key, label] of Object.entries(allColumns)) {
+                    const checked = defaultCols.includes(key) ? 'checked' : '';
+                    columnList.innerHTML += `<label style="display:flex;align-items:center;gap:6px; margin-bottom:4px;"><input type="checkbox" value="${key}" ${checked}> ${label}</label>`;
+                }
             }
-            pdfDownloadBtn.innerText = mode === 'bundle' ? "Download All" : "Generate PDF";
-            pdfModal.style.display = 'flex';
+            if(pdfDownloadBtn) pdfDownloadBtn.innerText = mode === 'bundle' ? "Download All" : "Generate PDF";
+            if(pdfModal) pdfModal.style.display = 'flex';
         }
 
-        function closePdfModal() { pdfModal.style.display = 'none'; }
+        function closePdfModal() { if(pdfModal) pdfModal.style.display = 'none'; }
 
-        fabPdfBtn.addEventListener('click', () => openPdfModal('standard', 'Export Filtered List'));
+        if(fabPdfBtn) fabPdfBtn.addEventListener('click', () => openPdfModal('standard', 'Export Filtered List'));
         if(bulkPdfBtn) bulkPdfBtn.addEventListener('click', () => openPdfModal('summary', `Export Summary (${selectedIds.length})`));
         if(bulkBundleBtn) bulkBundleBtn.addEventListener('click', () => openPdfModal('bundle', `Bundle Download (${selectedIds.length})`));
-        pdfCancelBtn.addEventListener('click', closePdfModal);
+        if(pdfCancelBtn) pdfCancelBtn.addEventListener('click', closePdfModal);
 
-        pdfDownloadBtn.addEventListener('click', () => {
-            const checkedCols = Array.from(document.querySelectorAll('#pdf-column-list input:checked')).map(cb => `columnsToInclude=${cb.value}`).join('&');
+        if(pdfDownloadBtn) {
+            pdfDownloadBtn.addEventListener('click', () => {
+                const checkedCols = Array.from(document.querySelectorAll('#pdf-column-list input:checked')).map(cb => `columnsToInclude=${cb.value}`).join('&');
 
-            if(pdfMode === 'standard') {
-                const currentMin = parseFloat(minInput.value);
-                const currentMax = parseFloat(maxInput.value);
-                if ((isNaN(currentMin) || currentMin <= 0) && (isNaN(currentMax) || currentMax >= sliderMax)) {
-                     minInput.disabled = true; maxInput.disabled = true;
+                if(pdfMode === 'standard') {
+                    const currentMin = parseFloat(minInput.value);
+                    const currentMax = parseFloat(maxInput.value);
+                    if ((isNaN(currentMin) || currentMin <= 0) && (isNaN(currentMax) || currentMax >= sliderMax)) {
+                         minInput.disabled = true; maxInput.disabled = true;
+                    }
+                    const fd = new FormData(mobileFilterForm);
+                    const params = new URLSearchParams(fd);
+                    minInput.disabled = false; maxInput.disabled = false;
+                    window.open(`@Url.Action("ExportPdf", "Photos")?${params.toString()}&${checkedCols}`, '_blank');
                 }
-                const fd = new FormData(document.getElementById('mobileFilterForm'));
-                const params = new URLSearchParams(fd);
-                minInput.disabled = false; maxInput.disabled = false;
-                window.open(`@Url.Action("ExportPdf", "Photos")?${params.toString()}&${checkedCols}`, '_blank');
-            }
-            else if (pdfMode === 'summary' || pdfMode === 'bundle') {
-                let params = selectedIds.map(id => `ids=${id}`).join('&');
-                window.open(`@Url.Action("ExportPdf", "Photos")?${params}&${checkedCols}`, '_blank');
+                else {
+                    let params = selectedIds.map(id => `ids=${id}`).join('&');
+                    window.open(`@Url.Action("ExportPdf", "Photos")?${params}&${checkedCols}`, '_blank');
 
-                if (pdfMode === 'bundle') {
-                    if(!confirm(`Download ${selectedIds.length} individual files? (Allow pop-ups)`)) return;
-                    selectedIds.forEach((id, i) => {
-                        setTimeout(() => {
-                            const link = document.createElement('a');
-                            link.href = `@Url.Action("ExportSinglePdf", "Photos")?id=${id}&${checkedCols}`;
-                            link.download = ''; document.body.appendChild(link); link.click(); document.body.removeChild(link);
-                        }, (i * 1000) + 1200);
-                    });
+                    if (pdfMode === 'bundle') {
+                        if(!confirm(`Download ${selectedIds.length} individual files?`)) return;
+                        selectedIds.forEach((id, i) => {
+                            setTimeout(() => {
+                                const link = document.createElement('a');
+                                link.href = `@Url.Action("ExportSinglePdf", "Photos")?id=${id}&${checkedCols}`;
+                                link.download = ''; document.body.appendChild(link); link.click(); document.body.removeChild(link);
+                            }, (i * 1000) + 1200);
+                        });
+                    }
                 }
-            }
-            closePdfModal();
-        });
+                closePdfModal();
+            });
+        }
 
         if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => { navigator.serviceWorker.register('/service-worker.js', { scope: '/' }); });
+             window.addEventListener('load', () => { navigator.serviceWorker.register('/service-worker.js', { scope: '/' }); });
         }
     });
 </script>

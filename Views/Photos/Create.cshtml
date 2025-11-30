@@ -1,7 +1,21 @@
 @model PhotoApp.Models.PhotoRecord
+@using Microsoft.EntityFrameworkCore
+@inject PhotoApp.Data.AppDbContext _context
 
 @{
     ViewData["Title"] = "Add New Record";
+
+    // --- NAČTENÍ DAT PRO NAŠEPTÁVAČE Z DB ---
+    var allOptions = _context.FilterOptions.AsNoTracking().ToList();
+
+    var suppliers = allOptions.Where(x => x.Category == "supplier").Select(x => x.Value).OrderBy(x => x);
+    var materials = allOptions.Where(x => x.Category == "material").Select(x => x.Value).OrderBy(x => x);
+    var colors = allOptions.Where(x => x.Category == "color").Select(x => x.Value).OrderBy(x => x);
+    var positions = allOptions.Where(x => x.Category == "position").Select(x => x.Value).OrderBy(x => x);
+    var forms = allOptions.Where(x => x.Category == "form").Select(x => x.Value).OrderBy(x => x);
+    var fillers = allOptions.Where(x => x.Category == "filler").Select(x => x.Value).OrderBy(x => x);
+    var quantities = allOptions.Where(x => x.Category == "monthlyQuantity").Select(x => x.Value).OrderBy(x => x);
+    var mfis = allOptions.Where(x => x.Category == "mfi").Select(x => x.Value).OrderBy(x => x);
 }
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -375,120 +389,96 @@
             <div class="form-group">
                 <label asp-for="Position">Position</label>
                 <input asp-for="Position" class="form-control" list="position-list" />
-                @if (ViewBag.Positions != null)
-                {
-                    <datalist id="position-list">
-                        @foreach (var item in ViewBag.Positions)
-                        {
-                            <option value="@item"></option>
-                        }
-                    </datalist>
-                }
+                <datalist id="position-list">
+                    @foreach (var item in positions)
+                    {
+                        <option value="@item"></option>
+                    }
+                </datalist>
                 <span asp-validation-for="Position" class="field-validation"></span>
             </div>
 
             <div class="form-group">
                 <label asp-for="Material">Material</label>
                 <input asp-for="Material" class="form-control" list="material-list" />
-                @if (ViewBag.Materials != null)
-                {
-                    <datalist id="material-list">
-                        @foreach (var item in ViewBag.Materials)
-                        {
-                            <option value="@item"></option>
-                        }
-                    </datalist>
-                }
+                <datalist id="material-list">
+                    @foreach (var item in materials)
+                    {
+                        <option value="@item"></option>
+                    }
+                </datalist>
                 <span asp-validation-for="Material" class="field-validation"></span>
             </div>
 
             <div class="form-group">
                 <label asp-for="Form">Form</label>
                 <input asp-for="Form" class="form-control" list="form-list" />
-                @if (ViewBag.Forms != null)
-                {
-                    <datalist id="form-list">
-                        @foreach (var item in ViewBag.Forms)
-                        {
-                            <option value="@item"></option>
-                        }
-                    </datalist>
-                }
+                <datalist id="form-list">
+                    @foreach (var item in forms)
+                    {
+                        <option value="@item"></option>
+                    }
+                </datalist>
                 <span asp-validation-for="Form" class="field-validation"></span>
             </div>
 
             <div class="form-group">
                 <label asp-for="Filler">Filler</label>
                 <input asp-for="Filler" class="form-control" list="filler-list" />
-                @if (ViewBag.Fillers != null)
-                {
-                    <datalist id="filler-list">
-                        @foreach (var item in ViewBag.Fillers)
-                        {
-                            <option value="@item"></option>
-                        }
-                    </datalist>
-                }
+                <datalist id="filler-list">
+                    @foreach (var item in fillers)
+                    {
+                        <option value="@item"></option>
+                    }
+                </datalist>
                 <span asp-validation-for="Filler" class="field-validation"></span>
             </div>
 
             <div class="form-group">
                 <label asp-for="Color">Color</label>
                 <input asp-for="Color" class="form-control" list="color-list" />
-                @if (ViewBag.Colors != null)
-                {
-                    <datalist id="color-list">
-                        @foreach (var item in ViewBag.Colors)
-                        {
-                            <option value="@item"></option>
-                        }
-                    </datalist>
-                }
+                <datalist id="color-list">
+                    @foreach (var item in colors)
+                    {
+                        <option value="@item"></option>
+                    }
+                </datalist>
                 <span asp-validation-for="Color" class="field-validation"></span>
             </div>
 
             <div class="form-group">
                 <label asp-for="MonthlyQuantity">Monthly Quantity (t/month)</label>
                 <input asp-for="MonthlyQuantity" class="form-control" list="monthlyquantity-list" />
-                @if (ViewBag.MonthlyQuantities != null)
-                {
-                    <datalist id="monthlyquantity-list">
-                        @foreach (var item in ViewBag.MonthlyQuantities)
-                        {
-                            <option value="@item"></option>
-                        }
-                    </datalist>
-                }
+                <datalist id="monthlyquantity-list">
+                    @foreach (var item in quantities)
+                    {
+                        <option value="@item"></option>
+                    }
+                </datalist>
                 <span asp-validation-for="MonthlyQuantity" class="field-validation"></span>
             </div>
 
             <div class="form-group">
                 <label asp-for="Mfi">MFI/°C/kg</label>
                 <input asp-for="Mfi" class="form-control" list="mfi-list" />
-                @if (ViewBag.Mfis != null)
-                {
-                    <datalist id="mfi-list">
-                        @foreach (var item in ViewBag.Mfis)
-                        {
-                            <option value="@item"></option>
-                        }
-                    </datalist>
-                }
+                <datalist id="mfi-list">
+                    @foreach (var item in mfis)
+                    {
+                        <option value="@item"></option>
+                    }
+                </datalist>
                 <span asp-validation-for="Mfi" class="field-validation"></span>
             </div>
 
             <div class="form-group">
                 <label asp-for="Supplier">Supplier</label>
                 <input asp-for="Supplier" class="form-control" list="supplier-list" />
-                @if (ViewBag.Suppliers != null)
-                {
-                    <datalist id="supplier-list">
-                        @foreach (var item in ViewBag.Suppliers)
-                        {
-                            <option value="@item"></option>
-                        }
-                    </datalist>
-                }
+                <datalist id="supplier-list">
+                    @foreach (var item in suppliers)
+                    {
+                        <option value="@item"></option>
+                    }
+                </datalist>
                 <span asp-validation-for="Supplier" class="field-validation"></span>
             </div>
 

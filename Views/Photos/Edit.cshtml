@@ -1,4 +1,6 @@
 ﻿@model PhotoApp.Models.PhotoRecord
+@using Microsoft.EntityFrameworkCore
+@inject PhotoApp.Data.AppDbContext _context
 
 @{
     ViewData["Title"] = "Edit Sample";
@@ -6,6 +8,18 @@
     // Získání cesty k hlavnímu obrázku
     var imageSrc = !string.IsNullOrWhiteSpace(Model.ImagePath) ? Url.Content(Model.ImagePath) : (string.IsNullOrWhiteSpace(Model.PhotoPath) ? null : Url.Content(Model.PhotoPath));
     var additionalPhotos = Model.GetAdditionalPhotosList();
+
+    // --- NAČTENÍ DAT PRO NAŠEPTÁVAČE Z DB ---
+    var allOptions = _context.FilterOptions.AsNoTracking().ToList();
+
+    var suppliers = allOptions.Where(x => x.Category == "supplier").Select(x => x.Value).OrderBy(x => x);
+    var materials = allOptions.Where(x => x.Category == "material").Select(x => x.Value).OrderBy(x => x);
+    var colors = allOptions.Where(x => x.Category == "color").Select(x => x.Value).OrderBy(x => x);
+    var positions = allOptions.Where(x => x.Category == "position").Select(x => x.Value).OrderBy(x => x);
+    var forms = allOptions.Where(x => x.Category == "form").Select(x => x.Value).OrderBy(x => x);
+    var fillers = allOptions.Where(x => x.Category == "filler").Select(x => x.Value).OrderBy(x => x);
+    var quantities = allOptions.Where(x => x.Category == "monthlyQuantity").Select(x => x.Value).OrderBy(x => x);
+    var mfis = allOptions.Where(x => x.Category == "mfi").Select(x => x.Value).OrderBy(x => x);
 }
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -59,7 +73,7 @@
     }
 
     /* === LEVÝ SLOUPEC (MEDIA) === */
-    @@media {
+    aside.media {
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -287,25 +301,22 @@
 
     /* === RESPONSIVE (DESKTOP) === */
     @@media (min-width: 768px) {
-        .layout
+        .layout {
+            grid-template-columns: 320px 1fr;
+        }
 
-    {
-        grid-template-columns: 320px 1fr;
-    }
+        .fields {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px 20px;
+        }
 
-    .fields {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 12px 20px;
-    }
+        .full {
+            grid-column: 1 / -1;
+        }
 
-    .full {
-        grid-column: 1 / -1;
-    }
-
-    .detail-img {
-        margin-bottom: 0;
-    }
-
+        .detail-img {
+            margin-bottom: 0;
+        }
     }
 </style>
 
@@ -395,7 +406,13 @@
             <section class="fields">
                 <div class="field">
                     <label asp-for="Position" class="label">Position</label>
-                    <input asp-for="Position" class="value-input" placeholder="e.g. A-12" />
+                    <input asp-for="Position" class="value-input" placeholder="e.g. A-12" list="position-list" />
+                    <datalist id="position-list">
+                        @foreach (var item in positions)
+                        {
+                            <option value="@item"></option>
+                        }
+                    </datalist>
                     <span asp-validation-for="Position" class="field-validation-error"></span>
                 </div>
 
@@ -406,7 +423,13 @@
 
                 <div class="field full">
                     <label asp-for="Supplier" class="label">Supplier</label>
-                    <input asp-for="Supplier" class="value-input" />
+                    <input asp-for="Supplier" class="value-input" list="supplier-list" />
+                    <datalist id="supplier-list">
+                        @foreach (var item in suppliers)
+                        {
+                            <option value="@item"></option>
+                        }
+                    </datalist>
                     <span asp-validation-for="Supplier" class="field-validation-error"></span>
                 </div>
 
@@ -418,37 +441,73 @@
 
                 <div class="field">
                     <label asp-for="Material" class="label">Material</label>
-                    <input asp-for="Material" class="value-input" />
+                    <input asp-for="Material" class="value-input" list="material-list" />
+                    <datalist id="material-list">
+                        @foreach (var item in materials)
+                        {
+                            <option value="@item"></option>
+                        }
+                    </datalist>
                     <span asp-validation-for="Material" class="field-validation-error"></span>
                 </div>
 
                 <div class="field">
                     <label asp-for="Form" class="label">Form</label>
-                    <input asp-for="Form" class="value-input" />
+                    <input asp-for="Form" class="value-input" list="form-list" />
+                    <datalist id="form-list">
+                        @foreach (var item in forms)
+                        {
+                            <option value="@item"></option>
+                        }
+                    </datalist>
                     <span asp-validation-for="Form" class="field-validation-error"></span>
                 </div>
 
                 <div class="field">
                     <label asp-for="Filler" class="label">Filler</label>
-                    <input asp-for="Filler" class="value-input" />
+                    <input asp-for="Filler" class="value-input" list="filler-list" />
+                    <datalist id="filler-list">
+                        @foreach (var item in fillers)
+                        {
+                            <option value="@item"></option>
+                        }
+                    </datalist>
                     <span asp-validation-for="Filler" class="field-validation-error"></span>
                 </div>
 
                 <div class="field">
                     <label asp-for="Color" class="label">Color</label>
-                    <input asp-for="Color" class="value-input" />
+                    <input asp-for="Color" class="value-input" list="color-list" />
+                    <datalist id="color-list">
+                        @foreach (var item in colors)
+                        {
+                            <option value="@item"></option>
+                        }
+                    </datalist>
                     <span asp-validation-for="Color" class="field-validation-error"></span>
                 </div>
 
                 <div class="field">
                     <label asp-for="MonthlyQuantity" class="label">Quantity (month)</label>
-                    <input asp-for="MonthlyQuantity" class="value-input" />
+                    <input asp-for="MonthlyQuantity" class="value-input" list="monthlyquantity-list" />
+                    <datalist id="monthlyquantity-list">
+                        @foreach (var item in quantities)
+                        {
+                            <option value="@item"></option>
+                        }
+                    </datalist>
                     <span asp-validation-for="MonthlyQuantity" class="field-validation-error"></span>
                 </div>
 
                 <div class="field">
                     <label asp-for="Mfi" class="label">MFI/°C/kg</label>
-                    <input asp-for="Mfi" class="value-input" />
+                    <input asp-for="Mfi" class="value-input" list="mfi-list" />
+                    <datalist id="mfi-list">
+                        @foreach (var item in mfis)
+                        {
+                            <option value="@item"></option>
+                        }
+                    </datalist>
                     <span asp-validation-for="Mfi" class="field-validation-error"></span>
                 </div>
 
