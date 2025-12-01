@@ -63,10 +63,13 @@ namespace PhotoApp.Models
         // Obsahuje více cest oddìlených støedníkem (napø. "/uploads/foto1.jpg;/uploads/foto2.jpg")
         public string? AdditionalPhotos { get; set; }
 
-        // pole pro datum vytvoøení
-        public DateTime CreatedAt { get; set; }
+        // Pøidejte tyto dva øádky:
+        // --- PØIDEJTE TYTO DVA ØÁDKY ---
+        public string? CreatedBy { get; set; }
+        public string? UpdatedBy { get; set; }
+        // -------------------------------
 
-        // pole pro datum aktualizace (volitelnì)
+        public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
 
         // *** HELPER METODA PRO ZÍSKÁNÍ SEZNAMU DODATEÈNÝCH FOTEK ***

@@ -83,22 +83,52 @@ builder.Services.AddScoped<IUserService, EfUserService>();
 var app = builder.Build();
 
 // AUTOMATICKÁ MIGRACE + seed uživatele
+// AUTOMATICKÁ MIGRACE + seed uživatelù
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+    // 1. Aplikovat migrace (vytvoøí tabulky, pokud nejsou)
     db.Database.Migrate();
 
-    // Seed admin user pokud neexistuje
-    if (!db.Users.Any())
+    // 2. Definice uživatelù, které chceme mít v systému
+    var usersToSeed = new[]
     {
-        var hasher = new PasswordHasher<CustomUser>();
-        var admin = new CustomUser { UserName = "admin" };
-        admin.PasswordHash = hasher.HashPassword(admin, "P@ssw0rd!");
-        db.Users.Add(admin);
+        new { Name = "admin", Pass = "P@ssw0rd!" },
+        new { Name = "Jan", Pass = "Honzik123!" },
+        new { Name = "Ladislav", Pass = "Ladislav123!" },
+        new { Name = "Jakub", Pass = "Jakub123!" }
+    };
+
+    var hasher = new PasswordHasher<CustomUser>();
+    bool changesMade = false;
+
+    foreach (var userInfo in usersToSeed)
+    {
+        // Kontrola: Pokud uživatel s tímto jménem NEEXISTUJE, vytvoøíme ho
+        if (!db.Users.Any(u => u.UserName == userInfo.Name))
+        {
+            var newUser = new CustomUser
+            {
+                // Id se vytvoøí samo díky = Guid.NewGuid().ToString() v modelu
+                UserName = userInfo.Name
+            };
+
+            // Vygenerování hashe
+            newUser.PasswordHash = hasher.HashPassword(newUser, userInfo.Pass);
+
+            db.Users.Add(newUser);
+            changesMade = true;
+            Console.WriteLine($"Vytvoøen uživatel: {userInfo.Name}");
+        }
+    }
+
+    // 3. Uložení zmìn do DB (pokud jsme nìkoho pøidali)
+    if (changesMade)
+    {
         db.SaveChanges();
     }
 }
-
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");

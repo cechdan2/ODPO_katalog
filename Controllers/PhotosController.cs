@@ -958,14 +958,17 @@ public class PhotosController : Controller
         string? savedPath = null;
         string defaultPlaceholder = "/photos/default.JPEG";
 
+        // --- 1. Zpracování hlavní fotky ---
         if (PhotoFile != null && PhotoFile.Length > 0)
         {
+            // Kontrola velikosti (MaxFileSize musí být definováno v controlleru jako konstanta nebo field)
             if (PhotoFile.Length > MaxFileSize)
             {
                 ModelState.AddModelError("PhotoFile", "File is too large.");
                 return View(photoModel);
             }
 
+            // Kontrola typu (PermittedTypes musí být definováno v controlleru)
             if (!PermittedTypes.Contains(PhotoFile.ContentType))
             {
                 ModelState.AddModelError("PhotoFile", "Unsupported file type.");
@@ -991,6 +994,7 @@ public class PhotosController : Controller
             savedPath = defaultPlaceholder;
         }
 
+        // --- 2. Zpracování dodatečných fotek ---
         var additionalPaths = new List<string>();
         if (AdditionalPhotoFiles != null && AdditionalPhotoFiles.Any(f => f.Length > 0))
         {
@@ -1027,6 +1031,7 @@ public class PhotosController : Controller
             }
         }
 
+        // --- 3. Vytvoření záznamu a uložení uživatele ---
         var photo = new PhotoRecord
         {
             Position = photoModel.Position,
@@ -1045,17 +1050,23 @@ public class PhotosController : Controller
             Description = photoModel.Description ?? "",
             Notes = photoModel.Notes ?? "",
             PhotoPath = savedPath,
-            ImagePath = savedPath,
+            ImagePath = savedPath, // Pokud používáte oba sloupce
             AdditionalPhotos = string.Join(";", additionalPaths),
+
+            // Časová razítka
             CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
+            UpdatedAt = DateTime.UtcNow,
+
+            // === ZDE SE UKLÁDÁ UŽIVATEL ===
+            // Pokud User.Identity.Name je null (nepřihlášen), uloží se "Unknown"
+            CreatedBy = User.Identity?.Name ?? "Unknown",
+            UpdatedBy = User.Identity?.Name ?? "Unknown"
         };
 
         _context.Add(photo);
         await _context.SaveChangesAsync();
         return RedirectToAction(nameof(Index));
     }
-
     public async Task<IActionResult> Edit(int? id)
     {
         if (id == null) return NotFound();

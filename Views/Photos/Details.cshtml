@@ -547,7 +547,16 @@
 
             <div class="meta">
                 <div class="title">@(!string.IsNullOrWhiteSpace(Model.Name) ? Model.Name : "-")</div>
-                <div class="muted">Updated: @SafeDate(Model.UpdatedAt)</div>
+                @* Původní řádek: <div class="muted">Updated: @SafeDate(Model.UpdatedAt)</div> *@
+
+                @* Nový řádek s uživatelem: *@
+                <div class="muted">
+                    Updated: @SafeDate(Model.UpdatedAt)
+                    @if (!string.IsNullOrWhiteSpace(Model.UpdatedBy))
+                    {
+                        <span>(by @Model.UpdatedBy)</span>
+                    }
+                </div>
             </div>
 
             @if (User.Identity?.IsAuthenticated == true)
@@ -612,7 +621,12 @@
                 <div class="field"><div class="label">Quantity (month)</div><div class="value">@Safe(Model.MonthlyQuantity?.ToString())</div></div>
                 <div class="field"><div class="label">MFI/°C/kg</div><div class="value">@Safe(Model.Mfi)</div></div>
                 <div class="field full"><div class="label">Notes</div><div class="value">@Safe(Model.Notes)</div></div>
-                <div class="field"><div class="label">Created</div><div class="value">@SafeDate(Model.CreatedAt)</div></div>
+
+                <div class="field"><div class="label">Created By</div><div class="value">@Safe(Model.CreatedBy)</div></div>
+                <div class="field"><div class="label">Created At</div><div class="value">@SafeDate(Model.CreatedAt)</div></div>
+
+                <div class="field"><div class="label">Updated By</div><div class="value">@Safe(Model.UpdatedBy)</div></div>
+                <div class="field"><div class="label">Updated At</div><div class="value">@SafeDate(Model.UpdatedAt)</div></div>
             </div>
         </section>
     </div>

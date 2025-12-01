@@ -87,6 +87,13 @@ namespace PhotoApp.Data
 
                 entity.Property(e => e.UpdatedAt)
                       .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                // Pøidat konfiguraci pro nové sloupce
+                entity.Property(e => e.CreatedBy)
+                      .HasMaxLength(100); // Staèí pro username/email
+
+                entity.Property(e => e.UpdatedBy)
+                      .HasMaxLength(100);
             });
 
             // If using CustomUser (Identity), ensure mapping if a different table name is needed.
