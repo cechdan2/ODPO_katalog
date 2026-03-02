@@ -828,7 +828,14 @@
                             <option></option>
                             @foreach (var val in filter.AllValues)
                             {
-                                <option value="@val" selected="@(filter.SelectedValues.Contains(val))">@val</option>
+                                @if (filter.SelectedValues != null && filter.SelectedValues.Contains(val))
+                                {
+                                    <option value="@val" selected="selected">@val</option>
+                                }
+                                else
+                                {
+                                    <option value="@val">@val</option>
+                                }
                             }
                         </select>
                     </div>
@@ -1012,6 +1019,19 @@
         document.getElementById('image-overlay').classList.add('active');
     };
 
+    function setCookie(name, value, days) {
+        const d = new Date();
+        d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
+        document.cookie = name + "=" + encodeURIComponent(value) + ";expires=" + d.toUTCString() + ";path=/";
+    }
+    function getCookie(name) {
+        const v = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
+        return v ? decodeURIComponent(v.pop()) : null;
+    }
+    function deleteCookie(name) {
+        document.cookie = name + '=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/;';
+    }
+
     document.addEventListener("DOMContentLoaded", function() {
         setTimeout(() => $('.multi-select').select2({ allowClear: true, closeOnSelect: false }), 100);
 
@@ -1028,6 +1048,7 @@
         if (resetBtn && filterForm) {
             resetBtn.addEventListener('click', (e) => {
                 e.preventDefault();
+                deleteCookie('odpo_filters');
                 filterForm.querySelector('input[name="search"]').value = '';
                 $(filterForm).find('.multi-select').val(null).trigger('change');
                 filterForm.querySelector('input[name="minMfi"]').value = '';
@@ -1035,6 +1056,38 @@
                 filterForm.querySelectorAll('.col-toggle').forEach(cb => cb.checked = true);
                 filterForm.submit();
             });
+        }
+
+        if (filterForm) {
+            filterForm.addEventListener('submit', function() {
+                const filterData = {
+                    search: filterForm.querySelector('input[name="search"]').value,
+                    minMfi: parseFloat(filterForm.querySelector('input[name="minMfi"]').value) || null,
+                    maxMfi: parseFloat(filterForm.querySelector('input[name="maxMfi"]').value) || null
+                };
+                document.querySelectorAll('#desktopFilterForm .multi-select').forEach(function(sel) {
+                    filterData[sel.name] = $(sel).val() || [];
+                });
+                setCookie('odpo_filters', JSON.stringify(filterData), 30);
+            });
+
+            if (!window.location.search) {
+                const saved = getCookie('odpo_filters');
+                if (saved) {
+                    try {
+                        const filterData = JSON.parse(saved);
+                        if (filterData.search) filterForm.querySelector('input[name="search"]').value = filterData.search;
+                        document.querySelectorAll('#desktopFilterForm .multi-select').forEach(function(sel) {
+                            if (filterData[sel.name] && filterData[sel.name].length > 0) {
+                                $(sel).val(filterData[sel.name]).trigger('change');
+                            }
+                        });
+                        if (filterData.minMfi !== null) filterForm.querySelector('input[name="minMfi"]').value = filterData.minMfi;
+                        if (filterData.maxMfi !== null) filterForm.querySelector('input[name="maxMfi"]').value = filterData.maxMfi;
+                        setTimeout(() => filterForm.submit(), 100);
+                    } catch(e) { deleteCookie('odpo_filters'); }
+                }
+            }
         }
 
         const openFilterFab = document.getElementById('openFilterFab');
