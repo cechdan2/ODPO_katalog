@@ -63,6 +63,30 @@ public class PhotosController : Controller
         return null;
     }
 
+    // --- POMOCNÁ METODA PRO SESTAVENÍ QUERY STRING Z FILTRŮ ---
+    private string BuildFilterQueryString(
+        string search, List<string> supplier, List<string> material, List<string> type,
+        List<string> color, List<string> name, List<string> position, List<string> filler,
+        List<string> form, List<string> mfi, List<string> monthlyQuantity,
+        double? minMfi, double? maxMfi)
+    {
+        var queryParams = new List<string>();
+        if (!string.IsNullOrWhiteSpace(search)) queryParams.Add($"search={Uri.EscapeDataString(search)}");
+        if (supplier != null) foreach (var v in supplier) queryParams.Add($"supplier={Uri.EscapeDataString(v)}");
+        if (material != null) foreach (var v in material) queryParams.Add($"material={Uri.EscapeDataString(v)}");
+        if (type != null) foreach (var v in type) queryParams.Add($"type={Uri.EscapeDataString(v)}");
+        if (color != null) foreach (var v in color) queryParams.Add($"color={Uri.EscapeDataString(v)}");
+        if (name != null) foreach (var v in name) queryParams.Add($"name={Uri.EscapeDataString(v)}");
+        if (position != null) foreach (var v in position) queryParams.Add($"position={Uri.EscapeDataString(v)}");
+        if (filler != null) foreach (var v in filler) queryParams.Add($"filler={Uri.EscapeDataString(v)}");
+        if (form != null) foreach (var v in form) queryParams.Add($"form={Uri.EscapeDataString(v)}");
+        if (mfi != null) foreach (var v in mfi) queryParams.Add($"mfi={Uri.EscapeDataString(v)}");
+        if (monthlyQuantity != null) foreach (var v in monthlyQuantity) queryParams.Add($"monthlyQuantity={Uri.EscapeDataString(v)}");
+        if (minMfi.HasValue) queryParams.Add($"minMfi={minMfi.Value}");
+        if (maxMfi.HasValue) queryParams.Add($"maxMfi={maxMfi.Value}");
+        return queryParams.Any() ? "?" + string.Join("&", queryParams) : "";
+    }
+
     public IActionResult Import()
     {
         return View();
@@ -78,7 +102,8 @@ public class PhotosController : Controller
     {
         if (Request.Headers["User-Agent"].ToString().Contains("Mobile"))
         {
-            return RedirectToAction("Index_phone", new { search, supplier, material, type, color, name, position, filler, form, mfi, monthlyQuantity, minMfi, maxMfi });
+            var qs = BuildFilterQueryString(search, supplier, material, type, color, name, position, filler, form, mfi, monthlyQuantity, minMfi, maxMfi);
+            return Redirect(Url.Action("Index_phone") + qs);
         }
 
         var vm = await GetFilteredViewModel(search, supplier, material, type, color, name, position, filler, mfi, monthlyQuantity, form, minMfi, maxMfi);
@@ -99,7 +124,8 @@ public class PhotosController : Controller
     {
         if (forceDesktop)
         {
-            return RedirectToAction("Index", new { search, supplier, material, type, color, name, position, filler, form, mfi, monthlyQuantity, minMfi, maxMfi });
+            var qs = BuildFilterQueryString(search, supplier, material, type, color, name, position, filler, form, mfi, monthlyQuantity, minMfi, maxMfi);
+            return Redirect(Url.Action("Index") + qs);
         }
 
         var vm = await GetFilteredViewModel(search, supplier, material, type, color, name, position, filler, mfi, monthlyQuantity, form, minMfi, maxMfi);

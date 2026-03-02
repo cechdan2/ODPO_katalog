@@ -480,7 +480,7 @@
             <h3 style="margin:0;color:var(--brand-dark);">Filters</h3>
             <span id="closeFilterBtn" style="font-size:24px;cursor:pointer;">&times;</span>
         </div>
-        <form method="get" id="mobileFilterForm" class="filter-panel-body">
+        <form method="get" id="mobileFilterForm" class="filter-panel-body" asp-controller="Photos" asp-action="Index_phone">
             <!-- Search -->
             <div class="filter-row">
                 <div style="width: 20px; flex-shrink:0;"></div>
@@ -515,7 +515,14 @@
                         <select name="@filter.Name" class="multi-select" multiple="multiple">
                             @foreach (var val in filter.AllValues)
                             {
-                                <option value="@val" selected="@(filter.SelectedValues != null && filter.SelectedValues.Contains(val))">@val</option>
+                                @if (filter.SelectedValues != null && filter.SelectedValues.Contains(val))
+                                {
+                                    <option value="@val" selected="selected">@val</option>
+                                }
+                                else
+                                {
+                                    <option value="@val">@val</option>
+                                }
                             }
                         </select>
                     </div>
@@ -653,6 +660,21 @@
 <script src="https://cdn.jsdelivr.net/npm/nouislider@14.6.3/distribute/nouislider.min.js"></script>
 
 <script>
+    function setCookie(name, value, days) {
+        const d = new Date();
+        d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
+        document.cookie = name + "=" + encodeURIComponent(value) + ";expires=" + d.toUTCString() + ";path=/";
+    }
+
+    function getCookie(name) {
+        const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+        return match ? decodeURIComponent(match[2]) : null;
+    }
+
+    function deleteCookie(name) {
+        document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/;";
+    }
+
     document.addEventListener('DOMContentLoaded', function () {
         // --- SELECT2 INIT ---
         $('.multi-select').select2({ placeholder: 'Select...', width: '100%', allowClear: true });
@@ -696,12 +718,48 @@
         // --- RESET ---
         if(resetFiltersBtn) {
             resetFiltersBtn.addEventListener('click', () => {
+                deleteCookie('odpo_filters');
                 mobileFilterForm.querySelector('input[name="search"]').value = "";
                 $('.multi-select').val(null).trigger('change');
                 document.querySelectorAll('.col-toggle').forEach(cb => cb.checked = true);
                 sliderElement.noUiSlider.set([0, sliderMax]);
                 setTimeout(() => mobileFilterForm.submit(), 50);
             });
+        }
+
+        // --- COOKIE: SAVE ON APPLY ---
+        if(mobileFilterForm) {
+            mobileFilterForm.addEventListener('submit', function() {
+                const filterData = {
+                    search: mobileFilterForm.querySelector('input[name="search"]').value,
+                    minMfi: parseFloat(minInput.value) || 0,
+                    maxMfi: parseFloat(maxInput.value) || sliderMax
+                };
+                document.querySelectorAll('.multi-select').forEach(function(sel) {
+                    filterData[sel.name] = $(sel).val() || [];
+                });
+                setCookie('odpo_filters', JSON.stringify(filterData), 30);
+            });
+        }
+
+        // --- COOKIE: RESTORE ON PAGE LOAD (no query params) ---
+        if (!window.location.search) {
+            const saved = getCookie('odpo_filters');
+            if (saved) {
+                try {
+                    const filterData = JSON.parse(saved);
+                    if (filterData.search) mobileFilterForm.querySelector('input[name="search"]').value = filterData.search;
+                    document.querySelectorAll('.multi-select').forEach(function(sel) {
+                        if (filterData[sel.name] && filterData[sel.name].length > 0) {
+                            $(sel).val(filterData[sel.name]).trigger('change');
+                        }
+                    });
+                    const savedMin = filterData.minMfi !== null ? filterData.minMfi : 0;
+                    const savedMax = filterData.maxMfi !== null ? filterData.maxMfi : sliderMax;
+                    sliderElement.noUiSlider.set([savedMin, savedMax]);
+                    setTimeout(() => mobileFilterForm.submit(), 100);
+                } catch(e) { deleteCookie('odpo_filters'); }
+            }
         }
 
          // --- TOGGLES ---
