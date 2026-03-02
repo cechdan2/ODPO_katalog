@@ -5,13 +5,10 @@
 @{
     ViewData["Title"] = "ODPO s.r.o. – Plastic Sample Catalog";
 
-    // Helper pro obrázky
     Func<PhotoApp.Models.PhotoRecord, string> ImageSrc = item =>
         !string.IsNullOrWhiteSpace(item.ImagePath) ? Url.Content(item.ImagePath) :
         !string.IsNullOrWhiteSpace(item.PhotoPath) ? Url.Content(item.PhotoPath) : null;
 
-    // --- 1. NAČTENÍ DAT PRO NAŠEPTÁVAČE Z DB ---
-    // Načteme data přímo z databáze
     var allOptions = _context.FilterOptions.AsNoTracking().ToList();
 
     var suppliersList = allOptions.Where(x => x.Category == "supplier").Select(x => x.Value).OrderBy(x => x).ToList();
@@ -21,10 +18,8 @@
     var formsList = allOptions.Where(x => x.Category == "form").Select(x => x.Value).OrderBy(x => x).ToList();
     var fillersList = allOptions.Where(x => x.Category == "filler").Select(x => x.Value).OrderBy(x => x).ToList();
 
-    // Monthly Quantity bereme z modelu, pokud nemáte kategorii v DB, jinak přidejte "monthlyQuantity" do FilterOptions
     var quantityList = Model.MonthlyQuantities;
 
-    // --- 2. DEFINICE FILTRŮ PRO UI ---
     var filtersToRender = new[]
     {
         new { Name = "supplier",        Placeholder = "Supplier",         AllValues = (IEnumerable<string>)suppliersList,           SelectedValues = (IEnumerable<string>)Model.Supplier },
@@ -46,7 +41,6 @@
     <link href="https://cdn.jsdelivr.net/npm/nouislider@14.6.3/distribute/nouislider.min.css" rel="stylesheet">
 
     <style>
-        /* === GLOBAL STYLES === */
         :root {
             --brand: #16a34a;
             --brand-dark: #166534;
@@ -73,7 +67,6 @@
             transition: padding-bottom 0.3s ease;
         }
 
-        /* === HEADER === */
         header {
             background: #fff;
             border-bottom: 2px solid var(--border);
@@ -110,7 +103,6 @@
                 color: var(--brand-dark);
             }
 
-        /* === CONTAINER === */
         .container {
             width: 100%;
             max-width: 800px;
@@ -118,7 +110,6 @@
             padding: 10px;
         }
 
-        /* === BUTTONS & LINKS === */
         .action-btn {
             display: inline-flex;
             align-items: center;
@@ -171,10 +162,9 @@
             display: flex;
         }
 
-        /* === CARDS LAYOUT (1 Column for cards, 2 Columns for info inside) === */
         .card-list {
             display: grid;
-            grid-template-columns: 1fr; /* Karty pod sebou */
+            grid-template-columns: 1fr;
             gap: 12px;
             padding-bottom: 16px;
         }
@@ -233,10 +223,9 @@
             border: 1px solid var(--border);
         }
 
-        /* === INFO GRID (2 Sloupce uvnitř karty) === */
         .card-info {
             display: grid;
-            grid-template-columns: 1fr 1fr; /* Dva sloupce */
+            grid-template-columns: 1fr 1fr;
             gap: 8px 12px;
             width: 100%;
             margin-top: 4px;
@@ -275,7 +264,6 @@
                 border-radius: 8px;
             }
 
-        /* === BULK BAR === */
         .bulk-actions-bar {
             position: fixed;
             bottom: 0;
@@ -311,7 +299,6 @@
             gap: 8px;
         }
 
-        /* === FAB === */
         .fab-group {
             position: fixed;
             right: 20px;
@@ -348,7 +335,6 @@
                 font-size: 18px;
             }
 
-        /* === FILTER MODAL === */
         .filter-overlay {
             display: none;
             position: fixed;
@@ -416,7 +402,6 @@
             border-top: 1px solid var(--border);
         }
 
-        /* Select2 styling */
         .select2-container .select2-selection--multiple {
             border-radius: 8px !important;
             border-color: var(--border) !important;
@@ -429,7 +414,10 @@
             color: white !important;
         }
 
-        /* Slider */
+        .select2-container--open .select2-dropdown {
+            z-index: 3000 !important;
+        }
+
         .slider-values {
             display: flex;
             justify-content: space-between;
@@ -455,7 +443,6 @@
                 display: none;
             }
 
-        /* === RESPONSIVE === */
         @@media (min-width: 768px) {
             .card-list {
                 grid-template-columns: 1fr 1fr;
@@ -480,6 +467,7 @@
             <h3 style="margin:0;color:var(--brand-dark);">Filters</h3>
             <span id="closeFilterBtn" style="font-size:24px;cursor:pointer;">&times;</span>
         </div>
+
         <form method="get" id="mobileFilterForm" class="filter-panel-body" asp-controller="Photos" asp-action="Index_phone">
             <!-- Search -->
             <div class="filter-row">
@@ -500,8 +488,8 @@
                         <span id="mfi-min-val">0</span>
                         <span id="mfi-max-val">100</span>
                     </div>
-                    <input type="hidden" name="minMfi" id="minMfiInput" value="@Context.Request.Query["minMfi"]" />
-                    <input type="hidden" name="maxMfi" id="maxMfiInput" value="@Context.Request.Query["maxMfi"]" />
+                    <input type="hidden" name="minMfi" id="minMfiInput" value="@Context.Request.Query["minMfi"]" disabled />
+                    <input type="hidden" name="maxMfi" id="maxMfiInput" value="@Context.Request.Query["maxMfi"]" disabled />
                 </div>
             </div>
 
@@ -528,27 +516,29 @@
                     </div>
                 </div>
             }
+
+            <!-- Notes toggle -->
             <div class="filter-row">
                 <input type="checkbox" class="filter-toggle col-toggle" data-col="notes" checked />
                 <div style="flex-grow: 1; padding: 8px; border: 1px solid transparent; color: #999;">Notes</div>
             </div>
+
+            <!-- Buttons INSIDE the form -->
+            <div style="padding:15px; display:flex; justify-content:flex-end; gap:10px; border-top:1px solid var(--border);">
+                <button type="button" class="action-btn" id="resetFiltersBtn">Reset</button>
+                <button type="submit" class="action-btn primary">Apply</button>
+            </div>
         </form>
-        <div class="filter-panel-footer">
-            <button type="button" class="action-btn" id="resetFiltersBtn">Reset</button>
-            <button type="submit" form="mobileFilterForm" class="action-btn primary">Apply</button>
-        </div>
     </div>
 </div>
 
 <main class="container">
     <div class="user-actions" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; height: 40px;">
-        <!-- Settings -->
         <a asp-controller="Admin" asp-action="Database" class="user-action-link" title="Manage Data">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
             Settings
         </a>
 
-        <!-- Auth -->
         @if (User?.Identity?.IsAuthenticated ?? false)
         {
             <form asp-controller="Account" asp-action="Logout" method="post">
@@ -680,10 +670,16 @@
     }
 
     document.addEventListener('DOMContentLoaded', function () {
-        // --- SELECT2 INIT ---
-        $('.multi-select').select2({ placeholder: 'Select...', width: '100%', allowClear: true });
 
-        // --- FILTER MODAL LOGIC ---
+        // SELECT2 - dropdownParent uvnitř overlay
+        $('.multi-select').select2({
+            placeholder: 'Select...',
+            width: '100%',
+            allowClear: true,
+            dropdownParent: $('#filterOverlay')
+        });
+
+        // --- FILTER MODAL ---
         const filterOverlay = document.getElementById('filterOverlay');
         const openFilterFab = document.getElementById('openFilterFab');
         const closeFilterBtn = document.getElementById('closeFilterBtn');
@@ -703,11 +699,21 @@
 
         let urlMin = parseFloat("@Context.Request.Query["minMfi"]");
         let urlMax = parseFloat("@Context.Request.Query["maxMfi"]");
+
+        let mfiSliderTouched = false;
+        if (!isNaN(urlMin) || !isNaN(urlMax)) {
+            mfiSliderTouched = true;
+        }
+
         if (isNaN(urlMin)) urlMin = 0;
         if (isNaN(urlMax)) urlMax = sliderMax;
 
         noUiSlider.create(sliderElement, {
-            start: [urlMin, urlMax], connect: true, range: { 'min': 0, 'max': sliderMax }, step: 1, tooltips: false
+            start: [urlMin, urlMax],
+            connect: true,
+            range: { 'min': 0, 'max': sliderMax },
+            step: 1,
+            tooltips: false
         });
 
         const minValDisplay = document.getElementById('mfi-min-val');
@@ -719,54 +725,96 @@
             else { maxValDisplay.innerText = val; maxInput.value = val; }
         });
 
-        // --- RESET ---
+        sliderElement.noUiSlider.on('change', function () {
+            mfiSliderTouched = true;
+        });
+
+        // ==============================================
+        // RESET - čistý redirect bez parametrů
+        // ==============================================
         if(resetFiltersBtn) {
             resetFiltersBtn.addEventListener('click', () => {
                 deleteCookie('odpo_filters');
-                mobileFilterForm.querySelector('input[name="search"]').value = "";
-                $('.multi-select').val(null).trigger('change');
-                document.querySelectorAll('.col-toggle').forEach(cb => cb.checked = true);
-                sliderElement.noUiSlider.set([0, sliderMax]);
-                setTimeout(() => mobileFilterForm.submit(), 50);
+                window.location.href = '@Url.Action("Index_phone", "Photos")';
             });
         }
 
-        // --- COOKIE: SAVE ON APPLY ---
+        // ==============================================
+        // SUBMIT - sestavíme URL ručně, pouze
+        // s neprázdnými parametry. Prázdné selecty
+        // a inputy se vůbec nepošlou.
+        // ==============================================
         if(mobileFilterForm) {
-            mobileFilterForm.addEventListener('submit', function() {
+            mobileFilterForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+
+                const params = new URLSearchParams();
+
+                // Search
+                const searchVal = mobileFilterForm.querySelector('input[name="search"]').value.trim();
+                if (searchVal) params.append('search', searchVal);
+
+                // Select2 multi-selecty - pouze neprázdné
+                document.querySelectorAll('#mobileFilterForm .multi-select').forEach(function(sel) {
+                    const vals = $(sel).val();
+                    if (vals && vals.length > 0) {
+                        vals.forEach(v => params.append(sel.name, v));
+                    }
+                });
+
+                // MFI range - pouze pokud uživatel pohnul sliderem a není full range
+                const currentMin = Math.round(parseFloat(minInput.value));
+                const currentMax = Math.round(parseFloat(maxInput.value));
+                if (mfiSliderTouched && !(currentMin <= 0 && currentMax >= sliderMax)) {
+                    params.append('minMfi', currentMin);
+                    params.append('maxMfi', currentMax);
+                }
+
+                // Uložíme do cookie
                 const filterData = {
-                    search: mobileFilterForm.querySelector('input[name="search"]').value,
-                    minMfi: parseFloat(minInput.value) || 0,
-                    maxMfi: parseFloat(maxInput.value) || sliderMax
+                    search: searchVal,
+                    minMfi: mfiSliderTouched ? currentMin : null,
+                    maxMfi: mfiSliderTouched ? currentMax : null
                 };
-                document.querySelectorAll('.multi-select').forEach(function(sel) {
+                document.querySelectorAll('#mobileFilterForm .multi-select').forEach(function(sel) {
                     filterData[sel.name] = $(sel).val() || [];
                 });
                 setCookie('odpo_filters', JSON.stringify(filterData), 30);
+
+                // Redirect s čistými parametry
+                const qs = params.toString();
+                const baseUrl = '@Url.Action("Index_phone", "Photos")';
+                window.location.href = qs ? baseUrl + '?' + qs : baseUrl;
             });
         }
 
-        // --- COOKIE: RESTORE ON PAGE LOAD (no query params) ---
+        // --- COOKIE: RESTORE ---
         if (!window.location.search) {
             const saved = getCookie('odpo_filters');
             if (saved) {
                 try {
                     const filterData = JSON.parse(saved);
                     if (filterData.search) mobileFilterForm.querySelector('input[name="search"]').value = filterData.search;
-                    document.querySelectorAll('.multi-select').forEach(function(sel) {
+                    document.querySelectorAll('#mobileFilterForm .multi-select').forEach(function(sel) {
                         if (filterData[sel.name] && filterData[sel.name].length > 0) {
                             $(sel).val(filterData[sel.name]).trigger('change');
                         }
                     });
-                    const savedMin = filterData.minMfi !== null ? filterData.minMfi : 0;
-                    const savedMax = filterData.maxMfi !== null ? filterData.maxMfi : sliderMax;
-                    sliderElement.noUiSlider.set([savedMin, savedMax]);
-                    setTimeout(() => mobileFilterForm.submit(), 100);
+                    if (filterData.minMfi !== null && filterData.maxMfi !== null) {
+                        mfiSliderTouched = true;
+                        sliderElement.noUiSlider.set([filterData.minMfi, filterData.maxMfi]);
+                    }
+                    const hasFilters = filterData.search ||
+                        (filterData.minMfi !== null) ||
+                        Object.keys(filterData).some(k => k !== 'search' && k !== 'minMfi' && k !== 'maxMfi' && Array.isArray(filterData[k]) && filterData[k].length > 0);
+                    if (hasFilters) {
+                        setTimeout(() => mobileFilterForm.dispatchEvent(new Event('submit')), 100);
+                    }
                 } catch(e) { deleteCookie('odpo_filters'); }
             }
         }
 
-         // --- TOGGLES ---
+        // --- TOGGLES ---
         const colCheckboxes = document.querySelectorAll(".col-toggle");
         function toggleField(colName, isVisible) {
             document.querySelectorAll(`.item-card .info-item[data-col='${colName}']`).forEach(field => {
@@ -875,14 +923,12 @@
                 const checkedCols = Array.from(document.querySelectorAll('#pdf-column-list input:checked')).map(cb => `columnsToInclude=${cb.value}`).join('&');
 
                 if(pdfMode === 'standard') {
-                    const currentMin = parseFloat(minInput.value);
-                    const currentMax = parseFloat(maxInput.value);
-                    if ((isNaN(currentMin) || currentMin <= 0) && (isNaN(currentMax) || currentMax >= sliderMax)) {
-                         minInput.disabled = true; maxInput.disabled = true;
-                    }
-                    const fd = new FormData(mobileFilterForm);
-                    const params = new URLSearchParams(fd);
-                    minInput.disabled = false; maxInput.disabled = false;
+                    // Bere params z aktuální URL (ne z formuláře - ten má prázdné hodnoty)
+                    const currentParams = new URLSearchParams(window.location.search);
+                    const params = new URLSearchParams();
+                    currentParams.forEach((value, key) => {
+                        if (value) params.append(key, value);
+                    });
                     window.open(`@Url.Action("ExportPdf", "Photos")?${params.toString()}&${checkedCols}`, '_blank');
                 }
                 else {

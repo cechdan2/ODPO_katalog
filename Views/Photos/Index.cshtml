@@ -1045,18 +1045,14 @@
 
         const resetBtn = document.getElementById('resetFiltersBtn');
         const filterForm = document.getElementById('desktopFilterForm');
-        if (resetBtn && filterForm) {
-            resetBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                deleteCookie('odpo_filters');
-                filterForm.querySelector('input[name="search"]').value = '';
-                $(filterForm).find('.multi-select').val(null).trigger('change');
-                filterForm.querySelector('input[name="minMfi"]').value = '';
-                filterForm.querySelector('input[name="maxMfi"]').value = '';
-                filterForm.querySelectorAll('.col-toggle').forEach(cb => cb.checked = true);
-                filterForm.submit();
-            });
-        }
+    if (resetBtn) {
+        resetBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            deleteCookie('odpo_filters');
+            window.location.replace('/Photos/Index');
+        });
+    }
 
         if (filterForm) {
             filterForm.addEventListener('submit', function() {
