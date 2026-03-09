@@ -224,13 +224,13 @@ public class PhotosController : Controller
 
                             row.RelativeItem(1).Column(c =>
                             {
-                                c.Item().AlignRight().Text("Technical Data Sheet").SemiBold().FontColor(Color.FromHex("#182c25")).FontSize(16);
+                                c.Item().AlignRight().Text("List of materials").SemiBold().FontColor(Color.FromHex("#182c25")).FontSize(16);
                                 c.Item().AlignRight().Text("").FontColor(Color.FromHex("#182c25")).FontSize(5);
                                 c.Item().AlignRight().Text($"Date: {DateTime.Now:d. M. yyyy}").FontColor(Color.FromHex("#182c25")).FontSize(9);
                                 c.Item().AlignRight().Text($"Count: {itemsList.Count}").FontColor(Color.FromHex("#182c25")).FontSize(9);
                                 c.Item().AlignRight().Text("").FontSize(9);
                                 c.Item().AlignRight().Text("Riegrova 59, CZ - 388 01 Blatná").FontColor(Color.FromHex("#182c25")).FontSize(10);
-                                c.Item().AlignRight().Text("Laboratoř/Laboratory: Radomyšl 248, 387 31 Radomyšl").FontColor(Color.FromHex("#182c25")).FontSize(10);
+                                c.Item().AlignRight().Text("Production/Laboratory: Radomyšl 248, 387 31 Radomyšl").FontColor(Color.FromHex("#182c25")).FontSize(10);
                                 c.Item().AlignRight().Text("tel. +420 723 007 734 / +420 778 020 315").FontColor(Color.FromHex("#182c25")).FontSize(10);
                             });
                         });
