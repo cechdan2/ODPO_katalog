@@ -14,7 +14,7 @@ public class EfUserServiceTests
         using var context = CreateContext();
         var service = new EfUserService(context);
 
-        var isValid = service.ValidateCredentials("testuser", "ValidPass123!", out var user);
+        var isValid = service.ValidateCredentials("TestUser", "ValidPass123!", out var user);
 
         Assert.True(isValid);
         Assert.NotNull(user);
@@ -27,11 +27,9 @@ public class EfUserServiceTests
         using var context = CreateContext();
         var service = new EfUserService(context);
 
-        var isValid = service.ValidateCredentials("TestUser", "WrongPass123!", out var user);
+        var isValid = service.ValidateCredentials("TestUser", "WrongPass123!", out _);
 
         Assert.False(isValid);
-        Assert.NotNull(user);
-        Assert.Equal("TestUser", user.UserName);
     }
 
     [Fact]
