@@ -12,6 +12,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Remove="PhotoApp.Tests\**\*.cs" />
+    <EmbeddedResource Remove="PhotoApp.Tests\**\*" />
+    <None Remove="PhotoApp.Tests\**\*" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="EPPlus" Version="8.2.1" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="8.0.0" />
     <PackageReference Include="QRCoder" Version="1.7.0" />
