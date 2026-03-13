@@ -65,13 +65,14 @@ public class PhotosController : Controller
 
     // --- POMOCNÁ METODA PRO SESTAVENÍ QUERY STRING Z FILTRŮ ---
     private string BuildFilterQueryString(
-        string search, List<string> supplier, List<string> material, List<string> type,
+        string search, string searchId, List<string> supplier, List<string> material, List<string> type,
         List<string> color, List<string> name, List<string> position, List<string> filler,
-        List<string> form, List<string> mfi, List<string> monthlyQuantity,
-        double? minMfi, double? maxMfi)
+        List<string> form, List<string> mfi, List<string> onStock, List<string> monthlyQuantity,
+        double? minMfi, double? maxMfi, DateTime? dateFrom, DateTime? dateTo, string sortBy)
     {
         var queryParams = new List<string>();
         if (!string.IsNullOrWhiteSpace(search)) queryParams.Add($"search={Uri.EscapeDataString(search)}");
+        if (!string.IsNullOrWhiteSpace(searchId)) queryParams.Add($"searchId={Uri.EscapeDataString(searchId)}");
         if (supplier != null) foreach (var v in supplier) queryParams.Add($"supplier={Uri.EscapeDataString(v)}");
         if (material != null) foreach (var v in material) queryParams.Add($"material={Uri.EscapeDataString(v)}");
         if (type != null) foreach (var v in type) queryParams.Add($"type={Uri.EscapeDataString(v)}");
@@ -81,9 +82,13 @@ public class PhotosController : Controller
         if (filler != null) foreach (var v in filler) queryParams.Add($"filler={Uri.EscapeDataString(v)}");
         if (form != null) foreach (var v in form) queryParams.Add($"form={Uri.EscapeDataString(v)}");
         if (mfi != null) foreach (var v in mfi) queryParams.Add($"mfi={Uri.EscapeDataString(v)}");
+        if (onStock != null) foreach (var v in onStock) queryParams.Add($"onStock={Uri.EscapeDataString(v)}");
         if (monthlyQuantity != null) foreach (var v in monthlyQuantity) queryParams.Add($"monthlyQuantity={Uri.EscapeDataString(v)}");
         if (minMfi.HasValue) queryParams.Add($"minMfi={minMfi.Value}");
         if (maxMfi.HasValue) queryParams.Add($"maxMfi={maxMfi.Value}");
+        if (dateFrom.HasValue) queryParams.Add($"dateFrom={dateFrom.Value:yyyy-MM-dd}");
+        if (dateTo.HasValue) queryParams.Add($"dateTo={dateTo.Value:yyyy-MM-dd}");
+        if (!string.IsNullOrWhiteSpace(sortBy)) queryParams.Add($"sortBy={Uri.EscapeDataString(sortBy)}");
         return queryParams.Any() ? "?" + string.Join("&", queryParams) : "";
     }
 
@@ -95,18 +100,18 @@ public class PhotosController : Controller
     // --- HLAVNÍ METODA PRO ZOBRAZENÍ (DESKTOP) ---
     [Authorize]
     public async Task<IActionResult> Index(
-        string search, List<string> supplier, List<string> material, List<string> type,
+        string search, string searchId, List<string> supplier, List<string> material, List<string> type,
         List<string> color, List<string> name, List<string> position, List<string> filler,
-        List<string> mfi, List<string> monthlyQuantity, List<string> form,
-        double? minMfi, double? maxMfi)
+        List<string> mfi, List<string> onStock, List<string> monthlyQuantity, List<string> form,
+        double? minMfi, double? maxMfi, DateTime? dateFrom, DateTime? dateTo, string sortBy)
     {
         if (Request.Headers["User-Agent"].ToString().Contains("Mobile"))
         {
-            var qs = BuildFilterQueryString(search, supplier, material, type, color, name, position, filler, form, mfi, monthlyQuantity, minMfi, maxMfi);
+            var qs = BuildFilterQueryString(search, searchId, supplier, material, type, color, name, position, filler, form, mfi, onStock, monthlyQuantity, minMfi, maxMfi, dateFrom, dateTo, sortBy);
             return Redirect(Url.Action("Index_phone") + qs);
         }
 
-        var vm = await GetFilteredViewModel(search, supplier, material, type, color, name, position, filler, mfi, monthlyQuantity, form, minMfi, maxMfi);
+        var vm = await GetFilteredViewModel(search, searchId, supplier, material, type, color, name, position, filler, mfi, onStock, monthlyQuantity, form, minMfi, maxMfi, dateFrom, dateTo, sortBy);
 
         ViewBag.IsMobile = false;
         return View(vm);
@@ -116,19 +121,19 @@ public class PhotosController : Controller
     [HttpGet]
     [Authorize]
     public async Task<IActionResult> Index_phone(
-        string search, List<string> supplier, List<string> material, List<string> type,
+        string search, string searchId, List<string> supplier, List<string> material, List<string> type,
         List<string> color, List<string> name, List<string> position, List<string> filler,
-        List<string> form, List<string> mfi, List<string> monthlyQuantity,
-        double? minMfi, double? maxMfi,
+        List<string> form, List<string> mfi, List<string> onStock, List<string> monthlyQuantity,
+        double? minMfi, double? maxMfi, DateTime? dateFrom, DateTime? dateTo, string sortBy,
         bool forceDesktop = false)
     {
         if (forceDesktop)
         {
-            var qs = BuildFilterQueryString(search, supplier, material, type, color, name, position, filler, form, mfi, monthlyQuantity, minMfi, maxMfi);
+            var qs = BuildFilterQueryString(search, searchId, supplier, material, type, color, name, position, filler, form, mfi, onStock, monthlyQuantity, minMfi, maxMfi, dateFrom, dateTo, sortBy);
             return Redirect(Url.Action("Index") + qs);
         }
 
-        var vm = await GetFilteredViewModel(search, supplier, material, type, color, name, position, filler, mfi, monthlyQuantity, form, minMfi, maxMfi);
+        var vm = await GetFilteredViewModel(search, searchId, supplier, material, type, color, name, position, filler, mfi, onStock, monthlyQuantity, form, minMfi, maxMfi, dateFrom, dateTo, sortBy);
 
         ViewBag.IsMobile = true;
         return View("Index_phone", vm);
@@ -719,13 +724,24 @@ public class PhotosController : Controller
 
     // --- METODA PRO VIEWMODEL ---
     private async Task<PhotoApp.ViewModels.PhotosIndexViewModel> GetFilteredViewModel(
-        string search, List<string> supplier, List<string> material, List<string> type,
+        string search, string searchId, List<string> supplier, List<string> material, List<string> type,
         List<string> color, List<string> name, List<string> position, List<string> filler,
-        List<string> mfi, List<string> monthlyQuantity, List<string> form,
-        double? minMfi = null, double? maxMfi = null)
+        List<string> mfi, List<string> onStock, List<string> monthlyQuantity, List<string> form,
+        double? minMfi = null, double? maxMfi = null, DateTime? dateFrom = null, DateTime? dateTo = null, string sortBy = null)
     {
         IQueryable<PhotoRecord> baseQuery = _context.Photos.AsNoTracking().AsQueryable();
 
+        // Search by ID
+        if (!string.IsNullOrWhiteSpace(searchId))
+        {
+            var idSearch = searchId.Trim().ToLower();
+            baseQuery = baseQuery.Where(p =>
+                (p.Id.ToString().Contains(idSearch)) ||
+                (p.ExternalId != null && p.ExternalId.ToLower().Contains(idSearch))
+            );
+        }
+
+        // General text search
         if (!string.IsNullOrWhiteSpace(search))
         {
             var s = search.Trim().ToLower();
@@ -738,6 +754,17 @@ public class PhotosController : Controller
             );
         }
 
+        // Date range filter
+        if (dateFrom.HasValue)
+        {
+            baseQuery = baseQuery.Where(p => p.CreatedAt >= dateFrom.Value);
+        }
+        if (dateTo.HasValue)
+        {
+            var dateToEndOfDay = dateTo.Value.AddDays(1);
+            baseQuery = baseQuery.Where(p => p.CreatedAt < dateToEndOfDay);
+        }
+
         var itemsQuery = baseQuery;
         var supplierQuery = baseQuery;
         var materialQuery = baseQuery;
@@ -748,6 +775,7 @@ public class PhotosController : Controller
         var fillerQuery = baseQuery;
         var formQuery = baseQuery;
         var mfiQuery = baseQuery;
+        var onStockQuery = baseQuery;
         var monthlyQuantityQuery = baseQuery;
 
         Expression<Func<PhotoRecord, bool>> supplierFilter = p => supplier.Contains(p.Supplier);
@@ -759,6 +787,7 @@ public class PhotosController : Controller
         Expression<Func<PhotoRecord, bool>> fillerFilter = p => filler.Contains(p.Filler);
         Expression<Func<PhotoRecord, bool>> formFilter = p => form.Contains(p.Form);
         Expression<Func<PhotoRecord, bool>> mfiFilter = p => mfi.Contains(p.Mfi);
+        Expression<Func<PhotoRecord, bool>> onStockFilter = p => onStock.Contains(p.OnStock);
         Expression<Func<PhotoRecord, bool>> monthlyQuantityFilter = p => monthlyQuantity.Contains(p.MonthlyQuantity);
 
         if (supplier != null && supplier.Any())
@@ -772,6 +801,7 @@ public class PhotosController : Controller
             fillerQuery = fillerQuery.Where(supplierFilter);
             formQuery = formQuery.Where(supplierFilter);
             mfiQuery = mfiQuery.Where(supplierFilter);
+            onStockQuery = onStockQuery.Where(supplierFilter);
             monthlyQuantityQuery = monthlyQuantityQuery.Where(supplierFilter);
         }
 
@@ -786,6 +816,7 @@ public class PhotosController : Controller
             fillerQuery = fillerQuery.Where(materialFilter);
             formQuery = formQuery.Where(materialFilter);
             mfiQuery = mfiQuery.Where(materialFilter);
+            onStockQuery = onStockQuery.Where(materialFilter);
             monthlyQuantityQuery = monthlyQuantityQuery.Where(materialFilter);
         }
 
@@ -800,6 +831,7 @@ public class PhotosController : Controller
             fillerQuery = fillerQuery.Where(typeFilter);
             formQuery = formQuery.Where(typeFilter);
             mfiQuery = mfiQuery.Where(typeFilter);
+            onStockQuery = onStockQuery.Where(typeFilter);
             monthlyQuantityQuery = monthlyQuantityQuery.Where(typeFilter);
         }
 
@@ -814,6 +846,7 @@ public class PhotosController : Controller
             fillerQuery = fillerQuery.Where(colorFilter);
             formQuery = formQuery.Where(colorFilter);
             mfiQuery = mfiQuery.Where(colorFilter);
+            onStockQuery = onStockQuery.Where(colorFilter);
             monthlyQuantityQuery = monthlyQuantityQuery.Where(colorFilter);
         }
 
@@ -828,6 +861,7 @@ public class PhotosController : Controller
             fillerQuery = fillerQuery.Where(nameFilter);
             formQuery = formQuery.Where(nameFilter);
             mfiQuery = mfiQuery.Where(nameFilter);
+            onStockQuery = onStockQuery.Where(nameFilter);
             monthlyQuantityQuery = monthlyQuantityQuery.Where(nameFilter);
         }
 
@@ -842,6 +876,7 @@ public class PhotosController : Controller
             fillerQuery = fillerQuery.Where(positionFilter);
             formQuery = formQuery.Where(positionFilter);
             mfiQuery = mfiQuery.Where(positionFilter);
+            onStockQuery = onStockQuery.Where(positionFilter);
             monthlyQuantityQuery = monthlyQuantityQuery.Where(positionFilter);
         }
 
@@ -856,6 +891,7 @@ public class PhotosController : Controller
             positionQuery = positionQuery.Where(fillerFilter);
             formQuery = formQuery.Where(fillerFilter);
             mfiQuery = mfiQuery.Where(fillerFilter);
+            onStockQuery = onStockQuery.Where(fillerFilter);
             monthlyQuantityQuery = monthlyQuantityQuery.Where(fillerFilter);
         }
 
@@ -870,6 +906,7 @@ public class PhotosController : Controller
             positionQuery = positionQuery.Where(formFilter);
             fillerQuery = fillerQuery.Where(formFilter);
             mfiQuery = mfiQuery.Where(formFilter);
+            onStockQuery = onStockQuery.Where(formFilter);
             monthlyQuantityQuery = monthlyQuantityQuery.Where(formFilter);
         }
 
@@ -884,7 +921,23 @@ public class PhotosController : Controller
             positionQuery = positionQuery.Where(mfiFilter);
             fillerQuery = fillerQuery.Where(mfiFilter);
             formQuery = formQuery.Where(mfiFilter);
+            onStockQuery = onStockQuery.Where(mfiFilter);
             monthlyQuantityQuery = monthlyQuantityQuery.Where(mfiFilter);
+        }
+
+        if (onStock != null && onStock.Any())
+        {
+            itemsQuery = itemsQuery.Where(onStockFilter);
+            supplierQuery = supplierQuery.Where(onStockFilter);
+            materialQuery = materialQuery.Where(onStockFilter);
+            typeQuery = typeQuery.Where(onStockFilter);
+            colorQuery = colorQuery.Where(onStockFilter);
+            nameQuery = nameQuery.Where(onStockFilter);
+            positionQuery = positionQuery.Where(onStockFilter);
+            fillerQuery = fillerQuery.Where(onStockFilter);
+            formQuery = formQuery.Where(onStockFilter);
+            mfiQuery = mfiQuery.Where(onStockFilter);
+            monthlyQuantityQuery = monthlyQuantityQuery.Where(onStockFilter);
         }
 
         if (monthlyQuantity != null && monthlyQuantity.Any())
@@ -899,9 +952,48 @@ public class PhotosController : Controller
             fillerQuery = fillerQuery.Where(monthlyQuantityFilter);
             formQuery = formQuery.Where(monthlyQuantityFilter);
             mfiQuery = mfiQuery.Where(monthlyQuantityFilter);
+            onStockQuery = onStockQuery.Where(monthlyQuantityFilter);
         }
 
-        var itemsList = await itemsQuery.OrderByDescending(p => p.UpdatedAt).ToListAsync();
+        // Apply sorting
+        IOrderedQueryable<PhotoRecord> orderedQuery;
+        switch (sortBy?.ToLower())
+        {
+            case "material":
+                orderedQuery = itemsQuery.OrderBy(p => p.Material ?? string.Empty);
+                break;
+            case "created":
+            case "datecreated":
+                orderedQuery = itemsQuery.OrderByDescending(p => p.CreatedAt);
+                break;
+            case "updated":
+            case "lastupdated":
+                orderedQuery = itemsQuery.OrderByDescending(p => p.UpdatedAt);
+                break;
+            case "onstock":
+            case "quantity":
+                // For quantity sorting, we need to sort in memory after loading
+                orderedQuery = itemsQuery.OrderByDescending(p => p.UpdatedAt);
+                break;
+            default:
+                orderedQuery = itemsQuery.OrderByDescending(p => p.UpdatedAt);
+                break;
+        }
+
+        var itemsList = await orderedQuery.ToListAsync();
+
+        // If sorting by quantity, do it in-memory
+        if (sortBy?.ToLower() == "onstock" || sortBy?.ToLower() == "quantity")
+        {
+            itemsList = itemsList.OrderByDescending(p => {
+                if (string.IsNullOrWhiteSpace(p.OnStock)) return 0;
+                // Try to parse numeric value
+                var match = System.Text.RegularExpressions.Regex.Match(p.OnStock, @"(\d+(?:[.,]\d+)?)");
+                if (match.Success && double.TryParse(match.Value.Replace(',', '.'), out double val))
+                    return val;
+                return 0;
+            }).ToList();
+        }
 
         if (minMfi.HasValue || maxMfi.HasValue)
         {
@@ -934,12 +1026,13 @@ public class PhotosController : Controller
         var fillersTask = GetFilterOptions(fillerQuery, p => p.Filler);
         var formsTask = GetFilterOptions(formQuery, p => p.Form);
         var mfisTask = GetFilterOptions(mfiQuery, p => p.Mfi);
+        var onStocksTask = GetFilterOptions(onStockQuery, p => p.OnStock);
         var monthlyQuantitiesTask = GetFilterOptions(monthlyQuantityQuery, p => p.MonthlyQuantity);
 
 
         await Task.WhenAll(
             suppliersTask, materialsTask, typesTask, colorsTask,
-            namesTask, positionsTask, fillersTask, formsTask, mfisTask, monthlyQuantitiesTask
+            namesTask, positionsTask, fillersTask, formsTask, mfisTask, onStocksTask, monthlyQuantitiesTask
         );
 
         var vm = new PhotoApp.ViewModels.PhotosIndexViewModel
@@ -953,10 +1046,12 @@ public class PhotosController : Controller
             Positions = positionsTask.Result,
             Fillers = fillersTask.Result,
             Forms = formsTask.Result,
+            OnStocks = onStocksTask.Result,
             MonthlyQuantities = monthlyQuantitiesTask.Result,
             Mfis = mfisTask.Result,
 
             Search = search,
+            SearchId = searchId,
             Supplier = supplier,
             Material = material,
             Type = type,
@@ -965,8 +1060,12 @@ public class PhotosController : Controller
             Position = position,
             Filler = filler,
             Form = form,
+            OnStock = onStock,
             MonthlyQuantity = monthlyQuantity,
-            Mfi = mfi
+            Mfi = mfi,
+            DateFrom = dateFrom,
+            DateTo = dateTo,
+            SortBy = sortBy
         };
 
         return vm;

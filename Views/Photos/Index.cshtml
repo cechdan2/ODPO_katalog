@@ -1037,7 +1037,10 @@
 
         const toggleBtn = document.getElementById('sidebar-toggle-btn');
         const body = document.body;
-        if (localStorage.getItem('filtersVisible') === 'true') body.classList.add('filters-visible');
+        // Changed: Filter bar is now collapsed by default (removed the auto-show on page load)
+        // Only show if user explicitly toggled it before
+        const wasExplicitlyOpened = localStorage.getItem('filtersVisible') === 'true';
+        if (wasExplicitlyOpened) body.classList.add('filters-visible');
         if (toggleBtn) toggleBtn.addEventListener('click', () => {
             const isNowVisible = body.classList.toggle('filters-visible');
             localStorage.setItem('filtersVisible', isNowVisible ? 'true' : 'false');

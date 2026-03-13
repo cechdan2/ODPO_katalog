@@ -1,26 +1,26 @@
 namespace PhotoApp.Models
 {
-    // Reprezentace záznamu odpovídající sloupcùm v Excelu (pro import do DB)
+    // Reprezentace zï¿½znamu odpovï¿½dajï¿½cï¿½ sloupcï¿½m v Excelu (pro import do DB)
     public class PhotoRecord
     {
         public int Id { get; set; }
 
-        // Excel: "Pozice" (napø. "19 + 20")
+        // Excel: "Pozice" (napï¿½. "19 + 20")
         public string? Position { get; set; }
 
-        // Excel: "ID" (externí ID z Excelu)
+        // Excel: "ID" (externï¿½ ID z Excelu)
         public string? ExternalId { get; set; }
 
         // Dodavatel (v Excelu sloupec "Dodavatel")
         public string? Supplier { get; set; } = "";
 
-        // Excel: "Pùvodní název" (originální název / vırobce)
+        // Excel: "Pï¿½vodnï¿½ nï¿½zev" (originï¿½lnï¿½ nï¿½zev / vï¿½robce)
         public string? OriginalName { get; set; } = "";
 
-        // Uivatelské/altersní pole Name (vaše pùvodní)
+        // Uï¿½ivatelskï¿½/altersnï¿½ pole Name (vaï¿½e pï¿½vodnï¿½)
         public string? Name { get; set; } = "";
 
-        // Kód / interní kód
+        // Kï¿½d / internï¿½ kï¿½d
         public string Code { get; set; } = "";
 
         // Typ / kategorie
@@ -41,30 +41,33 @@ namespace PhotoApp.Models
         // Excel: "popis"
         public string? Description { get; set; }
 
-        // Excel: "mnoství mìsíc(t)" — ponecháno jako string pro flexibilitu (mùe obsahovat text jako "kusová", "19+20" apod.)
+        // OnStock - previously MonthlyQuantity, renamed to reflect current stock levels
+        public string? OnStock { get; set; }
+
+        // Excel: "mnoÅ¾stvÃ­ mÄ›sÃ­c(t)" â€“ new field, initially empty for user to fill in
         public string? MonthlyQuantity { get; set; }
 
-        // Excel: "MFI" (mùe bıt èíslo nebo text, proto string)
+        // Excel: "MFI" (mÅ¯Å¾e bÃ½t ÄÃ­slo nebo text, proto string)
         public string? Mfi { get; set; }
 
-        // Poznámka (Excel: "Poznámka")
+        // Poznï¿½mka (Excel: "Poznï¿½mka")
         public string? Notes { get; set; } = "";
 
-        // Obrázek / fotka (Excel: "Fotka") — lze uloit jen název souboru nebo relativní cesta
+        // Obrï¿½zek / fotka (Excel: "Fotka") ï¿½ lze uloï¿½it jen nï¿½zev souboru nebo relativnï¿½ cesta
         public string? PhotoFileName { get; set; }
 
-        // Pùvodní pole pro obrázek (ponech pro kompatibilitu)
+        // Pï¿½vodnï¿½ pole pro obrï¿½zek (ponech pro kompatibilitu)
         public string? PhotoPath { get; set; }
 
-        // Nové pole, pouívané v controlleru (relativní cesta v wwwroot)
+        // Novï¿½ pole, pouï¿½ï¿½vanï¿½ v controlleru (relativnï¿½ cesta v wwwroot)
         public string? ImagePath { get; set; }
 
-        // *** NOVÉ POLE PRO VÍCE FOTEK ***
-        // Obsahuje více cest oddìlenıch støedníkem (napø. "/uploads/foto1.jpg;/uploads/foto2.jpg")
+        // *** NOVï¿½ POLE PRO Vï¿½CE FOTEK ***
+        // Obsahuje vï¿½ce cest oddï¿½lenï¿½ch stï¿½ednï¿½kem (napï¿½. "/uploads/foto1.jpg;/uploads/foto2.jpg")
         public string? AdditionalPhotos { get; set; }
 
-        // Pøidejte tyto dva øádky:
-        // --- PØIDEJTE TYTO DVA ØÁDKY ---
+        // Pï¿½idejte tyto dva ï¿½ï¿½dky:
+        // --- Pï¿½IDEJTE TYTO DVA ï¿½ï¿½DKY ---
         public string? CreatedBy { get; set; }
         public string? UpdatedBy { get; set; }
         // -------------------------------
@@ -72,8 +75,8 @@ namespace PhotoApp.Models
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
 
-        // *** HELPER METODA PRO ZÍSKÁNÍ SEZNAMU DODATEÈNİCH FOTEK ***
-        // Neukládá se do DB, slouí pouze pro práci v kódu
+        // *** HELPER METODA PRO Zï¿½SKï¿½Nï¿½ SEZNAMU DODATEï¿½Nï¿½CH FOTEK ***
+        // Neuklï¿½dï¿½ se do DB, slouï¿½ï¿½ pouze pro prï¿½ci v kï¿½du
         public List<string> GetAdditionalPhotosList()
         {
             if (string.IsNullOrWhiteSpace(AdditionalPhotos))
