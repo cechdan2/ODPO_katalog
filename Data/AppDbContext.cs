@@ -57,6 +57,9 @@ namespace PhotoApp.Data
                 entity.Property(e => e.Description)
                       .HasMaxLength(2000);
 
+                entity.Property(e => e.OnStock)
+                      .HasMaxLength(200);
+
                 entity.Property(e => e.MonthlyQuantity)
                       .HasMaxLength(200);
 
@@ -88,9 +91,9 @@ namespace PhotoApp.Data
                 entity.Property(e => e.UpdatedAt)
                       .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
-                // Pøidat konfiguraci pro nové sloupce
+                // Pï¿½idat konfiguraci pro novï¿½ sloupce
                 entity.Property(e => e.CreatedBy)
-                      .HasMaxLength(100); // Staèí pro username/email
+                      .HasMaxLength(100); // Staï¿½ï¿½ pro username/email
 
                 entity.Property(e => e.UpdatedBy)
                       .HasMaxLength(100);
@@ -111,12 +114,12 @@ namespace PhotoApp.Data
             // --- SUPPLIER ---
             var suppliers = new[]
             {
-                "Oprava", "AA Group", "AGC", "Agor", "Archeo", "Vážeme", "Badico", "BBH",
+                "Oprava", "AA Group", "AGC", "Agor", "Archeo", "Vï¿½eme", "Badico", "BBH",
                 "Delasitas", "Dijmex", "Duo Pet", "JMK", "Ecoprimus", "EF Recycling", "Eri-trade",
                 "Rumpold", "Fatra", "Gabeo", "GID", "Neveon", "Gumotex", "GZR", "Chintex",
-                "Inno Comp", "Repla", "Juta", "Kamiddos", "Kantoøík", "Kužílek", "KV Ekoplast",
+                "Inno Comp", "Repla", "Juta", "Kamiddos", "Kantoï¿½ï¿½k", "Kuï¿½ï¿½lek", "KV Ekoplast",
                 "Laszlo", "Leifheit", "Magna", "Mondeco", "Nexis", "Oceanize", "odpo",
-                "Power-Full", "PFN", "PlastMetal", "Pošumavská", "Prodos rec", "Rapol",
+                "Power-Full", "PFN", "PlastMetal", "Poï¿½umavskï¿½", "Prodos rec", "Rapol",
                 "Regoplast", "Remaq", "Renoplasti", "Reyond", "Silon Recy", "Suchan",
                 "TKC Kunst", "Torray", "Valek", "Vansida", "Witt and M", "Witte", "Zeba", "ZMPB"
             };

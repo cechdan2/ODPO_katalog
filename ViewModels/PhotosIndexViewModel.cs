@@ -16,6 +16,7 @@ namespace PhotoApp.ViewModels
         public List<string> Names { get; set; } = new List<string>();
         public List<string> Positions { get; set; } = new List<string>();
         public List<string> Fillers { get; set; } = new List<string>();
+        public List<string> OnStocks { get; set; } = new List<string>();
         public List<string> MonthlyQuantities { get; set; } = new List<string>();
         public List<string> Mfis { get; set; } = new List<string>();
         public List<string> Forms { get; set; } = new List<string>();
@@ -24,6 +25,7 @@ namespace PhotoApp.ViewModels
         // Vlastnosti pro uchování AKTUÁLNĚ VYBRANÝCH hodnot z filtrů
         // Nyní jsou to seznamy, aby mohly obsahovat více hodnot.
         public string Search { get; set; }
+        public string SearchId { get; set; }
         public List<string> Supplier { get; set; } = new List<string>();
         public List<string> Material { get; set; } = new List<string>();
         public List<string> Type { get; set; } = new List<string>();
@@ -31,8 +33,12 @@ namespace PhotoApp.ViewModels
         public List<string> Name { get; set; } = new List<string>();
         public List<string> Position { get; set; } = new List<string>();
         public List<string> Filler { get; set; } = new List<string>();
+        public List<string> OnStock { get; set; } = new List<string>();
         public List<string> MonthlyQuantity { get; set; } = new List<string>();
         public List<string> Mfi { get; set; } = new List<string>();
         public List<string> Form { get; set; } = new List<string>();
+        public DateTime? DateFrom { get; set; }
+        public DateTime? DateTo { get; set; }
+        public string SortBy { get; set; }
     }
 }
