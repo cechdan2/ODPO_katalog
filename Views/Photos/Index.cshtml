@@ -21,7 +21,7 @@
     var formsList = allOptions.Where(x => x.Category == "form").Select(x => x.Value).OrderBy(x => x).ToList();
     var fillersList = allOptions.Where(x => x.Category == "filler").Select(x => x.Value).OrderBy(x => x).ToList();
 
-    // MonthlyQuantity necháme zatím z Modelu
+    // MonthlyQuantity and OnStock from Model
 
     // OPRAVA: Všechny kolekce explicitně přetypujeme na IEnumerable<string>, aby měly anonymní objekty stejný typ
     var filtersToRender = new[] {
@@ -31,6 +31,7 @@
         new { Name = "position",        Placeholder = "Position",         AllValues = (IEnumerable<string>)positionsList,           SelectedValues = (IEnumerable<string>)Model.Position },
         new { Name = "form",            Placeholder = "Form",             AllValues = (IEnumerable<string>)formsList,               SelectedValues = (IEnumerable<string>)Model.Form },
         new { Name = "filler",          Placeholder = "Filler",           AllValues = (IEnumerable<string>)fillersList,             SelectedValues = (IEnumerable<string>)Model.Filler },
+        new { Name = "onStock",         Placeholder = "On Stock",         AllValues = (IEnumerable<string>)Model.OnStocks,          SelectedValues = (IEnumerable<string>)Model.OnStock },
         new { Name = "monthlyQuantity", Placeholder = "Monthly Quantity", AllValues = (IEnumerable<string>)Model.MonthlyQuantities, SelectedValues = (IEnumerable<string>)Model.MonthlyQuantity }
     };
 }
@@ -820,6 +821,30 @@
                         <input type="search" name="search" placeholder="Search anything…" value="@(Model?.Search ?? "")" />
                     </div>
                 </div>
+                <div class="filter-row">
+                    <div class="filter-toggle-placeholder"></div>
+                    <input type="search" name="searchId" placeholder="Search by ID…" value="@(Model?.SearchId ?? "")" style="flex-grow: 1; padding: 8px; border: 1px solid #dbe7d9; border-radius: 8px;" />
+                </div>
+                <div class="filter-row" style="align-items: flex-start;">
+                    <div class="filter-toggle-placeholder" style="margin-top: 6px;"></div>
+                    <div style="flex-grow: 1; display: flex; flex-direction: column; gap: 4px;">
+                        <label style="font-size: 12px; color: #666; margin-left: 4px;">Date Added</label>
+                        <div class="filter-range-inputs">
+                            <input type="date" name="dateFrom" value="@(Model?.DateFrom?.ToString("yyyy-MM-dd") ?? "")" />
+                            <input type="date" name="dateTo" value="@(Model?.DateTo?.ToString("yyyy-MM-dd") ?? "")" />
+                        </div>
+                    </div>
+                </div>
+                <div class="filter-row">
+                    <div class="filter-toggle-placeholder"></div>
+                    <select name="sortBy" style="flex-grow: 1; padding: 8px; border: 1px solid #dbe7d9; border-radius: 8px;">
+                        <option value="">Sort by: Last Updated</option>
+                        <option value="material" selected="@(Model?.SortBy == "material" ? "selected" : null)">Sort by: Material (A-Z)</option>
+                        <option value="created" selected="@(Model?.SortBy == "created" ? "selected" : null)">Sort by: Date Added</option>
+                        <option value="updated" selected="@(Model?.SortBy == "updated" ? "selected" : null)">Sort by: Last Modified</option>
+                        <option value="onstock" selected="@(Model?.SortBy == "onstock" ? "selected" : null)">Sort by: On Stock</option>
+                    </select>
+                </div>
                 @foreach (var filter in filtersToRender)
                 {
                     <div class="filter-row">
@@ -933,9 +958,13 @@
                             {
                                 <div class="info-item" data-col="filler"><strong>Filler</strong><span>@item.Filler</span></div>
                             }
+                            @if (!string.IsNullOrWhiteSpace(item.OnStock))
+                            {
+                                <div class="info-item" data-col="onstock"><strong>On Stock</strong><span>@item.OnStock</span></div>
+                            }
                             @if (!string.IsNullOrWhiteSpace(item.MonthlyQuantity))
                             {
-                                <div class="info-item" data-col="monthlyquantity"><strong>Quantity (month)</strong><span>@item.MonthlyQuantity</span></div>
+                                <div class="info-item" data-col="monthlyquantity"><strong>Monthly Quantity</strong><span>@item.MonthlyQuantity</span></div>
                             }
                             @if (!string.IsNullOrWhiteSpace(item.Mfi))
                             {
@@ -1000,7 +1029,8 @@
             <label><input type="checkbox" value="Form" checked> <span>Form</span></label>
             <label><input type="checkbox" value="Filler" checked> <span>Filler</span></label>
             <label><input type="checkbox" value="Color" checked> <span>Color</span></label>
-            <label><input type="checkbox" value="MonthlyQuantity" checked> <span>Qty</span></label>
+            <label><input type="checkbox" value="OnStock" checked> <span>On Stock</span></label>
+            <label><input type="checkbox" value="MonthlyQuantity" checked> <span>Monthly Quantity</span></label>
             <label><input type="checkbox" value="Mfi" checked> <span>MFI</span></label>
             <label><input type="checkbox" value="Notes" checked> <span>Notes</span></label>
             <label><input type="checkbox" value="CreatedAt" checked> <span>Created</span></label>

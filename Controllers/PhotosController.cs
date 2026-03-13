@@ -144,10 +144,10 @@ public class PhotosController : Controller
     // =========================================================
     [HttpGet]
     public async Task<IActionResult> ExportPdf(
-        string search, List<string> supplier, List<string> material, List<string> type,
+        string search, string searchId, List<string> supplier, List<string> material, List<string> type,
         List<string> color, List<string> name, List<string> position, List<string> filler,
-        List<string> mfi, List<string> monthlyQuantity, List<string> form,
-        double? minMfi, double? maxMfi,
+        List<string> mfi, List<string> onStock, List<string> monthlyQuantity, List<string> form,
+        double? minMfi, double? maxMfi, DateTime? dateFrom, DateTime? dateTo,
         [FromQuery] List<string> columnsToInclude,
         [FromQuery] List<int> ids) // <--- PŘIDÁNO: Seznam ID pro hromadný výběr
     {
@@ -259,6 +259,7 @@ public class PhotosController : Controller
                             if (columnsToInclude.Contains("Position")) columns.RelativeColumn();
                             if (columnsToInclude.Contains("Form")) columns.RelativeColumn();
                             if (columnsToInclude.Contains("Filler")) columns.RelativeColumn();
+                            if (columnsToInclude.Contains("OnStock")) columns.ConstantColumn(60);
                             if (columnsToInclude.Contains("MonthlyQuantity")) columns.ConstantColumn(60);
                             if (columnsToInclude.Contains("Mfi")) columns.ConstantColumn(50);
                             if (columnsToInclude.Contains("Notes")) columns.RelativeColumn(2);
@@ -281,7 +282,8 @@ public class PhotosController : Controller
                             if (columnsToInclude.Contains("Position")) header.Cell().Element(HeaderCellStyle).Text("Position").SemiBold();
                             if (columnsToInclude.Contains("Form")) header.Cell().Element(HeaderCellStyle).Text("Form").SemiBold();
                             if (columnsToInclude.Contains("Filler")) header.Cell().Element(HeaderCellStyle).Text("Filler").SemiBold();
-                            if (columnsToInclude.Contains("MonthlyQuantity")) header.Cell().Element(HeaderCellStyle).Text("Qty").SemiBold();
+                            if (columnsToInclude.Contains("OnStock")) header.Cell().Element(HeaderCellStyle).Text("On Stock").SemiBold();
+                            if (columnsToInclude.Contains("MonthlyQuantity")) header.Cell().Element(HeaderCellStyle).Text("Monthly Qty").SemiBold();
                             if (columnsToInclude.Contains("Mfi")) header.Cell().Element(HeaderCellStyle).Text("MFI/°C/kg").SemiBold();
                             if (columnsToInclude.Contains("Notes")) header.Cell().Element(HeaderCellStyle).Text("Notes").SemiBold();
                         });
@@ -298,6 +300,7 @@ public class PhotosController : Controller
                             if (columnsToInclude.Contains("Position")) table.Cell().Element(DataCellStyle).Text(item.Position);
                             if (columnsToInclude.Contains("Form")) table.Cell().Element(DataCellStyle).Text(item.Form);
                             if (columnsToInclude.Contains("Filler")) table.Cell().Element(DataCellStyle).Text(item.Filler);
+                            if (columnsToInclude.Contains("OnStock")) table.Cell().Element(DataCellStyle).Text(item.OnStock);
                             if (columnsToInclude.Contains("MonthlyQuantity")) table.Cell().Element(DataCellStyle).Text(item.MonthlyQuantity);
                             if (columnsToInclude.Contains("Mfi")) table.Cell().Element(DataCellStyle).Text(item.Mfi);
                             if (columnsToInclude.Contains("Notes")) table.Cell().Element(DataCellStyle).Text(item.Notes);
